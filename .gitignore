@@ -1,0 +1,37 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Logs and temp
+*.log
+*.tmp
+*.temp
+.tmp/
+tmp/
+
+# Build artifacts
+build/
+dist/
+
+# Secrets (never commit)
+.env
+.env.*
+*.pem
+*.key
+secrets/
+credentials/
+
+# Claude Code local state
+.claude/
+.serena/

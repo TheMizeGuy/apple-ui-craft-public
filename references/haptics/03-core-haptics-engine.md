@@ -1,0 +1,393 @@
+# Core Haptics Engine
+
+For custom haptic patterns beyond the built-in feedback types. Use Core Haptics when you need:
+- Custom timing or sequences
+- Dynamic intensity/sharpness modulation
+- Audio + haptic synchronization
+- AHAP file playback (designer-authored patterns)
+
+For most apps, the built-in `.sensoryFeedback` and `UIFeedbackGenerator` are sufficient. Reach for Core Haptics only for distinctive haptic experiences (games, music apps, productivity tools with rich feedback).
+
+## CHHapticEngine
+
+The gateway to the haptic server. Create, configure, start, manage lifecycle.
+
+### Creating and starting
+
+```swift
+import CoreHaptics
+
+class HapticManager {
+    private var engine: CHHapticEngine?
+    
+    func setupEngine() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        
+        do {
+            engine = try CHHapticEngine()
+            try engine?.start()
+            
+            // Reset handler: engine may stop unexpectedly (e.g., app backgrounded)
+            engine?.resetHandler = { [weak self] in
+                do {
+                    try self?.engine?.start()
+                } catch {
+                    print("Failed to restart engine: \(error)")
+                }
+            }
+            
+            // Stopped handler: engine stopped due to system event
+            engine?.stoppedHandler = { reason in
+                print("Engine stopped: \(reason)")
+            }
+        } catch {
+            print("Failed to start engine: \(error)")
+        }
+    }
+}
+```
+
+### When to start/stop
+
+```swift
+// App background -- stop engine to save resources
+func applicationDidEnterBackground() {
+    engine?.stop()
+}
+
+// App foreground -- restart engine
+func applicationWillEnterForeground() {
+    do {
+        try engine?.start()
+    } catch {
+        // Handle error
+    }
+}
+```
+
+## CHHapticEvent
+
+A single haptic event in a pattern.
+
+### Event types
+
+| Type | Description |
+|---|---|
+| `hapticTransient` | Brief haptic (default duration) |
+| `hapticContinuous` | Sustained haptic with explicit duration |
+| `audioCustom` | Custom audio sample played alongside haptic |
+| `audioContinuous` | Sustained audio |
+
+### Event parameters
+
+| Parameter | Range | Effect |
+|---|---|---|
+| `hapticIntensity` | 0.0 - 1.0 | Strength of vibration |
+| `hapticSharpness` | 0.0 - 1.0 | Sharp (high) vs soft (low) |
+| `attackTime` | 0.0 - ~1.0 | Fade-in time (continuous only) |
+| `decayTime` | 0.0 - ~1.0 | Fade-out time (continuous only) |
+| `releaseTime` | 0.0 - 1.0 | Release fade |
+| `sustained` | 0 or 1 | Whether to sustain at peak |
+
+### Building a transient event
+
+```swift
+let event = CHHapticEvent(
+    eventType: .hapticTransient,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.8),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.6)
+    ],
+    relativeTime: 0
+)
+```
+
+### Building a continuous event
+
+```swift
+let event = CHHapticEvent(
+    eventType: .hapticContinuous,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.5),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3),
+        CHHapticEventParameter(parameterID: .attackTime, value: 0.1),
+        CHHapticEventParameter(parameterID: .decayTime, value: 0.2)
+    ],
+    relativeTime: 0,
+    duration: 1.0  // 1 second sustained
+)
+```
+
+## CHHapticPattern
+
+A sequence of events.
+
+```swift
+func playButtonTapPattern() throws {
+    let event = CHHapticEvent(
+        eventType: .hapticTransient,
+        parameters: [
+            CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.6),
+            CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+        ],
+        relativeTime: 0
+    )
+    
+    let pattern = try CHHapticPattern(events: [event], parameters: [])
+    let player = try engine?.makePlayer(with: pattern)
+    try player?.start(atTime: CHHapticTimeImmediate)
+}
+```
+
+### Multi-event pattern (success confirmation)
+
+```swift
+func playSuccessPattern() throws {
+    let firstTap = CHHapticEvent(
+        eventType: .hapticTransient,
+        parameters: [
+            CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.5),
+            CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+        ],
+        relativeTime: 0
+    )
+    
+    let secondTap = CHHapticEvent(
+        eventType: .hapticTransient,
+        parameters: [
+            CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+            CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+        ],
+        relativeTime: 0.1  // 100ms after first
+    )
+    
+    let pattern = try CHHapticPattern(events: [firstTap, secondTap], parameters: [])
+    let player = try engine?.makePlayer(with: pattern)
+    try player?.start(atTime: CHHapticTimeImmediate)
+}
+```
+
+## Dynamic parameters
+
+Modulate parameters during playback (e.g., for a force-feedback effect):
+
+```swift
+let event = CHHapticEvent(
+    eventType: .hapticContinuous,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.5),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+    ],
+    relativeTime: 0,
+    duration: 2.0
+)
+
+let pattern = try CHHapticPattern(events: [event], parameters: [])
+let player = try engine?.makeAdvancedPlayer(with: pattern)
+
+try player?.start(atTime: CHHapticTimeImmediate)
+
+// Modulate intensity over time
+let intensityCurve = CHHapticParameterCurve(
+    parameterID: .hapticIntensityControl,
+    controlPoints: [
+        .init(relativeTime: 0, value: 0.5),
+        .init(relativeTime: 1.0, value: 1.0),
+        .init(relativeTime: 2.0, value: 0.0)
+    ],
+    relativeTime: 0
+)
+
+try player?.scheduleParameterCurve(intensityCurve, atTime: CHHapticTimeImmediate)
+```
+
+## AHAP files
+
+Designer-authored haptic patterns in JSON format. Lets non-developers create complex haptic experiences.
+
+### Example AHAP
+
+```json
+{
+    "Version": 1.0,
+    "Pattern": [
+        {
+            "Event": {
+                "Time": 0,
+                "EventType": "HapticTransient",
+                "EventParameters": [
+                    { "ParameterID": "HapticIntensity", "ParameterValue": 1.0 },
+                    { "ParameterID": "HapticSharpness", "ParameterValue": 0.5 }
+                ]
+            }
+        },
+        {
+            "Event": {
+                "Time": 0.1,
+                "EventType": "HapticContinuous",
+                "EventDuration": 0.5,
+                "EventParameters": [
+                    { "ParameterID": "HapticIntensity", "ParameterValue": 0.7 },
+                    { "ParameterID": "HapticSharpness", "ParameterValue": 0.3 }
+                ]
+            }
+        }
+    ]
+}
+```
+
+### Loading and playing AHAP
+
+```swift
+guard let url = Bundle.main.url(forResource: "celebration", withExtension: "ahap") else { return }
+
+do {
+    try engine?.playPattern(from: url)
+} catch {
+    print("Failed to play pattern: \(error)")
+}
+```
+
+## Audio + haptic sync
+
+Core Haptics can play synchronized audio:
+
+```swift
+let audioEvent = CHHapticEvent(
+    eventType: .audioCustom,
+    parameters: [
+        CHHapticEventParameter(parameterID: .audioPitch, value: 0.0),
+        CHHapticEventParameter(parameterID: .audioVolume, value: 1.0)
+    ],
+    relativeTime: 0
+)
+
+let hapticEvent = CHHapticEvent(
+    eventType: .hapticTransient,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0)
+    ],
+    relativeTime: 0  // Play simultaneously
+)
+
+let pattern = try CHHapticPattern(events: [audioEvent, hapticEvent], parameters: [])
+```
+
+For custom audio resources:
+
+```swift
+let resourceID = try engine?.registerAudioResource(audioFileURL)
+
+let audioEvent = CHHapticEvent(
+    audioResourceID: resourceID!,
+    parameters: [],
+    relativeTime: 0
+)
+```
+
+## Common patterns
+
+### Button tap (standard feel)
+
+```swift
+let event = CHHapticEvent(
+    eventType: .hapticTransient,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.6),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+    ],
+    relativeTime: 0
+)
+```
+
+### Soft confirmation
+
+```swift
+let event = CHHapticEvent(
+    eventType: .hapticTransient,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.4),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
+    ],
+    relativeTime: 0
+)
+```
+
+### Error (sharp double-tap)
+
+```swift
+let firstTap = CHHapticEvent(
+    eventType: .hapticTransient,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 1.0)
+    ],
+    relativeTime: 0
+)
+
+let secondTap = CHHapticEvent(
+    eventType: .hapticTransient,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 1.0)
+    ],
+    relativeTime: 0.08
+)
+```
+
+### Heartbeat (continuous + transient)
+
+```swift
+let beat1 = CHHapticEvent(
+    eventType: .hapticTransient,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+    ],
+    relativeTime: 0
+)
+
+let beat2 = CHHapticEvent(
+    eventType: .hapticTransient,
+    parameters: [
+        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.7),
+        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+    ],
+    relativeTime: 0.15
+)
+
+// Repeats every second
+```
+
+## When NOT to use Core Haptics
+
+| Don't use Core Haptics for | Use instead |
+|---|---|
+| Standard button taps | `.sensoryFeedback(.impact(weight: .light))` |
+| Toggle confirmation | `.sensoryFeedback(.selection)` |
+| Success/failure feedback | `.sensoryFeedback(.success)` / `.sensoryFeedback(.error)` |
+| Selection changes | `.sensoryFeedback(.selection)` |
+| Anything covered by built-in feedback | Built-in feedback |
+
+Core Haptics is for:
+- Games (custom rumble for explosions, hits, environmental)
+- Music apps (rhythm-synced haptics)
+- Productivity tools with rich feedback (drawing apps with brush feel)
+- Apps with brand-specific signature haptics
+
+## Common mistakes
+
+| Mistake | Problem | Fix |
+|---|---|---|
+| Not checking hardware support | Crashes on iPad / non-haptic devices | `CHHapticEngine.capabilitiesForHardware().supportsHaptics` |
+| No engine reset handler | Engine stops silently after backgrounding | Implement `resetHandler` |
+| Engine never stopped | Battery drain | Stop on app background |
+| Custom haptic for standard feedback | Reinventing the wheel | Use built-in `.sensoryFeedback` |
+| Loading AHAP every play | I/O overhead | Cache the pattern |
+| Audio without registering resource | Crash | Register `audioResourceID` first |
+| Modulating non-modulatable parameter | Silent failure | Use `Control` variants (`hapticIntensityControl`) |
+
+## See also
+
+- `01-haptic-design-principles.md` -- when to design custom patterns
+- `02-swiftui-sensory-feedback.md` -- prefer this when built-ins suffice
