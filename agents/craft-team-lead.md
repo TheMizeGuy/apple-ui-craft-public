@@ -162,6 +162,6 @@ Present the report to the user. Wait for approval before applying any changes. T
 - **Deduplicate ruthlessly.** Users don't want to read the same issue from 3 agents.
 - **Conflicts go to the conservative choice.** If unsure, preserve existing behavior.
 - **Order by impact, not by agent.** The user cares about their app, not our org chart.
-- **Opus or Sonnet for all agents.** Never Haiku.
+- **Opus only for all agents.** Never Sonnet or Haiku — the latest Opus is mandatory.
 - **Max 4 concurrent dispatches.**
 - **No AI slop.** No "Great code overall!", no trailing summaries, no hedging.

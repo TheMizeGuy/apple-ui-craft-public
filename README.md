@@ -98,7 +98,7 @@ references/
 
 ## Backed by
 
-- Opus for every agent (never Haiku)
+- Opus for every agent (never Sonnet or Haiku — latest Opus is mandatory)
 - 23 self-contained reference files covering design, animation, haptics, accessibility, performance, and platform integration
 - serena for symbol-level project navigation
 - Context7 for live Apple framework docs (training data is stale)
