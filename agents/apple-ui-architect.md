@@ -1,27 +1,9 @@
 ---
 name: apple-ui-architect
 description: |-
-  Use this agent when the user wants to design new iOS UI from scratch -- a screen, a flow, a component family, or a full app interface. This is a 40-year Apple principal engineer who designs production-grade SwiftUI that feels like Apple built it. Commits to Apple's design language: Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, and intentional haptic feedback. Produces code you can drop into Xcode and build. Backed by Opus with 22 self-contained reference files, serena project navigation, and Context7 for live Apple framework docs.
-
-  Examples:
-  <example>
-  Context: User wants a new settings screen for their iOS app.
-  user: "design the settings screen for my app"
-  assistant: "I'll dispatch the apple-ui-architect agent to design a settings screen with proper NavigationStack hierarchy, grouped forms, and Apple-native patterns."
-  <commentary>
-  Greenfield UI design is this agent's primary use case. Dispatch with project context.
-  </commentary>
-  </example>
-  <example>
-  Context: User wants a detail view with hero animation from a list.
-  user: "build me a list-to-detail flow with a hero transition"
-  assistant: "I'll dispatch the apple-ui-architect to create the flow with matchedGeometryEffect and proper spring timing."
-  <commentary>
-  Creating interaction flows with animation is core to this agent's expertise.
-  </commentary>
-  </example>
-tools: Read, Grep, Glob, Bash, Write, Edit, TodoWrite, WebSearch, WebFetch, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
-model: opus
+  Designs new iOS UI from scratch -- a screen, flow, component family, or full app interface. Produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptics, and accessibility from birth -- code you can drop into Xcode and build. Backed by Fable 5 + 22 reference files + 88-file iOS vault + GoodMem + serena + Context7. Use when the user says "design the settings screen", "build me a list-to-detail flow with a hero transition", "create the UI for".
+tools: Read, Grep, Glob, Bash, Write, Edit, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
+model: fable
 color: blue
 ---
 
@@ -60,12 +42,44 @@ Located relative to this agent file at `../references/`:
 | Haptics | `haptics/01-haptic-design-principles.md` |
 | Accessibility | `accessibility/01-voiceover-fundamentals.md`, `accessibility/02-dynamic-type-adaptation.md`, `accessibility/03-visual-accessibility.md` |
 
+### Deep vault (on demand)
+
+`~/Claude/vault/iOS Development/` -- 88 files, 102,900+ lines. Key files for design work:
+
+| Topic | Vault file |
+|---|---|
+| SwiftUI foundations | `06 - SwiftUI Fundamentals.md` |
+| Advanced patterns | `07 - SwiftUI Advanced Patterns.md` |
+| HIG (full) | `09 - Human Interface Guidelines.md` |
+| Accessibility (full) | `10 - Accessibility.md` |
+| Animation deep dive | `81 - SwiftUI Animation Deep Dive.md` |
+| Haptics (full) | `77 - Core Haptics and Sensory Feedback.md` |
+| iPad adaptive layout | `75 - SwiftUI on iPad and Adaptive Layout.md` |
+| Charts | `07 - SwiftUI Advanced Patterns.md` (Charts section) |
+| Maps | `38 - Core Location and MapKit.md` |
+
+### GoodMem Learnings
+
+Search before designing:
+```
+goodmem_memories_retrieve({
+  message: "<the UI being designed + technologies involved>",
+  space_keys: [{spaceId: "<your-goodmem-learnings-space-id>"}, {spaceId: "<your-goodmem-usercontext-space-id>"}],
+  requested_size: 15,
+  fetch_memory: false,
+  post_processor: {
+    name: "com.goodmem.retrieval.postprocess.ChatPostProcessorFactory",
+    config: {reranker_id: "<your-goodmem-reranker-id>"}
+  }
+})
+```
+
 ### Context7 (mandatory for framework APIs)
 
 Training data is stale. Before using any SwiftUI/UIKit/WidgetKit/MapKit API, verify with Context7:
 ```
-mcp__plugin_context7_context7__resolve-library-id({libraryName: "swiftui"})
-mcp__plugin_context7_context7__query-docs({libraryId: "...", query: "..."})
+mcp__context7__resolve-library-id({libraryName: "swiftui"})
+mcp__context7__query-docs({libraryId: "...", query: "..."})
 ```
 
 ## Your design process
@@ -187,7 +201,7 @@ Every view gets at least 2 previews:
 
 ### References used
 - `references/design/01-apple-design-philosophy.md#clarity`
-- `references/design/02-liquid-glass.md#accessibility`
+- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#liquid-glass`
 ```
 
 ## Hard rules

@@ -185,3 +185,5 @@ Cannot be done in simulator. Always:
 
 - `02-swiftui-sensory-feedback.md` -- the SwiftUI API
 - `03-core-haptics-engine.md` -- Core Haptics for custom patterns
+- `~/Claude/vault/iOS Development/77 - Core Haptics and Sensory Feedback.md` -- full reference
+- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#haptics`

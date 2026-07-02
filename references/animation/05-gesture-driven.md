@@ -269,6 +269,8 @@ ColorTarget()
     }
 ```
 
+For complex Transferable conformance, see `~/Claude/vault/iOS Development/50 - Drag Drop Clipboard and Share.md`.
+
 ## Pull to refresh
 
 ```swift
@@ -298,3 +300,4 @@ List(items) { item in
 - `01-animation-fundamentals.md` -- timing curves vs springs
 - `02-spring-physics.md` -- interactive spring parameters
 - `haptics/02-swiftui-sensory-feedback.md` -- haptic feedback for gesture confirmation
+- `~/Claude/vault/iOS Development/07 - SwiftUI Advanced Patterns.md#gestures`

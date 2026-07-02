@@ -327,3 +327,4 @@ Animate SF Symbols with built-in, symbol-aware effects (covered in `design/05-sf
 - `01-animation-fundamentals.md` -- when to use which animator
 - `02-spring-physics.md` -- spring parameters
 - `04-transitions-geometry.md` -- transitions are different from animators
+- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md`

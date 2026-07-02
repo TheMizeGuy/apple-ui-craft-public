@@ -290,3 +290,4 @@ struct MyView: View {
 
 - `01-haptic-design-principles.md` -- when and where to use haptics
 - `03-core-haptics-engine.md` -- custom patterns beyond built-in feedback
+- `~/Claude/vault/iOS Development/77 - Core Haptics and Sensory Feedback.md`

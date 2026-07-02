@@ -285,3 +285,4 @@ Test your app with each. Many real users have multiple of these enabled.
 - `02-dynamic-type-adaptation.md` -- text scaling
 - `04-motor-interaction.md` -- physical/motor accessibility
 - `design/04-color-system.md` -- semantic colors auto-adapt
+- `~/Claude/vault/iOS Development/10 - Accessibility.md`

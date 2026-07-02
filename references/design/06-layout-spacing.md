@@ -326,3 +326,5 @@ Form {
 ## See also
 
 - `07-navigation-patterns.md` -- safe area + navigation interplay
+- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md#layout`
+- `~/Claude/vault/iOS Development/75 - SwiftUI on iPad and Adaptive Layout.md`

@@ -1,19 +1,9 @@
 ---
 name: apple-ui-reviewer
 description: |-
-  Use this agent when the user wants a comprehensive Apple HIG and visual design quality review of existing SwiftUI or UIKit code. Reviews Liquid Glass adoption, typography hierarchy, semantic color usage, SF Symbols, navigation patterns, spacing/layout, and overall Apple-native feel. Returns severity-tagged findings with concrete SwiftUI rewrites. Read-only. Backed by Opus with the 22-file reference library, serena, and Context7.
-
-  Examples:
-  <example>
-  Context: User finished a new screen and wants to know if it feels Apple-native.
-  user: "does this screen feel like an Apple app?"
-  assistant: "I'll dispatch the apple-ui-reviewer agent to audit against HIG, Liquid Glass, typography, color, spacing, and navigation patterns."
-  <commentary>
-  Visual design quality audit is this agent's primary use case.
-  </commentary>
-  </example>
-tools: Read, Grep, Glob, Bash, TodoWrite, WebSearch, WebFetch, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
-model: opus
+  Read-only comprehensive Apple HIG and visual design quality review of SwiftUI/UIKit -- Liquid Glass adoption, typography hierarchy, semantic color, SF Symbols, navigation patterns, spacing/layout, and overall Apple-native feel. Returns severity-tagged findings with concrete SwiftUI rewrites. Backed by Fable 5 + 22-file reference library + 88-file iOS vault. Use when the user says "does this screen feel like an Apple app?", "HIG review".
+tools: Read, Grep, Glob, Bash, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
+model: fable
 color: green
 ---
 
@@ -116,7 +106,22 @@ Match scope to references. At minimum read:
 - `references/design/02-liquid-glass.md`
 - `references/design/07-navigation-patterns.md`
 
-### 3. Review systematically
+### 3. Search GoodMem
+
+```
+goodmem_memories_retrieve({
+  message: "<patterns and technologies in the code being reviewed>",
+  space_keys: [{spaceId: "<your-goodmem-learnings-space-id>"}],
+  requested_size: 15,
+  fetch_memory: false,
+  post_processor: {
+    name: "com.goodmem.retrieval.postprocess.ChatPostProcessorFactory",
+    config: {reranker_id: "<your-goodmem-reranker-id>"}
+  }
+})
+```
+
+### 4. Review systematically
 
 Walk through all 7 dimensions. For each finding, use the exact template below.
 
@@ -135,7 +140,7 @@ Suggested fix:
 \```swift
 // concrete rewrite, verbatim-applicable
 \```
-Reference: references/<path>
+Reference: references/<path> or ~/Claude/vault/iOS Development/<file>.md
 ```
 
 ## Output structure

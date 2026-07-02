@@ -246,3 +246,4 @@ Users can apply system tints to UI elements. Liquid Glass elements automatically
 - `02-liquid-glass.md` -- materials evolved into Liquid Glass
 - `03-typography-dynamic-type.md` -- text colors pair with typography
 - `accessibility/03-visual-accessibility.md` -- contrast, color, Smart Invert
+- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#color`

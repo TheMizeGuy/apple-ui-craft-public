@@ -168,3 +168,4 @@ Text("Label")
 
 - `01-apple-design-philosophy.md#deference` -- why Liquid Glass exists
 - `accessibility/03-visual-accessibility.md#reduce-transparency` -- a11y adaptation
+- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md` -- full HIG section

@@ -187,3 +187,4 @@ Spring feel is hard to judge from code. Always:
 
 - `01-animation-fundamentals.md` -- when to use springs vs curves
 - `05-gesture-driven.md` -- interactive springs for gestures
+- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md#spring-animations`

@@ -371,3 +371,5 @@ Exceeding limits causes the system to throttle or end the activity.
 ## See also
 
 - `02-app-intents-system.md` -- App Intents power widget interactions
+- `~/Claude/vault/iOS Development/30 - App Extensions and WidgetKit.md`
+- `~/Claude/vault/iOS Development/74 - Live Activities and Dynamic Island.md`

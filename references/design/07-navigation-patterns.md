@@ -427,3 +427,5 @@ List(items) { item in
 
 - `02-liquid-glass.md` -- glass tab bar and toolbar buttons
 - `06-layout-spacing.md` -- safe area, toolbar layout
+- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md#navigation`
+- `~/Claude/vault/iOS Development/75 - SwiftUI on iPad and Adaptive Layout.md`

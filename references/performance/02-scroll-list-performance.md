@@ -326,3 +326,5 @@ The system spinner is well-optimized. Don't build custom pull-to-refresh -- it's
 
 - `01-swiftui-rendering.md` -- general SwiftUI performance
 - `animation/01-animation-fundamentals.md` -- layout vs render cost
+- `~/Claude/vault/iOS Development/23 - Performance Optimization.md` -- full reference
+- `~/Claude/vault/iOS Development/54 - Xcode Instruments Deep Dive.md` -- Instruments workflow

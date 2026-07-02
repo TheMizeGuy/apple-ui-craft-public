@@ -1,6 +1,6 @@
 # apple-ui-craft
 
-A team of 7 Opus specialists embodying a 40-year principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
+A team of 7 Fable 5 specialists embodying a 40-year principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
 
 ## What this plugin does
 
@@ -98,7 +98,7 @@ references/
 
 ## Backed by
 
-- Opus for every agent (never Sonnet or Haiku — latest Opus is mandatory)
+- Fable 5 for every agent by default; Sonnet 5 only for multi-agent workflows at `xhigh` effort; never Haiku
 - 23 self-contained reference files covering design, animation, haptics, accessibility, performance, and platform integration
 - serena for symbol-level project navigation
 - Context7 for live Apple framework docs (training data is stale)

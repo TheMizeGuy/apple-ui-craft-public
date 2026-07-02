@@ -253,3 +253,4 @@ In simulator: Settings > Developer > Dynamic Type Sizes > select AX5, then test 
 - `01-voiceover-fundamentals.md` -- text labels also scale
 - `03-visual-accessibility.md` -- contrast and other visual settings
 - `design/03-typography-dynamic-type.md` -- typography reference
+- `~/Claude/vault/iOS Development/10 - Accessibility.md`

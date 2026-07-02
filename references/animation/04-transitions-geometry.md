@@ -331,3 +331,4 @@ private func proxyOffset(proxy: GeometryProxy) -> CGFloat {
 
 - `01-animation-fundamentals.md` -- when to use transitions vs animations
 - `02-spring-physics.md` -- spring parameters for transition animations
+- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md#transitions`

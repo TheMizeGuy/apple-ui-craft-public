@@ -197,3 +197,4 @@ If an animation doesn't communicate one of these, remove it.
 - `04-transitions-geometry.md` -- transitions and matchedGeometryEffect
 - `05-gesture-driven.md` -- interactive animation
 - `accessibility/03-visual-accessibility.md#reduce-motion`
+- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md`

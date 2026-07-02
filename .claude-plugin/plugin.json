@@ -1,15 +1,9 @@
 {
   "name": "apple-ui-craft",
   "version": "0.1.0",
-  "description": "Principal-engineer-grade Apple UI specialist. 7 Opus agents that design, review, optimize, and craft iOS UI so it feels like Apple built it. Covers Liquid Glass, spring animations, haptic design, accessibility, SwiftUI performance, and deep platform integration (widgets, Live Activities, App Intents). Four skills: design-ios (greenfield screen/flow creation), review-ios-ui (HIG + visual + interaction audit), optimize-ios-ui (animation + haptics + performance tuning), craft-ios-ui (full 6-specialist team sweep). Backed by 23 self-contained reference files covering design, animation, haptics, accessibility, performance, and platform integration. Read-only review by default; the orchestrator applies findings only on explicit user approval.",
+  "description": "Principal-engineer-grade Apple UI specialist. 7 Fable 5 agents that design, review, optimize, and craft iOS UI so it feels like Apple built it. Covers Liquid Glass, spring animations, haptic design, accessibility, SwiftUI performance, and deep platform integration (widgets, Live Activities, App Intents). Four skills: design-ios (greenfield screen/flow creation), review-ios-ui (HIG + visual + interaction audit), optimize-ios-ui (animation + haptics + performance tuning), craft-ios-ui (full 6-specialist team sweep). Backed by 23 self-contained reference files distilled from an 88-document iOS vault (102,900+ lines) plus GoodMem learnings and serena project navigation. Read-only review by default; the orchestrator applies findings only on explicit user approval.",
   "author": {
-    "name": "TheMizeGuy",
-    "url": "https://github.com/TheMizeGuy"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/TheMizeGuy/apple-ui-craft-public"
+    "name": "mize"
   },
   "keywords": [
     "ios",
@@ -34,6 +28,6 @@
     "navigation",
     "design-system",
     "multi-agent",
-    "opus"
+    "fable"
   ]
 }

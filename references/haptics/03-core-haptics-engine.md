@@ -391,3 +391,4 @@ Core Haptics is for:
 
 - `01-haptic-design-principles.md` -- when to design custom patterns
 - `02-swiftui-sensory-feedback.md` -- prefer this when built-ins suffice
+- `~/Claude/vault/iOS Development/77 - Core Haptics and Sensory Feedback.md` -- full reference with AHAP grammar

@@ -328,3 +328,4 @@ For images shown in lists, decode at target size on a background thread before d
 
 - `02-scroll-list-performance.md` -- list-specific optimization
 - `animation/01-animation-fundamentals.md` -- animation cost
+- `~/Claude/vault/iOS Development/23 - Performance Optimization.md` -- full reference

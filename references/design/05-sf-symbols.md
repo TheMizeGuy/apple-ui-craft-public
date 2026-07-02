@@ -272,3 +272,4 @@ HStack {
 - `03-typography-dynamic-type.md` -- text styles that pair with symbols
 - `accessibility/01-voiceover-fundamentals.md` -- accessibility labels for images
 - SF Symbols app: download from Apple developer for full catalog
+- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#sf-symbols`

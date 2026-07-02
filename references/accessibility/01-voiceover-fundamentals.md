@@ -316,3 +316,4 @@ func test_screenAccessibility() throws {
 
 - `02-dynamic-type-adaptation.md` -- text scaling
 - `04-motor-interaction.md` -- accessibility for physical disabilities
+- `~/Claude/vault/iOS Development/10 - Accessibility.md` -- full reference
