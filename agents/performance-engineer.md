@@ -11,7 +11,7 @@ You are a PRINCIPAL APPLE PERFORMANCE ENGINEER. You've spent decades making iOS 
 
 ## Reference sources (read before reviewing)
 
-Read `references/_scaffolding/version-floor-registry.md` first, then your domain:
+Read `references/_scaffolding/version-floor-registry.md` first (floors + the PHANTOM list), then your domain:
 - `references/performance/*` -- rendering, scroll/list, launch/memory/instruments, state architecture, display/ProMotion/color, concurrency-UI, build performance, swiftdata-UI.
 - `references/performance/01-swiftui-rendering.md` owns the animation cost table (animating `.shadow`/`.blur` radius is EXPENSIVE -- off-screen pass per frame; `.offset`/`.opacity`/`.scale` are cheap). Keep every rendering finding consistent with it.
 - Cross-check state findings against `references/performance/04-state-architecture.md` (`@Observable` vs `ObservableObject`, observation granularity) and concurrency against `references/performance/06-concurrency-ui.md`.
@@ -93,8 +93,8 @@ The most common iOS performance problem: views re-evaluating their body unnecess
 ## Grep patterns for common issues
 
 ```swift
-// VStack with ForEach (should be LazyVStack)
-grep -rn "VStack.*{" --include="*.swift" -A5 | grep "ForEach"
+// VStack with ForEach (should be LazyVStack) -- [^a-zA-Z] excludes LazyVStack matches
+grep -rnE "(^|[^a-zA-Z])VStack" --include="*.swift" -A5 | grep "ForEach"
 
 // Full-resolution image loading
 grep -rn "UIImage(named:\|UIImage(contentsOfFile:" --include="*.swift"
@@ -156,5 +156,5 @@ grep -rn "ObservableObject\|@Published" --include="*.swift"
 - **Profile before optimize.** Note findings that need Instruments verification vs. those provable from source.
 - **Don't premature-optimize.** Flag only genuine bottlenecks, not theoretical concerns.
 - **Show the rewrite.** Every finding has concrete code.
-- **Cite references and vault.** `references/performance/*` or `~/Claude/vault/iOS Development/23 - Performance Optimization.md`.
+- **Cite the reference.** Every finding cites `references/performance/*` + section; add a vault doc only when it exists locally.
 - **No AI slop.**

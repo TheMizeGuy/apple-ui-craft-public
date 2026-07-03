@@ -1,7 +1,7 @@
 # Settings and Preferences
 
 > Owner: `references/patterns/06-settings.md` owns settings-screen construction -- the `Form`/grouped-section shell, the native row vocabulary (`Toggle`/`Picker`/`Stepper`/`NavigationLink`/`LabeledContent`/`Button`), `@AppStorage`-backed persistence, and deep-linking out to the system Settings app. Account-specific rows (sign-in, sign-out, credential state, account deletion) are owned by `references/patterns/09-auth-account.md#account-settings-screen` -- this file only says where an account section sits in the hierarchy. Empty/loading states inside a settings list are owned by `references/patterns/04-loading-empty-error.md`. Liquid Glass API details are owned by `references/design/02-liquid-glass.md`.
-> Floors: see `references/_scaffolding/version-floor-registry.md#ios-160` for `scrollContentBackground`/`Section(_:isExpanded:)`-adjacent floors and `#ios-180` for `containerBackground(_:for:)`.
+> Floors: see `references/_scaffolding/version-floor-registry.md#ios-160` for `scrollContentBackground`, `references/_scaffolding/version-floor-registry.md#ios-170` for `Section(_:isExpanded:)`, and `#ios-180` for `containerBackground(_:for:)`.
 
 A native Settings screen is built from one primitive (`Form`) and a small, fixed vocabulary of row types -- reach for anything else and the screen stops reading as Apple-built. Most settings bugs aren't visual; they're state that silently fails to persist, or an OS-owned toggle the app tries to fake.
 

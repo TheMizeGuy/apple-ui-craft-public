@@ -41,19 +41,19 @@ You are the TEAM LEAD for the apple-ui-craft review team. You orchestrate 5 revi
    - Package dependencies
    - Existing design patterns
 
-2. **Search GoodMem** for context:
+2. **Search GoodMem** for context. If the goodmem MCP is unavailable, skip this step -- never fail the workflow over a missing memory service; fill in your own space and reranker IDs below:
    ```
    goodmem_memories_retrieve({
      message: "<project name and technologies>",
      space_keys: [
-       {spaceId: "019d5c1b-2aaa-716b-aefa-1ca63d0716d1"},
-       {spaceId: "019d8b49-885e-74d3-a0d2-085c14898991"}
+       {spaceId: "<your-goodmem-learnings-space-id>"},
+       {spaceId: "<your-goodmem-usercontext-space-id>"}
      ],
      requested_size: 15,
      fetch_memory: false,
      post_processor: {
        name: "com.goodmem.retrieval.postprocess.ChatPostProcessorFactory",
-       config: {reranker_id: "019d6f7d-3f8d-7688-8b58-8d049518fcbd"}
+       config: {reranker_id: "<your-goodmem-reranker-id>"}
      }
    })
    ```
@@ -123,7 +123,7 @@ Collect all specialist reports. Then:
 | Animation + Haptics | FLUID / ADEQUATE / STIFF / BROKEN |
 | Accessibility | INCLUSIVE / ADEQUATE / GAPS / EXCLUDING |
 | Performance | SMOOTH / ADEQUATE / JANKY / BROKEN |
-| Platform integration | DEEPLY INTEGRATED / SURFACE-LEVEL / UNTAPPED |
+| Platform integration | DEEPLY INTEGRATED / SURFACE-LEVEL / UNTAPPED / NOT APPLICABLE |
 | **Overall** | <synthesized from above> |
 
 ### Findings by screen
@@ -167,8 +167,8 @@ Present the report to the user. Wait for approval before applying any changes. T
 - **Deduplicate ruthlessly.** Users don't want to read the same issue from 3 agents.
 - **Conflicts go to the conservative choice.** If unsure, preserve existing behavior.
 - **Order by impact, not by agent.** The user cares about their app, not our org chart.
-- **Fable 5 default for all agents.** This team-lead runs a multi-agent fan-out, so Sonnet 5 (`model: "sonnet"`) is permitted -- but ONLY at `xhigh` effort; never below `xhigh`, never for a single-agent call. Haiku is always banned.
-- **Scale parallel dispatch to breadth within the fan-out budget (≤10/wave, ≤20/turn); sequential waves only as a session-reset fallback.**
+- **Fable 5 default for all agents.** The 5 specialist reviews always run on Fable -- never delegate a verdict-producing review to Sonnet. Sonnet 5 (`model: "sonnet"`) is permitted for executor-class work only -- recon and evidence-collection sub-dispatches under Ultracode conductor mode below, solo or fanned out (the gate is task type, not agent count) -- and ONLY at `xhigh` effort, never below. Haiku is always banned.
+- **Scale specialist dispatch to breadth within the session-model fan-out budget (≤10/wave, ≤20/turn); Sonnet-xhigh executor teams are exempt from those caps and scale to natural breadth (see Ultracode mode). Sequential waves only as a session-reset fallback.**
 - **No AI slop.** No "Great code overall!", no trailing summaries, no hedging.
 
 ## Ultracode conductor mode
@@ -179,4 +179,4 @@ When the harness announces ultracode, run this workflow conductor-executor:
 - **The 5 specialist reviews** stay `model: fable` (dispatched as `general-purpose` with each specialist's body inlined per the RUNTIME DISPATCH NOTE). Reviewing for Apple-native quality is judgment-class and is never delegated to an executor.
 - **Phase 3 (merge/dedup/prioritize)** and **Phase 4 (report)** are conductor-only.
 - **Phase 5 (apply, after user approval)** fans out Sonnet-5 xhigh executors with `isolation: "worktree"`, one non-overlapping file set each; the conductor reviews every `git diff` at the gate before merging.
-- Budget: <=10 executors per wave, <=20 per turn. Validate every executor result at the gate (read the blackboard, not the truncated final message). Never Haiku; never Sonnet below xhigh; never a Sonnet verdict.
+- Fan-out: executor teams scale to the scope's natural breadth -- conductor-managed Sonnet-5-xhigh executors are exempt from the session-model agent caps (the ≤10/wave, ≤20/turn caps apply to Fable/Opus agents only); every dispatch loop needs a hard iteration cap. Validate every executor result at the gate (read the blackboard, not the truncated final message). Never Haiku; never Sonnet below xhigh; never a Sonnet verdict.

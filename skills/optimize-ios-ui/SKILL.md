@@ -27,6 +27,15 @@ After both complete, merge findings:
 - Order by impact (most noticeable improvement first)
 - Group by screen/flow
 
+## Scope determination
+
+| Arg | Meaning |
+|---|---|
+| empty / `diff` | Uncommitted + staged changes (default) |
+| `staged` | Only staged files |
+| `<file>` or `<directory>` | Specific target |
+| `all` | Entire project (excluding generated code, Pods, build artifacts) |
+
 ## When to use this vs. review-ios-ui
 
 | Goal | Skill |
@@ -48,7 +57,7 @@ Unified report with:
 
 ## Ultracode conductor mode
 
-When the harness announces ultracode, this skill runs conductor-executor: the session model CONDUCTS -- Fable 5 or Opus 4.8, interchangeably (either model drives the workflow identically) -- and teams of Sonnet 5 executors at `xhigh` effort do the scoped grunt stages. Without ultracode, run the standard 2-specialist dispatch above unchanged.
+When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard 2-specialist dispatch above unchanged.
 
 **Split of labor**
 
@@ -56,16 +65,7 @@ When the harness announces ultracode, this skill runs conductor-executor: the se
 |---|---|
 | Animation/haptic/performance verdicts, spring-parameter judgment, conflict resolution (heavier spring vs hitch), apply/no-apply judgment, final report synthesis | Instrumentation sweeps: body-reevaluation candidates, animation inventory (curve/spring params per site), haptic-trigger inventory, scroll-container census; post-approval mechanical application of approved parameter changes |
 
-**Scoping contract -- every executor is scoped via this skill.** Each executor prompt MUST inline:
-1. The exact file set it owns (non-overlapping) and the inventory/deliverable format.
-2. Absolute paths of `references/animation/*`, `references/interaction/*`, `references/haptics/*`, `references/performance/*` + `references/_scaffolding/version-floor-registry.md`.
-3. The severity scale and the 11-row a11y/perf checklist (rows 1-5 are the motion-safety core).
-4. `BLACKBOARD: <path>` (first token = path) + the escalation rule (2 failed attempts or ambiguity -> `## ESCALATE` + early return).
-5. The instruction that executors report evidence/inventory, never verdicts -- the conductor grades.
-
-**Dispatch mechanics**
-- `Agent({subagent_type: "general-purpose", model: "sonnet", prompt: <scoped briefing>})`; in Workflow scripts pass `{model: 'sonnet', effort: 'xhigh'}` explicitly.
+**Executor scoping (on top of the protocol's prompt contract)**
+- Reference set: absolute paths of `references/animation/*`, `references/interaction/*`, `references/haptics/*`, `references/performance/*` + `references/_scaffolding/version-floor-registry.md`.
+- Inline the severity scale and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (rows 1-3 Reduce-Motion gating, row 5 compositor cost, rows 9-10 transition/flash safety -- the motion-relevant rows; sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
 - The `animation-haptics-engineer` / `performance-engineer` specialists stay `model: fable` -- judgment reviewers, never executors.
-- Fan-out budget: <=10 executors per wave, <=20 per turn. Application executors writing files in parallel use `isolation: "worktree"`.
-- Conductor gate before anything reaches the user: read blackboards, spot-check against the files, re-grade. One re-dispatch on failure, then the conductor takes over.
-- Never Haiku. Never Sonnet below xhigh. Never a Sonnet verdict.

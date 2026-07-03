@@ -98,7 +98,7 @@ Use when accessibility is the whole ask. Goes deeper than the `review-ios-ui` a1
 "WCAG check before submission"
 ```
 
-**What happens:** the `accessibility-engineer` runs solo with the full accessibility reference set, applies the 11-row a11y/perf gate per screen, maps every finding to a WCAG 2.2 success criterion with the correct level (2.5.8 Minimum AA 24px vs 2.5.5 Enhanced AAA 44px; 44pt stays the Apple HIG rule), and produces a per-setting behavior matrix.
+**What happens:** the `accessibility-engineer` runs solo with the full accessibility reference set, runs its 5-dimension audit (VoiceOver, Dynamic Type, visual, motor, cognitive & hearing) per screen, maps every finding to a WCAG 2.2 success criterion with the correct level (2.5.8 Minimum AA 24px vs 2.5.5 Enhanced AAA 44px; 44pt stays the Apple HIG rule), and produces the Settings matrix (behavior under each accessibility setting).
 
 ### `integrate-platform` -- system reach
 
@@ -145,7 +145,7 @@ Reviews are **read-only by default.** Findings are advisory. The orchestrator ap
 When your session is running under **ultracode**, every skill switches to conductor-executor mode automatically. You do not do anything differently; the split happens under the hood:
 
 - **The session model conducts -- Fable 5 or Opus 4.8, interchangeably.** Whichever model your session runs, it decides scope, grades severity, deduplicates findings, resolves conflicts, and synthesizes the final report. Every verdict is the conductor's, and the two models drive the workflow identically -- selecting Opus behaves exactly like selecting Fable 5.
-- **Sonnet-5 xhigh executor teams do the grunt stages** -- reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application. Each executor is scoped through the skill: a non-overlapping file set, the dimension's reference paths plus the version-floor registry, the severity scale and 11-row checklist, and a blackboard + escalation contract. Executors report **evidence, never verdicts**.
+- **Sonnet-5 xhigh executor teams do the grunt stages** -- reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application. Each executor is scoped through the skill: a non-overlapping file set, the dimension's reference paths plus the version-floor registry, the severity scale plus the skill's inlined check tables, and a blackboard + escalation contract. Executors report **evidence, never verdicts**. The shared dispatch mechanics, fan-out doctrine (executor teams scale to natural breadth), and validation gate live in `references/_scaffolding/conductor-dispatch-protocol.md`.
 - **The specialist reviewers stay on the session model.** Judging Apple-native quality is never delegated to an executor.
 - **Every executor result is gated** -- the conductor reads the durable blackboard (not the truncated final message), spot-checks claims against the actual files, and re-grades before anything reaches you.
 
@@ -154,7 +154,7 @@ Without ultracode, the skills run their standard direct dispatch. The model inva
 
 ## The reference library
 
-The plugin's knowledge lives in `references/` -- **81 files** across 11 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, exemplars, methodology) plus `_scaffolding/` (12 directories total). See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
+The plugin's knowledge lives in `references/` -- **82 files** across 11 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, exemplars, methodology) plus `_scaffolding/` (12 directories total). See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
 
 Two files anchor the whole library:
 

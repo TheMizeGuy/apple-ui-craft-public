@@ -31,7 +31,8 @@ apple-ui-craft/
 │   └── craft-team-lead.md             orchestrator for craft-ios-ui multi-pass
 └── references/                  (12 domains -- self-contained knowledge files)
     ├── _scaffolding/
-    │   ├── _TEMPLATE.md                     reference-file skeleton
+    │   ├── _TEMPLATE.md                     reference-file skeleton (authoring-only)
+    │   ├── conductor-dispatch-protocol.md   shared ultracode dispatch mechanics (all 6 skills point here)
     │   └── version-floor-registry.md        SINGLE source of availability floors + PHANTOM list
     ├── design/
     │   ├── 01-apple-design-philosophy.md    clarity, deference, depth
@@ -99,7 +100,7 @@ apple-ui-craft/
     │   ├── 01-widgets-live-activities.md    OWNER: widget refresh budget, WidgetKit, Dynamic Island
     │   ├── 02-app-intents-system.md         OWNER: App Intents, Siri, Shortcuts, Spotlight, schemas
     │   ├── 03-controls-standby.md           ControlWidget, Control Center, Action Button, StandBy
-    │   ├── 04-system-surfaces-notifications.md  notifications, ShareLink, Spotlight, Quick Actions
+    │   ├── 04-system-surfaces-notifications.md  notifications, alternate icons, launch screens
     │   ├── 05-maps-location.md              SwiftUI Map, Look Around, CLLocationManager UX
     │   ├── 06-apple-intelligence-ui.md      Foundation Models, Writing Tools, Genmoji, Image Playground
     │   ├── 07-webview-web-content.md        SwiftUI WebView/WebPage (iOS 26)
@@ -127,7 +128,7 @@ apple-ui-craft/
 
 Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship the core; P2 files add depth. Exemplars are labeled "signature-drafted, build-pending" (no Xcode build in this repo). Some P2 files (design/12-13, methodology, carplay, cognitive/hearing) are depth-pass additions.
 
-**Reference inventory (81 files):** design 13, patterns 11, platform 9, performance 8, accessibility 7, animation 6, interaction 6, cross-platform 6, exemplars 5, haptics 4, methodology 4, `_scaffolding` 2. That is 11 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
+**Reference inventory (82 files):** design 13, patterns 11, platform 9, performance 8, accessibility 7, animation 6, interaction 6, cross-platform 6, exemplars 5, haptics 4, methodology 4, `_scaffolding` 3. That is 11 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
 
 ## Agent <-> skill mapping
 
@@ -144,23 +145,23 @@ Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship t
 
 ## Reference <-> agent wiring (no orphan references)
 
-Rule: **every `references/**/*.md` appears in at least one agent's read scope.** Agents read `_scaffolding/version-floor-registry.md` first, then start-here files, then glob the rest of a domain when the task goes deep. Ownership below is the "who authors/owns this concept" map; reviewers read across domains.
+Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appears in at least one agent's read scope.** `_scaffolding/` holds process files, not knowledge: `version-floor-registry.md` is read first by every agent, `conductor-dispatch-protocol.md` is read by the ultracode conductor, `_TEMPLATE.md` is authoring-only. Agents read the floor registry first, then start-here files, then glob the rest of a domain when the task goes deep. Ownership below is the "who authors/owns this concept" map; reviewers read across domains.
 
 | Agent | Owns / reads |
 |---|---|
-| `apple-ui-architect` | design/* (all), patterns/* (all), animation/*, interaction/*, haptics/01-02, accessibility/01-06, performance/04, platform/09, methodology/01. Start: design/01-02, patterns/00-01 |
-| `apple-ui-reviewer` | design/* (all), patterns/* (all), interaction/*, accessibility/01-05. Start: design/01-02, design/07, patterns/01. Runs the 11-row a11y/perf gate |
+| `apple-ui-architect` | design/* (all), patterns/* (all), animation/*, interaction/*, haptics/01-02, accessibility/01-06, performance/04, platform/09, methodology/01-02, methodology/04, exemplars/* (all -- worked screens to steal structure from). Start: design/01-02, patterns/00-01 |
+| `apple-ui-reviewer` | design/* (all), patterns/* (all), interaction/*, accessibility/01-05, methodology/03-04 (Apple-sample calibration + API currency). Start: design/01-02, design/07, patterns/01. Runs the 11-row a11y/perf gate |
 | `animation-haptics-engineer` | animation/* (all), interaction/* (all), haptics/* (all), accessibility/05. Owns interaction/ + haptics/ |
 | `accessibility-engineer` | accessibility/* (all), design/03-04, design/06, patterns/01. Owns accessibility/ |
 | `performance-engineer` | performance/* (all), animation/01, interaction/01. Owns performance/ |
-| `platform-engineer` | platform/* (all), cross-platform/* (all), design/07. Owns platform/ + cross-platform/ |
+| `platform-engineer` | platform/* (all), cross-platform/* (all), design/07, patterns/03 + patterns/10 (TipKit, drag-drop surfaces in its matrix). Owns platform/ + cross-platform/ |
 | `craft-team-lead` | Routes only; reads none deeply. All references reachable through the specialists above -- zero orphans |
-| exemplars/ | Routed by team-lead + owning specialist (01 architect/reviewer, 02 animation-haptics, 03 accessibility, 04 performance, 05 platform) |
+| exemplars/ | Read by apple-ui-architect (all 5) and routed by team-lead to the owning specialist (01 architect/reviewer, 02 animation-haptics, 03 accessibility, 04 performance, 05 platform) |
 
 ## Hard rules baked into every agent
 
 1. **Read-only review by default.** Findings advisory. Orchestrator applies on explicit user OK.
-2. **Cite references + vault.** Every finding points to a reference file:section or vault path. No hand-waving.
+2. **Cite the reference.** Every finding points to a `references/` file:section; vault docs are cited only when they exist locally. No hand-waving.
 3. **Show code.** Concrete current -> suggested rework. Verbatim-applicable SwiftUI.
 4. **Severity tags.** CRITICAL / HIGH / MEDIUM / LOW / NIT -- same scale as ios-code-review.
 5. **No AI slop.** No "Great work!", "Just a minor suggestion", "Hope this helps", hedging, trailing summaries.
@@ -184,7 +185,7 @@ Rule: **every `references/**/*.md` appears in at least one agent's read scope.**
 
 ## Ultracode conductor mode
 
-Under ultracode, every skill runs conductor-executor: the session model -- Fable 5 or Opus 4.8, interchangeably (either conducts identically) -- conducts (scope, verdicts, dedup, conflict resolution, synthesis) and Sonnet-5 xhigh executor teams run the scoped grunt stages (recon, per-screen evidence, instrumentation inventory, component scaffolding, post-approval mechanical application). Each executor is scoped through the skill (non-overlapping files, dimension reference paths + version-floor registry, severity scale + 11-row checklist, blackboard + escalate contract, evidence-not-verdicts). Specialists stay `model: fable`; verdicts are never delegated. Budget <=10 executors/wave, <=20/turn; worktree isolation for parallel writes. Never Haiku; never Sonnet below xhigh. Each skill file carries the full contract in its "Ultracode conductor mode" section.
+Under ultracode, every skill runs conductor-executor: the session model -- Fable 5 or Opus 4.8, interchangeably (either conducts identically) -- conducts (scope, verdicts, dedup, conflict resolution, synthesis) and Sonnet-5 xhigh executor teams run the scoped grunt stages (recon, per-screen evidence, instrumentation inventory, component scaffolding, post-approval mechanical application). Each skill carries its split-of-labor table and dimension-specific executor scoping; the shared dispatch mechanics, fan-out doctrine (executor teams scale to natural breadth -- the <=10/wave, <=20/turn caps apply to session-model agents only), executor prompt contract, and validation gate live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. Specialists stay `model: fable`; verdicts are never delegated; worktree isolation for parallel writes. Never Haiku; never Sonnet below xhigh.
 
 ## Relationship to ios-code-review
 
@@ -202,7 +203,7 @@ Agent-to-reference (distinct context -- relative from the agent file):
 ../references/<topic>/<file>.md
 ```
 
-Vault citations:
+Vault citations (authoring-time provenance only -- shipped findings cite `references/`):
 ```
 ~/Claude/vault/iOS Development/<file>.md#section
 ```

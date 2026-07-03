@@ -6,7 +6,7 @@ description: |-
 
 # Craft iOS UI
 
-The full Apple UI treatment. 5 specialists review every dimension of your iOS app's user interface and produce a unified improvement plan.
+The full Apple UI treatment. Five specialists review every dimension of the app's user interface and produce a unified improvement plan.
 
 ## Dispatch
 
@@ -21,7 +21,7 @@ Agent({
 })
 ```
 
-The team lead then dispatches all 5 review specialists (leaf specialists ARE safe to dispatch plugin-namespaced only if they never need the Agent tool; the team lead inlines each specialist's body into a `general-purpose` dispatch for uniformity):
+The team lead then dispatches all 5 review specialists. It inlines each specialist's body into a `general-purpose` dispatch because that is the only shape verified to preserve tools -- the same plugin-namespace limitation above makes namespaced sub-dispatch from inside a subagent unreliable (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md`). Inlining is required, not stylistic:
 1. `apple-ui-reviewer` -- HIG, Liquid Glass, typography, color, navigation, layout
 2. `animation-haptics-engineer` -- motion, springs, haptic design, Reduce Motion
 3. `accessibility-engineer` -- VoiceOver, Dynamic Type, contrast, motor, cognitive
@@ -56,14 +56,16 @@ Comprehensive report with:
 
 | Goal | Skill | Agents | Time |
 |---|---|---|---|
-| Design new UI | `design-ios` | 1-2 | 5-10 min |
-| Review visual + a11y | `review-ios-ui` | 3 | 5-15 min |
+| Design new UI | `design-ios` | 2 | 5-10 min |
+| Review visual + motion + a11y | `review-ios-ui` | 3 | 5-15 min |
 | Optimize motion + perf | `optimize-ios-ui` | 2 | 5-10 min |
+| Deep accessibility-only audit | `audit-accessibility` | 1 | 5-10 min |
+| System-integration audit | `integrate-platform` | 1 | 5-10 min |
 | **The full treatment** | **`craft-ios-ui`** | **5 + lead** | **10-30 min** |
 
 ## Ultracode conductor mode
 
-When the harness announces ultracode, this skill runs conductor-executor: the session model CONDUCTS -- Fable 5 or Opus 4.8, interchangeably (either model drives the workflow identically) -- and teams of Sonnet 5 executors at `xhigh` effort do the scoped grunt stages. Without ultracode, run the standard dispatch above unchanged.
+When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard dispatch above unchanged.
 
 **Split of labor**
 
@@ -71,17 +73,7 @@ When the harness announces ultracode, this skill runs conductor-executor: the se
 |---|---|
 | Scope decision, severity verdicts, finding dedup + conflict resolution, apply/no-apply judgment, final report synthesis, anything security- or accessibility-verdict-shaped | Recon inventory (map screens/views per scope, SwiftUI-vs-UIKit split, deployment target); per-screen evidence collection against each specialist's checklist; post-approval mechanical application of approved findings (worktree-isolated, one screen-set per executor) |
 
-**Scoping contract -- every executor is scoped via this skill.** Each executor prompt MUST inline:
-1. The exact file set it owns (non-overlapping) and the deliverable format.
-2. Absolute paths of the reference files for its dimension (from the ARCHITECTURE reference<->agent matrix) + `references/_scaffolding/version-floor-registry.md`.
-3. The severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf checklist when reviewing.
-4. `BLACKBOARD: <path>` line (first token = path) + the escalation rule (2 failed attempts or spec ambiguity -> `## ESCALATE` + early return).
-5. The instruction that executors report evidence, never verdicts -- the conductor grades.
-
-**Dispatch mechanics**
-- Agent tool: `Agent({subagent_type: "general-purpose", model: "sonnet", prompt: <scoped briefing>})` -- session at xhigh means executors inherit xhigh; in Workflow scripts pass `{model: 'sonnet', effort: 'xhigh'}` explicitly.
-- Plugin specialist agents (`apple-ui-craft:*`) stay `model: fable` -- they are judgment reviewers, never executors. Sonnet executors are always plain `general-purpose` with the scoped briefing inlined.
-- The `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above) runs Phase 1 recon and Phase 2 evidence as Sonnet-xhigh executor teams; the 5 specialist reviews stay `model: fable`; Phase 3-4 merge/report are conductor-only; Phase 5 apply fans out worktree-isolated Sonnet-xhigh executors.
-- Fan-out budget: <=10 executors per wave, <=20 per turn. Parallel file WRITES require `isolation: "worktree"`; read-only sweeps do not.
-- Validation gate before any executor output reaches the user: conductor reads the blackboard (not the truncated final message), spot-checks claims against the files, re-grades severity. One re-dispatch on failure, then the conductor takes the work over.
-- Never Haiku. Never Sonnet below xhigh. Never a Sonnet verdict.
+**Executor scoping (on top of the protocol's prompt contract)**
+- Reference set per dimension from the ARCHITECTURE reference<->agent matrix + `references/_scaffolding/version-floor-registry.md`.
+- When reviewing motion, translucency, or custom controls, inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
+- Stage-tier map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection run as Sonnet-xhigh executor teams; the 5 specialist reviews stay `model: fable`; merge and report (Process steps 3-4) are conductor-only; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated Sonnet-xhigh executors.

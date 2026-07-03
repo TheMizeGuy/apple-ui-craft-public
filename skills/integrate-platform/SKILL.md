@@ -1,7 +1,7 @@
 ---
 name: integrate-platform
 description: |-
-  Deepen an iOS app's system integration. Dispatches the platform-engineer solo to audit existing integration and map what's missing: widgets, Live Activities, Dynamic Island, Control Center controls, App Intents, Siri and Apple Intelligence schemas, Spotlight, Quick Actions, StandBy, context menus, drag and drop, TipKit, keyboard shortcuts, plus cross-platform reach (iPadOS, watchOS, tvOS, macOS/Catalyst, visionOS, CarPlay). Triggers on "make my app feel more native beyond the UI", "add widgets", "should I build a Live Activity?", "App Intents audit", "platform integration", "system integration opportunities", "bring my app to [watch/Vision Pro/CarPlay]".
+  Deepen an iOS app's system integration. Dispatches the platform-engineer solo to audit existing integration and map what's missing: widgets, Live Activities, Dynamic Island, Control Center controls, App Intents, Siri and Apple Intelligence schemas, Spotlight, Quick Actions, StandBy, context menus, drag and drop, TipKit, keyboard shortcuts, Maps, WebView, App Clips, app extensions, plus cross-platform reach (iPadOS, watchOS, tvOS, macOS/Catalyst, visionOS, CarPlay). Triggers on "make my app feel more native beyond the UI", "add widgets", "should I build a Live Activity?", "App Intents audit", "platform integration", "system integration opportunities", "bring my app to [watch/Vision Pro/CarPlay]".
 ---
 
 # Integrate Platform
@@ -30,7 +30,7 @@ apple-ui-craft:platform-engineer
 
 ## Output
 
-- Integration verdict: DEEPLY INTEGRATED / SURFACE-LEVEL / UNTAPPED
+- Integration verdict: DEEPLY INTEGRATED / SURFACE-LEVEL / UNTAPPED / NOT APPLICABLE
 - Existing-surface audit (what ships today, with correctness findings, severity-tagged)
 - Opportunity map (surface -> what it does for this app -> APIs + floor -> effort)
 - Cross-platform reach assessment (which platforms this app should exist on, and why)
@@ -40,23 +40,15 @@ All findings are advisory. The user chooses what to build.
 
 ## Ultracode conductor mode
 
-When the harness announces ultracode, this skill runs conductor-executor: the session model CONDUCTS -- Fable 5 or Opus 4.8, interchangeably (either model drives the workflow identically) -- and teams of Sonnet 5 executors at `xhigh` effort do the scoped grunt stages. Without ultracode, run the standard dispatch above unchanged.
+When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard dispatch above unchanged.
 
 **Split of labor**
 
 | Conductor (session model -- never delegated) | Executor teams (Sonnet 5, ALWAYS `effort: xhigh`) |
 |---|---|
-| Opportunity ranking, value-vs-cost judgment, integration plan synthesis, anything entitlement- or privacy-adjacent | Surface census (existing intents, widgets, activities, extensions, plist declarations); per-surface boilerplate scaffolding from the conductor-approved integration plan |
+| Opportunity ranking, value-vs-cost judgment, integration plan synthesis, anything entitlement- or privacy-adjacent | Surface census (existing intents, widgets, activities, extensions, plist declarations); per-surface API-shape research from the conductor-approved opportunity list (framework, floor, required entitlements, minimal adoption checklist) |
 
-**Scoping contract -- every executor is scoped via this skill.** Each executor prompt MUST inline:
-1. The exact surface set it owns (non-overlapping) and the deliverable format.
-2. Absolute paths of `references/platform/` + `references/cross-platform/` + `references/_scaffolding/version-floor-registry.md`.
-3. `BLACKBOARD: <path>` (first token = path) + the escalation rule (2 failed attempts or ambiguity -> `## ESCALATE` + early return).
-4. The instruction that executors report evidence and scaffolds, never rankings -- the conductor ranks.
-
-**Dispatch mechanics**
-- `Agent({subagent_type: "general-purpose", model: "sonnet", prompt: <scoped briefing>})`; in Workflow scripts pass `{model: 'sonnet', effort: 'xhigh'}` explicitly.
+**Executor scoping (on top of the protocol's prompt contract)**
+- Reference set: absolute paths of `references/platform/` + `references/cross-platform/` + `references/_scaffolding/version-floor-registry.md`.
+- Executors report evidence and research, never rankings -- the conductor ranks. This skill stays advisory end to end: no executor writes project files. Scaffolding is a separate task the user must ask for after the report.
 - The `platform-engineer` specialist stays `model: fable` -- judgment reviewer, never an executor.
-- Fan-out budget: <=10 executors per wave, <=20 per turn. Scaffolding executors writing files in parallel use `isolation: "worktree"`.
-- Conductor gate before anything reaches the user: read blackboards, spot-check claims against the project, re-grade. One re-dispatch on failure, then the conductor takes over.
-- Never Haiku. Never Sonnet below xhigh. Never a Sonnet verdict.

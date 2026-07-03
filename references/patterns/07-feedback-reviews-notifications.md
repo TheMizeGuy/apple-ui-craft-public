@@ -1,7 +1,7 @@
 # Feedback, Reviews, and Notification Permission
 
 > Owner: `references/patterns/07-feedback-reviews-notifications.md` owns App Store review-prompt timing ethics (the `requestReview` env action), in-app feedback affordances, and the full notification PERMISSION lifecycle -- priming, the authorization request, `.provisional` quiet delivery, and denial recovery. Rich notification CONTENT (attachments, threading, `relevanceScore`, interruption-level capability wiring beyond the basic request) is owned by `references/platform/04-system-surfaces-notifications.md`. Deep-linking to the system Settings app (`openSettingsURLString`/`openNotificationSettingsURLString`) and the `Link`-row pattern for support/privacy content are owned by `references/patterns/06-settings.md` -- cite it here, don't restate. Account/sign-in flows are owned by `references/patterns/09-auth-account.md`.
-> Floors: see `references/_scaffolding/version-floor-registry.md#ios-160` for `requestReview`/`subscriptionStatusTask`-era floors; `UNUserNotificationCenter` authorization is iOS 10+ and not re-tabulated here.
+> Floors: see `references/_scaffolding/version-floor-registry.md#ios-160` for `requestReview`-era floors and `references/_scaffolding/version-floor-registry.md#ios-170` for `subscriptionStatusTask`; `UNUserNotificationCenter` authorization is iOS 10+ and not re-tabulated here.
 
 Both surfaces in this file share one discipline: earn the ask. A review prompt fired after a crash, or a notification permission dialog fired cold on first launch, doesn't just fail -- it burns a one-shot system resource you can't easily get back. The craft is entirely about timing and honest framing, not visual polish.
 

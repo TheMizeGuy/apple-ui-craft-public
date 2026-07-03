@@ -22,17 +22,19 @@ apple-ui-craft:accessibility-engineer
      Captions, Sound Recognition), cognitive (AssistiveAccess, plain language)
 ```
 
-Solo dispatch goes deeper than the review-ios-ui a11y lane: the engineer runs the full
-11-row a11y/perf checklist per screen, maps every finding to a WCAG 2.2 success
-criterion with the correct level (2.5.8 Minimum AA 24px vs 2.5.5 Enhanced AAA 44px --
-44pt stays the Apple HIG hard rule), and produces per-setting behavior tables
-(what changes under each accessibility setting).
+Solo dispatch goes deeper than the review-ios-ui a11y lane: the engineer runs its full
+5-dimension audit (VoiceOver, Dynamic Type, visual, motor, cognitive & hearing -- every
+check table in `agents/accessibility-engineer.md`) per screen, maps every finding to a
+WCAG 2.2 success criterion with the correct level (2.5.8 Minimum AA 24px vs 2.5.5
+Enhanced AAA 44px -- 44pt stays the Apple HIG hard rule), and produces the Settings
+matrix (what changes under each accessibility setting).
 
 ## Scope determination
 
 | Arg | Meaning |
 |---|---|
 | empty / `diff` | Uncommitted + staged changes (default) |
+| `staged` | Only staged files |
 | `<file>` or `<directory>` | Specific target |
 | `all` | Entire project (excluding generated code, Pods, build artifacts) |
 
@@ -49,24 +51,15 @@ All findings are advisory. The user chooses what to apply.
 
 ## Ultracode conductor mode
 
-When the harness announces ultracode, this skill runs conductor-executor: the session model CONDUCTS -- Fable 5 or Opus 4.8, interchangeably (either model drives the workflow identically) -- and teams of Sonnet 5 executors at `xhigh` effort do the scoped grunt stages. Without ultracode, run the standard dispatch above unchanged.
+When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard dispatch above unchanged.
 
 **Split of labor**
 
 | Conductor (session model -- never delegated) | Executor teams (Sonnet 5, ALWAYS `effort: xhigh`) |
 |---|---|
-| Scope decision, severity verdicts, WCAG-level grading, finding dedup, final report synthesis -- accessibility verdicts are always conductor-class | Per-screen a11y evidence collection against the 11-row checklist; VoiceOver label/trait/order inventory; contrast-pair computation sweeps; Dynamic Type breakpoint capture |
+| Scope decision, severity verdicts, WCAG-level grading, finding dedup, final report synthesis -- accessibility verdicts are always conductor-class | Per-screen a11y evidence collection against the engineer's 5-dimension check tables; VoiceOver label/trait/order inventory; contrast-pair computation sweeps; Dynamic Type breakpoint capture |
 
-**Scoping contract -- every executor is scoped via this skill.** Each executor prompt MUST inline:
-1. The exact file set it owns (non-overlapping) and the deliverable format.
-2. Absolute paths of `references/accessibility/` + `references/_scaffolding/version-floor-registry.md`.
-3. The severity scale and the 11-row a11y/perf checklist.
-4. `BLACKBOARD: <path>` (first token = path) + the escalation rule (2 failed attempts or ambiguity -> `## ESCALATE` + early return).
-5. The instruction that executors report evidence, never verdicts -- the conductor grades.
-
-**Dispatch mechanics**
-- `Agent({subagent_type: "general-purpose", model: "sonnet", prompt: <scoped briefing>})`; in Workflow scripts pass `{model: 'sonnet', effort: 'xhigh'}` explicitly.
+**Executor scoping (on top of the protocol's prompt contract)**
+- Reference set: absolute paths of `references/accessibility/` + `references/_scaffolding/version-floor-registry.md`.
+- Inline the severity scale and the relevant dimension tables from `agents/accessibility-engineer.md` -- its 5-dimension framework is the checklist executors collect evidence against.
 - The `accessibility-engineer` specialist stays `model: fable` -- judgment reviewer, never an executor.
-- Fan-out budget: <=10 executors per wave, <=20 per turn. Read-only sweeps need no worktree isolation.
-- Conductor gate before anything reaches the user: read blackboards, spot-check evidence against the files, re-grade severity. One re-dispatch on failure, then the conductor takes over.
-- Never Haiku. Never Sonnet below xhigh. Never a Sonnet verdict.

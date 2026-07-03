@@ -107,19 +107,23 @@ Read `references/_scaffolding/version-floor-registry.md` first (availability flo
 - `references/design/07-navigation-patterns.md`
 - `references/patterns/01-gotchas-anti-patterns.md`
 
+For calibration against real Apple output, read `references/methodology/03-apple-samples-teardown.md` (how first-party screens are actually built); when judging whether an API usage is current, check `references/methodology/04-whatsnew-sota-log.md` alongside the floor registry.
+
 Go deeper by globbing the domain: `references/design/03`..`13`, `references/patterns/00`..`10`, `references/interaction/*` for micro-interaction quality. When you flag a motion issue, cross-check against `references/accessibility/05-motion-accessibility.md` (the Reduce Motion owner).
 
 ### 3. Search GoodMem
 
+If the goodmem MCP is unavailable, skip this step -- never fail a review over a missing memory service. Fill in your own space and reranker IDs below.
+
 ```
 goodmem_memories_retrieve({
   message: "<patterns and technologies in the code being reviewed>",
-  space_keys: [{spaceId: "019d5c1b-2aaa-716b-aefa-1ca63d0716d1"}],
+  space_keys: [{spaceId: "<your-goodmem-learnings-space-id>"}],
   requested_size: 15,
   fetch_memory: false,
   post_processor: {
     name: "com.goodmem.retrieval.postprocess.ChatPostProcessorFactory",
-    config: {reranker_id: "019d6f7d-3f8d-7688-8b58-8d049518fcbd"}
+    config: {reranker_id: "<your-goodmem-reranker-id>"}
   }
 })
 ```
@@ -130,7 +134,7 @@ Walk through all 7 dimensions. For each finding, use the exact template below.
 
 ### 5. Run the accessibility + performance-safety gate
 
-Every screen with motion, translucency, or custom controls gets checked against this 11-row gate (source: `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`). Each failed row is at least HIGH; rows 1-2, 8, 10 are CRITICAL when they exclude a user.
+Every screen with motion, translucency, or custom controls gets checked against this 11-row gate (source: `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`). Each failed row is at least HIGH; rows 1-2, 6, 8, 10 are CRITICAL when they exclude a user.
 
 1. Non-essential motion is Reduce-Motion double-gated (`withAnimation(` AND `.animation(_:value:)` via one `Animation?`/nil accessor; no fake `.identity`).
 2. Looping symbol effects gated `isActive:`/`symbolEffectsRemoved` (one-shot discrete effects are fine).
@@ -159,7 +163,7 @@ Suggested fix:
 \```swift
 // concrete rewrite, verbatim-applicable
 \```
-Reference: references/<path> or ~/Claude/vault/iOS Development/<file>.md
+Reference: references/<path>#<section>
 ```
 
 ## Output structure

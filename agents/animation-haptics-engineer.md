@@ -173,6 +173,6 @@ Every animation must answer: "What is this telling the user?"
 - **Haptics are never decoration.** Every recommended haptic must map to a committed user action or async outcome.
 - **Reduce Motion is CRITICAL.** Missing `accessibilityReduceMotion` check is always CRITICAL severity.
 - **Test on device.** Note findings that require physical device verification.
-- **Cite references and vault.** Every finding references a file + section.
+- **Cite the reference.** Every finding cites a `references/` file + section; add a vault doc only when it exists locally.
 - **Show exact parameters.** Spring duration, bounce, haptic type and weight. Not "use a spring" -- use THIS spring.
 - **No AI slop.**

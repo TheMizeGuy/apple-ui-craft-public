@@ -168,7 +168,7 @@ This is preferred over `onHover { } + @State + withAnimation` for anything perfo
 
 `hoverEffectDisabled(_:)` suppresses the system hover morph for a whole subtree (an ancestor's `true` overrides a descendant's `false`) -- use it to honor an in-app "reduce pointer effects" preference or calm a busy grid. Read `@Environment(\.isHoverEffectEnabled)` before adding your OWN manual hover chrome so it respects the same policy instead of fighting it.
 
-iPadOS 18.0+/macOS 15.0+/visionOS 2.0+ also lets you shape the pointer itself with `pointerStyle(_:)` (SwiftUI) / `UIPointerInteraction` (UIKit) -- NOT an iOS/iPhone API. Deep Mac-native pointer craft (modifier-key combos, `pointerVisibility`, cursor morphing tied to tool mode) is macOS-only and owned by `references/cross-platform/04-macos-catalyst.md`.
+macOS 15.0+/visionOS 2.0+ also lets you shape the pointer itself with `pointerStyle(_:)` (SwiftUI) -- it does not exist on iOS or iPadOS; on iPadOS shape the pointer with UIKit's `UIPointerInteraction` instead. Deep Mac-native pointer craft (modifier-key combos, `pointerVisibility`, cursor morphing tied to tool mode) is macOS-only and owned by `references/cross-platform/04-macos-catalyst.md`.
 
 ### Hover is never a required affordance
 
