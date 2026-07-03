@@ -127,6 +127,8 @@ apple-ui-craft/
 
 Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship the core; P2 files add depth. Exemplars are labeled "signature-drafted, build-pending" (no Xcode build in this repo). Some P2 files (design/12-13, methodology, carplay, cognitive/hearing) are depth-pass additions.
 
+**Reference inventory (81 files):** design 13, patterns 11, platform 9, performance 8, accessibility 7, animation 6, interaction 6, cross-platform 6, exemplars 5, haptics 4, methodology 4, `_scaffolding` 2. That is 11 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
+
 ## Agent <-> skill mapping
 
 | Skill | Agents dispatched | Mode |
@@ -182,7 +184,7 @@ Rule: **every `references/**/*.md` appears in at least one agent's read scope.**
 
 ## Ultracode conductor mode
 
-Under ultracode, every skill runs conductor-executor: the session model conducts (scope, verdicts, dedup, conflict resolution, synthesis) and Sonnet-5 xhigh executor teams run the scoped grunt stages (recon, per-screen evidence, instrumentation inventory, component scaffolding, post-approval mechanical application). Each executor is scoped through the skill (non-overlapping files, dimension reference paths + version-floor registry, severity scale + 11-row checklist, blackboard + escalate contract, evidence-not-verdicts). Specialists stay `model: fable`; verdicts are never delegated. Budget <=10 executors/wave, <=20/turn; worktree isolation for parallel writes. Never Haiku; never Sonnet below xhigh. Each skill file carries the full contract in its "Ultracode conductor mode" section.
+Under ultracode, every skill runs conductor-executor: the session model -- Fable 5 or Opus 4.8, interchangeably (either conducts identically) -- conducts (scope, verdicts, dedup, conflict resolution, synthesis) and Sonnet-5 xhigh executor teams run the scoped grunt stages (recon, per-screen evidence, instrumentation inventory, component scaffolding, post-approval mechanical application). Each executor is scoped through the skill (non-overlapping files, dimension reference paths + version-floor registry, severity scale + 11-row checklist, blackboard + escalate contract, evidence-not-verdicts). Specialists stay `model: fable`; verdicts are never delegated. Budget <=10 executors/wave, <=20/turn; worktree isolation for parallel writes. Never Haiku; never Sonnet below xhigh. Each skill file carries the full contract in its "Ultracode conductor mode" section.
 
 ## Relationship to ios-code-review
 

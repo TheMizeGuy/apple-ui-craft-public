@@ -122,6 +122,21 @@ Every finding carries:
 - **A reference citation** -- `references/<domain>/<file>.md#<slug>` or a vault path. No hand-waving; every claim is grounded.
 - **Current -> suggested code** -- verbatim-applicable SwiftUI, not a description of what to do.
 
+For example, one finding in a report reads:
+
+> **CRITICAL -- Hero zoom runs with Reduce Motion enabled** -- `HomeView.swift:48-52`
+>
+> The expand animation fires unconditionally, so a user with Reduce Motion on gets a full vestibular-triggering scale. Gate both the `withAnimation(` and the `.animation(_:value:)` on a Reduce Motion accessor; substitute `nil` (or a crossfade) when it is enabled. Reference: `references/accessibility/05-motion-accessibility.md#the-apple-way`.
+
+```swift
+// current
+withAnimation(.spring) { isExpanded.toggle() }
+
+// suggested
+@Environment(\.accessibilityReduceMotion) private var reduceMotion
+withAnimation(reduceMotion ? nil : .spring) { isExpanded.toggle() }
+```
+
 Reviews are **read-only by default.** Findings are advisory. The orchestrator applies changes only when you explicitly approve them -- so you can run a review safely on any branch.
 
 
@@ -129,7 +144,7 @@ Reviews are **read-only by default.** Findings are advisory. The orchestrator ap
 
 When your session is running under **ultracode**, every skill switches to conductor-executor mode automatically. You do not do anything differently; the split happens under the hood:
 
-- **The session model conducts.** It decides scope, grades severity, deduplicates findings, resolves conflicts, and synthesizes the final report. Every verdict is the conductor's.
+- **The session model conducts -- Fable 5 or Opus 4.8, interchangeably.** Whichever model your session runs, it decides scope, grades severity, deduplicates findings, resolves conflicts, and synthesizes the final report. Every verdict is the conductor's, and the two models drive the workflow identically -- selecting Opus behaves exactly like selecting Fable 5.
 - **Sonnet-5 xhigh executor teams do the grunt stages** -- reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application. Each executor is scoped through the skill: a non-overlapping file set, the dimension's reference paths plus the version-floor registry, the severity scale and 11-row checklist, and a blackboard + escalation contract. Executors report **evidence, never verdicts**.
 - **The specialist reviewers stay on the session model.** Judging Apple-native quality is never delegated to an executor.
 - **Every executor result is gated** -- the conductor reads the durable blackboard (not the truncated final message), spot-checks claims against the actual files, and re-grades before anything reaches you.
@@ -139,7 +154,7 @@ Without ultracode, the skills run their standard direct dispatch. The model inva
 
 ## The reference library
 
-The plugin's knowledge lives in `references/`, organized into 12 domains (design, animation, interaction, haptics, accessibility, patterns, components-in-patterns, performance, platform, cross-platform, exemplars, methodology) plus `_scaffolding/`. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree and the reference-to-agent ownership matrix.
+The plugin's knowledge lives in `references/` -- **81 files** across 11 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, exemplars, methodology) plus `_scaffolding/` (12 directories total). See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
 
 Two files anchor the whole library:
 
@@ -172,3 +187,5 @@ Run both before shipping: one clears the gate, the other earns the delight.
 **What if my app has a deliberate non-default design system?** The reviewers respect existing coherence. A consistent, working non-default system is not penalized for being non-default; findings flag only where a choice hurts the experience.
 
 **How do I get the most out of a review?** Scope it. Point a skill at the screen or flow you care about rather than the whole project, and you get denser, more actionable findings.
+
+**Which model runs this?** Under ultracode, whichever model your session is on -- Fable 5 or Opus 4.8 -- conducts; the two are interchangeable and drive the workflow identically, so selecting Opus behaves exactly like selecting Fable 5. The grunt stages run on Sonnet 5 at `xhigh` effort. Without ultracode, the session model runs the dispatch directly. The invariants never change: never Haiku, never Sonnet below `xhigh`, never a Sonnet-authored verdict.

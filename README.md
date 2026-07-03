@@ -52,7 +52,7 @@ git clone https://github.com/TheMizeGuy/apple-ui-craft-public.git
 
 ## Reference library
 
-A self-contained reference library distilled from an 88-document iOS knowledge base (102,900+ lines), organized into 12 domains. The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
+**81 reference files** in a self-contained library distilled from an 88-document iOS knowledge base (102,900+ lines), organized into 11 content domains plus `_scaffolding` (12 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
 
 ```
 references/
@@ -76,6 +76,20 @@ references/
 ├── methodology/     component API design, previews/QA, Apple sample teardowns, what's-new log
 └── _scaffolding/    file template + the single version-floor registry
 ```
+
+Per-domain file counts:
+
+| Domain | Files | Domain | Files |
+|---|--:|---|--:|
+| design | 13 | animation | 6 |
+| patterns | 11 | interaction | 6 |
+| platform | 9 | cross-platform | 6 |
+| performance | 8 | exemplars | 5 |
+| accessibility | 7 | haptics | 4 |
+| | | methodology | 4 |
+| | | `_scaffolding` | 2 |
+
+**Total: 81 files** across 11 content domains plus `_scaffolding`.
 
 The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the single source of truth for availability floors, deprecated APIs, and the PHANTOM list -- APIs that do not exist and must never be emitted. Every reference file cites it rather than restating floors.
 
@@ -101,10 +115,11 @@ The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the
 
 ## Ultracode
 
-Under ultracode, every skill runs conductor-executor: the session model conducts (scope, verdicts, dedup, synthesis) and teams of Sonnet-5 executors at `xhigh` effort run the scoped grunt stages (recon, evidence sweeps, instrumentation inventory, component scaffolding, post-approval application). Specialists stay on the session model; verdicts are never delegated. See [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
+Under ultracode, every skill runs conductor-executor: the session model -- Fable 5 or Opus 4.8, interchangeably -- conducts (scope, verdicts, dedup, synthesis) and teams of Sonnet-5 executors at `xhigh` effort run the scoped grunt stages (recon, evidence sweeps, instrumentation inventory, component scaffolding, post-approval application). Specialists stay on the session model; verdicts are never delegated. See [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
 
 ## Backed by
 
+- Fable 5 or Opus 4.8 as the ultracode conductor -- interchangeable, either drives the workflow identically
 - Fable 5 for every agent by default; Sonnet 5 only as conductor-managed executors at `xhigh` effort; never Haiku
 - 88-file iOS Development vault (102,900+ lines), distilled into the reference library
 - A Context7-verified version-floor registry (iOS 16 through iOS 27 beta)
