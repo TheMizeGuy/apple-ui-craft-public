@@ -72,6 +72,7 @@ struct ItemRow: View, Equatable {
     
     static func == (lhs: ItemRow, rhs: ItemRow) -> Bool {
         lhs.item.id == rhs.item.id &&
+        lhs.item.title == rhs.item.title &&
         lhs.formattedDate == rhs.formattedDate &&
         lhs.isFavorite == rhs.isFavorite &&
         lhs.badgeCount == rhs.badgeCount
@@ -98,6 +99,8 @@ ForEach(items) { item in
     .equatable()
 }
 ```
+
+Every property `body` reads MUST appear in `==`. Comparing only `item.id` while `body` also renders `item.title` lets `.equatable()` suppress a real in-place title edit -- the row never refreshes because the equality check says nothing changed.
 
 ## Image loading in cells
 
@@ -324,7 +327,7 @@ The system spinner is well-optimized. Don't build custom pull-to-refresh -- it's
 
 ## See also
 
-- `01-swiftui-rendering.md` -- general SwiftUI performance
-- `animation/01-animation-fundamentals.md` -- layout vs render cost
+- `references/performance/01-swiftui-rendering.md#equatable-views` -- general SwiftUI performance, Equatable views
+- `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` -- layout vs render cost
 - `~/Claude/vault/iOS Development/23 - Performance Optimization.md` -- full reference
 - `~/Claude/vault/iOS Development/54 - Xcode Instruments Deep Dive.md` -- Instruments workflow

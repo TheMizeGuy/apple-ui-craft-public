@@ -1,6 +1,9 @@
 # Liquid Glass (iOS 26+)
 
-Apple's most significant visual redesign since iOS 7. Replaces the flat/material design language with a translucent glass metaphor across all platforms. Announced at WWDC 2025.
+> Owner: `references/design/02-liquid-glass.md` owns the Liquid Glass API surface, including the `Glass.tint(_:)` contract. visionOS's separate glass modifier (`glassBackgroundEffect`) is owned by `references/cross-platform/05-visionos.md`.
+> Floors: see `references/_scaffolding/version-floor-registry.md#ios-26x` for the full availability matrix cited below.
+
+Apple's most significant visual redesign since iOS 7. Replaces the flat/material design language with a translucent glass metaphor across all platforms, announced at WWDC 2025 and shipping since iOS 26.0. Get the variant set and the container model wrong and glass either won't compile or won't blend -- both are common, both are covered below.
 
 ## Design properties
 
@@ -23,12 +26,30 @@ Text("Label")
 
 ### Variants
 
+`Glass` has exactly three variants -- there is no `.thin`/`.thick` (those are `Material` names and will not compile on `Glass`):
+
 ```swift
 .glassEffect(.regular)      // Default
-.glassEffect(.thin)         // More transparent, less weight
-.glassEffect(.thick)        // More opaque, more presence
-.glassEffect(.identity)     // No effect (use for accessibility fallback)
+.glassEffect(.clear)        // Maximally transparent, minimal blur -- less refractive distortion than .regular
+.glassEffect(.identity)     // No effect -- use only on a view that already has its own opaque background
 ```
+
+### Tint and interactivity
+
+`Glass` exposes exactly two chaining calls:
+
+```swift
+Button("Delete", role: .destructive) { }
+    .buttonStyle(.glass)
+    .tint(.red)                                              // Glass reads the view's tint
+
+Text("Live")
+    .padding()
+    .glassEffect(.regular.tint(.blue.opacity(0.4)).interactive())
+```
+
+- `tint(_ color: Color?) -> Glass` -- applies a tint; the parameter is optional (`nil` clears an inherited tint).
+- `interactive(_ isEnabled: Bool = true) -> Glass` -- makes the glass react to touch/pointer (scale + highlight on press) the way system controls do. Use it on anything the user taps; omit it on purely decorative chrome.
 
 ### Custom shape
 
@@ -43,6 +64,34 @@ Image(systemName: "heart.fill")
     .glassEffect(.regular, in: Circle())
 ```
 
+### GlassEffectContainer (multi-element glass)
+
+A bare `.glassEffect()` never blends or morphs with a sibling -- each renders as an isolated island. Any screen with two or more glass shapes that should visually relate (a floating toolbar cluster, an expand/collapse control pair) needs `GlassEffectContainer`:
+
+```swift
+@Namespace private var glassNamespace
+
+GlassEffectContainer(spacing: 40) {
+    HStack(spacing: 40) {
+        Image(systemName: "scribble.variable")
+            .frame(width: 80, height: 80)
+            .font(.system(size: 36))
+            .glassEffect()
+            .glassEffectID("pencil", in: glassNamespace)
+
+        if isExpanded {
+            Image(systemName: "eraser")
+                .frame(width: 80, height: 80)
+                .font(.system(size: 36))
+                .glassEffect()
+                .glassEffectID("eraser", in: glassNamespace)
+        }
+    }
+}
+```
+
+`GlassEffectContainer(spacing:)` is a sampling/morph group, not a layout container -- it performs no layout of its own. `spacing` sets the blend-distance threshold: glass shapes within `spacing` of each other merge into one continuous blob. `.glassEffectID(_:in:)` pairs a shape across insertion/removal within the same `Namespace` so SwiftUI morphs one shape into another instead of fading; `.glassEffectTransition(.matchedGeometry)` (the default when a namespace pairing exists) is what drives that morph, `.materialize` fades independently, `.identity` disables the transition. Drive every insert/remove inside `withAnimation` -- the morph rides the transaction's spring. Limit a screen to one hero morphing cluster; several independent morphing blobs read as chaos and are GPU-expensive. Gate glass morphs under Reduce Motion (fall back to a plain fade) -- this is developer-owned, never automatic.
+
 ### Glass buttons
 
 ```swift
@@ -53,6 +102,8 @@ Button("Primary") { }
     .buttonStyle(.glassProminent)   // Opaque, primary action
     .tint(.blue)
 ```
+
+Parameterized styling -- `.buttonStyle(.glass(_:))`, `GlassButtonStyle.init(_:)`, `.glass(.clear)` -- is iOS 26.1+; the no-argument `.glass`/`.glassProminent` styles above are 26.0. `#available(iOS 26.0, *)` is not sufficient to compile the parameterized form -- see Availability below.
 
 ### Tab bar with glass
 
@@ -68,26 +119,17 @@ TabView {
 }
 ```
 
-### Accessibility auto-adaptation
+## Accessibility auto-adaptation
 
 Liquid Glass automatically adapts for:
 
 | Accessibility setting | Glass behavior |
 |---|---|
-| Reduce Transparency | Becomes opaque |
+| Reduce Transparency | Becomes near-opaque with zero code |
 | Increased Contrast | Stronger borders and fills |
 | Reduce Motion | No specular animation |
-| Tinted Mode (iOS 26.1+) | Respects tint preferences |
 
-No code needed for these adaptations. For manual control:
-
-```swift
-@Environment(\.accessibilityReduceTransparency) var reduceTransparency
-
-Text("Label")
-    .padding()
-    .glassEffect(reduceTransparency ? .identity : .regular)
-```
+No manual `.identity` swap is needed for Reduce Transparency -- the system already frosts `.glassEffect()` under that setting. Manually forcing `.identity` there is a bug, not a fix: `.identity` renders no material at all, so a floating control that relies on glass for its fill becomes fully invisible instead of opaque. Reserve `.identity` for a view that already has its own opaque background and only needs glass optionally layered on top of it.
 
 ## Where to use Liquid Glass
 
@@ -129,43 +171,44 @@ Text("Label")
     .glassEffect()
 ```
 
-Materials API still works but doesn't respond to the same accessibility controls or render with specular highlights.
+Materials API still works but doesn't participate in Liquid Glass's accessibility auto-adaptation or specular-highlight rendering.
 
 ## Multi-platform availability
 
 | Platform | Glass support |
 |---|---|
-| iOS 26+ | Full support |
-| iPadOS 26+ | Full support |
-| macOS 15+ | Full support (named "Sequoia Glass") |
-| watchOS 11+ | Limited (smaller surfaces) |
-| tvOS 18+ | Full support |
-| visionOS 2+ | Native (RealityKit materials) |
+| iOS 26.0+ | Full support |
+| iPadOS 26.0+ | Full support |
+| macOS 26.0+ (Tahoe) | Full support |
+| watchOS 26.0+ | Limited (smaller surfaces) |
+| tvOS 26.0+ | Full support |
+| visionOS | N/A -- visionOS uses the separate `glassBackgroundEffect(in:displayMode:)` modifier, not `.glassEffect()`. See `references/cross-platform/05-visionos.md`. |
 
-## Performance considerations
-
-Glass rendering uses GPU. On older devices (iPhone XS and earlier), heavy glass usage can drop frame rates.
-
-| Glass usage | Frame rate impact |
-|---|---|
-| 1-2 glass elements per screen | Negligible |
-| 5-10 glass elements per screen | < 5% on A12+ |
-| 20+ glass elements per screen | Visible drops on A12; significant on A11 |
-| Glass on scrolling cells | Can cause hitches; profile with Instruments |
-
-If targeting iPhone XS or earlier, conditionally apply glass:
+## Availability + fallbacks
 
 ```swift
-@Environment(\.accessibilityReduceTransparency) var reduceTransparency
-
-Text("Label")
-    .padding()
-    .glassEffect(reduceTransparency ? .identity : .regular)
-    // accessibilityReduceTransparency is also enabled when system performance is low
+// iOS 26.0+. Base Liquid Glass APIs (glassEffect, Glass.regular/.clear/.identity, .tint(_:)/
+// .interactive(_:), GlassEffectContainer, no-argument .buttonStyle(.glass/.glassProminent))
+// ship at the unified "26" floor across iOS/iPadOS/macOS Tahoe/watchOS/tvOS.
+@ViewBuilder
+func adaptiveGlass(_ shape: some Shape) -> some View {
+    if #available(iOS 26.0, *) {
+        Color.clear.glassEffect(.regular, in: shape)
+    } else {
+        shape.fill(.regularMaterial)   // Materials auto-respect Reduce Transparency too
+    }
+}
 ```
+
+The parameterized button styles described above need `#available(iOS 26.1, *)`, not `iOS 26.0` -- SDK-verify the exact minor before shipping against a fresh Xcode release.
+
+## Performance
+
+Glass rendering is GPU-composited. iOS 26's device floor (approximately A13 / iPhone 11 and later) makes per-device-era frame-rate warnings moot -- any hardware that can install iOS 26 can run Liquid Glass. For screens with many independent glass elements, profile with Instruments on real hardware and coalesce the elements into one `GlassEffectContainer` (see above) instead of nesting standalone `.glassEffect()` calls -- that consolidation, not a device-generation table, is the actual performance lever.
 
 ## See also
 
-- `01-apple-design-philosophy.md#deference` -- why Liquid Glass exists
-- `accessibility/03-visual-accessibility.md#reduce-transparency` -- a11y adaptation
+- `references/design/01-apple-design-philosophy.md#deference` -- why Liquid Glass exists
+- `references/accessibility/03-visual-accessibility.md#reduce-transparency` -- a11y adaptation
+- `references/cross-platform/05-visionos.md` -- `glassBackgroundEffect` and visionOS-native glass
 - `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md` -- full HIG section

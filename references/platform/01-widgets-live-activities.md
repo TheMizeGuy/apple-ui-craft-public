@@ -83,10 +83,22 @@ struct Provider: AppIntentTimelineProvider {
 | Policy | When |
 |---|---|
 | `.atEnd` | After last entry's date |
-| `.after(date)` | At specific date |
-| `.never` | Manual refresh only |
+| `.after(date)` | At a specific date -- a request, not a guarantee; the system may service it late under budget pressure |
+| `.never` | Manual refresh only -- pair with `WidgetCenter` reloads or the push path below |
 
-iOS budgets widget refreshes (~40 per day for active widgets). Don't refresh more than necessary. If data doesn't change often, push refresh to a daily/hourly schedule.
+WidgetKit grants each widget a rolling background-refresh budget scaled to how often the user actually looks at it: heavily-viewed widgets get roughly **40-70 reloads/day**, rarely-viewed ones far fewer. This range is OBSERVED behavior, not an Apple-published contract -- the budget is adaptive and tightens further in Low Power Mode. Reloads that spend budget: `.atEnd`/`.after` expirations, `WidgetCenter.shared.reloadTimelines(ofKind:)` / `reloadAllTimelines()`, and background-push reloads. Reloads that don't: on-screen relative/timer text (`Text(date, style: .timer)` / `.relative`), and the automatic reload after an interactive-intent `perform()` -- that's a user action, not a background poll.
+
+Design rule: match reload cadence to the data's real change rate. A widget that reloads every 5 minutes "just in case" exhausts its budget by midday and shows stale data for the rest of the day -- worse than a smart hourly schedule.
+
+### Push-based reloads (iOS 26)
+
+Widgets can be reloaded by a server push instead of only timeline expiration -- built for event-driven data (a score change, a delivery step) where polling would waste budget and still lag:
+
+1. The widget vends a push token, surfaced per-configuration through `WidgetCenter` push info. Forward it to your backend the same way you handle a Live Activity token.
+2. Your server sends an APNs push with **push-type `widgets`** -- topic header `<your-bundle-id>.push-type.widgets`. The push does not carry rendered content; it tells WidgetKit to request a fresh timeline, so `timeline(for:in:)` still runs -- keep it cheap.
+3. Push reloads are still rate-managed by the system, throttled like the background budget -- push buys timeliness, not an unlimited firehose.
+
+Pattern: `Timeline(entries: [entry], policy: .never)` + push, so you never burn budget polling. Confirm the exact symbol names (`WidgetPushHandler` and the push-token accessor) against the Xcode 26 SDK before shipping -- the mechanism is stable; the surface names are newer than the rest of this API.
 
 ## Interactive widgets (iOS 17+)
 
@@ -136,6 +148,36 @@ WidgetView(entry: entry)
         Image("background").resizable().scaledToFill()
     }
 ```
+
+## Rendering modes and Liquid Glass tinting
+
+A widget is not always drawn in full color. Read `\.widgetRenderingMode` and mark tintable content -- skipping this is the single most common reason a widget "looks broken" the instant a user leaves the default Home Screen appearance:
+
+```swift
+@Environment(\.widgetRenderingMode) private var renderingMode
+
+var body: some View {
+    switch renderingMode {
+    case .fullColor:
+        // Home Screen, StandBy: colors render as-authored.
+        Image(systemName: "flame.fill").foregroundStyle(.orange)
+    case .accented:
+        // iOS 18+ tinted Home Screen, watchOS. System splits the widget into a default
+        // group (fixed white/gray) and an accent group tinted with the user's color.
+        Image(systemName: "flame.fill").widgetAccentable()
+    case .vibrant:
+        // Lock Screen, StandBy: desaturated and recolored by luminance. Design for
+        // contrast, not hue -- custom .foregroundStyle colors are ignored here.
+        Image(systemName: "flame.fill")
+    @unknown default:
+        Image(systemName: "flame.fill")
+    }
+}
+```
+
+Anything NOT marked `.widgetAccentable()` renders in a fixed gray/white under `.accented`/`.vibrant`, regardless of its real color. `.widgetAccentedRenderingMode(_:)` (iOS 18+) gives an `Image` finer control (`.accented`, `.accentedDesaturated`, `.desaturated`, `.fullColor`) without an all-or-nothing toggle -- prefer `.accentedDesaturated` for photos so they don't re-tint into a flat colored blob.
+
+**Audit requirement for the iOS 26 glass/tint pass:** when the Home Screen appearance is set to Clear or a tint color, the system automatically replaces your `.containerBackground(for: .widget)` view with themed Liquid Glass and re-renders content through this SAME `.accented` path. You don't opt in to the glass background -- every widget gets it in tinted mode -- but you own making content still read correctly once everything goes monochrome-white. Every widget shipped since iOS 16 needs its rendering-mode handling reviewed before it can be called current; ship one unreviewed and treat it as a MEDIUM finding.
 
 ## Shared data between app and widget
 
@@ -344,16 +386,15 @@ APNs payload format:
 
 ## Frequency limits
 
-Live Activities have system-imposed limits:
-
 | Resource | Limit |
 |---|---|
-| Updates per Live Activity | ~4 per minute average (bursts allowed) |
-| Live Activity duration | 8 hours active, 4 hours stale |
+| Update budget | System-managed, throttled background budget -- there is no Apple-published fixed per-minute cap. Use `apns-priority: 5` for non-urgent updates to stay inside it. `NSSupportsLiveActivitiesFrequentUpdates` (Info.plist) requests a higher budget for genuinely rapid cadence (live sports scores); check `ActivityAuthorizationInfo().frequentPushesEnabled` at runtime rather than assuming the request was granted |
+| Active duration | Up to ~8 hours of active updates, then the system ends it |
+| Lock Screen persistence after end | Up to ~4 more hours (~12h total visible), governed by `dismissalPolicy` |
 | Concurrent Live Activities | System decides; user can stop excess |
-| Push update size | 4 KB |
+| Push payload size | 4 KB total -- `content-state` must fit inside it |
 
-Exceeding limits causes the system to throttle or end the activity.
+Design update cadence around the real event, not an assumed rate ceiling. Exceeding the throttled budget causes the system to delay or drop pushes rather than reject them outright.
 
 ## Common mistakes
 
@@ -370,6 +411,6 @@ Exceeding limits causes the system to throttle or end the activity.
 
 ## See also
 
-- `02-app-intents-system.md` -- App Intents power widget interactions
+- `references/platform/02-app-intents-system.md#app-intents` -- App Intents power widget interactions
 - `~/Claude/vault/iOS Development/30 - App Extensions and WidgetKit.md`
 - `~/Claude/vault/iOS Development/74 - Live Activities and Dynamic Island.md`

@@ -139,11 +139,13 @@ Use this when:
 `ForEach` uses identifiers to track which views correspond to which data. Unstable identifiers cause views to be destroyed and recreated.
 
 ```swift
-// BAD: UUID() generates new ID every render
+// BAD: id: \.self derives identity from the ENTIRE value -- requires Hashable to
+// compile, and any property change (not just a real identity change) makes ForEach
+// see a "new" element and recreate its view instead of updating it in place
+// (dropped @State, no smooth transition on the row that actually just changed).
 ForEach(items, id: \.self) { item in
     ItemRow(item: item)
 }
-// If items don't conform to Hashable, this is wrong
 
 // BAD: array index as id
 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
@@ -251,13 +253,14 @@ Remove before shipping (or wrap in `#if DEBUG`).
 |---|---|
 | `.opacity` | `.frame(width:height:)` |
 | `.scaleEffect` | `.padding` |
-| `.rotationEffect` | `.offset` (in some cases) |
-| `.offset` (transform) | Content changes |
-| `.blur` | `.font` size changes |
+| `.rotationEffect` | Content changes |
+| `.offset` (transform) | `.font` size changes |
 | `.brightness` | `HStack`/`VStack` spacing |
-| `.shadow` | Adding/removing views |
+| `.saturation` | Adding/removing views |
 
 Animate transforms (scale, opacity, rotation, offset) for smooth 60-120fps animation. Animating layout properties triggers a full layout pass per frame -- expensive.
+
+`.shadow` and `.blur` are neither column: both are cheap to render once, static. Animating their `radius`/`offset` forces an off-screen render pass EVERY frame -- one of the top sources of scroll hitches (see `references/performance/02-scroll-list-performance.md#off-screen-rendering`). Animate `.opacity` of a pre-rendered shadow/blur layer instead of animating the radius directly; keep the static shadow/blur as-is.
 
 ## drawingGroup
 
@@ -326,6 +329,6 @@ For images shown in lists, decode at target size on a background thread before d
 
 ## See also
 
-- `02-scroll-list-performance.md` -- list-specific optimization
-- `animation/01-animation-fundamentals.md` -- animation cost
+- `references/performance/02-scroll-list-performance.md#off-screen-rendering` -- list-specific optimization, off-screen render cost
+- `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` -- animation cost baseline
 - `~/Claude/vault/iOS Development/23 - Performance Optimization.md` -- full reference

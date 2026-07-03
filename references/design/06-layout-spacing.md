@@ -45,7 +45,7 @@ VStack { ... }
     .scenePadding(.horizontal)  // Just horizontal
 ```
 
-Use this for app-level content that should match other system apps' margins (Settings, Mail, Notes).
+Use this for app-level content that should match other system apps' margins (Settings, Mail, Notes). The parent `ScenePadding` API is iOS 16.0+, but its `.navigationBar`/`.minimum` cases are watchOS 9.0+ (nav-title alignment) and macOS root-window spacing respectively -- on iOS those two cases are a no-op for header alignment; don't reach for them expecting an iPhone/iPad effect.
 
 ## Safe area
 
@@ -81,14 +81,15 @@ ScrollView { ... }
 
 ### Reading safe area insets
 
+There is no `EnvironmentValues` key for safe area insets. The only way to read them is `GeometryProxy`:
+
 ```swift
 GeometryReader { proxy in
     Text("Top inset: \(proxy.safeAreaInsets.top)")
 }
-
-// Modern preference:
-@Environment(\.safeAreaInsets) var insets  // iOS 17+
 ```
+
+On visionOS, the 3D-aware equivalent is `GeometryProxy3D.safeAreaInsets` inside a `GeometryReader3D`.
 
 ### Adding to safe area
 
@@ -161,7 +162,7 @@ HStack {
 
 ## Touch targets
 
-44x44pt minimum for any tappable element. This is Apple's hard rule.
+44x44pt minimum for any tappable element. The full WCAG-level rationale and citation (`references/accessibility/04-motor-interaction.md`) owns this rule -- here's the layout-side shape of it:
 
 ```swift
 // Visual icon is small (24pt) but hit area is 44pt
@@ -325,6 +326,7 @@ Form {
 
 ## See also
 
-- `07-navigation-patterns.md` -- safe area + navigation interplay
+- `references/design/07-navigation-patterns.md` -- safe area + navigation interplay
+- `references/accessibility/04-motor-interaction.md` -- 44pt touch target rule + WCAG citations
 - `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md#layout`
 - `~/Claude/vault/iOS Development/75 - SwiftUI on iPad and Adaptive Layout.md`

@@ -213,9 +213,26 @@ Now VoiceOver users can perform these actions without needing to swipe.
 
 ## Custom rotor entries
 
-The rotor is VoiceOver's secondary navigation mode (twist with two fingers). Add custom rotor entries for content types users want to jump between:
+The rotor is VoiceOver's secondary navigation mode (twist with two fingers). Add custom rotor entries for content types users want to jump between. Two forms exist; reach for the array form first -- it needs no `@Namespace`.
+
+### Array form (default choice)
 
 ```swift
+List {
+    ForEach(articles) { article in
+        ArticleRow(article: article)
+    }
+}
+.accessibilityRotor("Headlines", entries: articles, entryID: \.id, entryLabel: \.title)
+```
+
+`accessibilityRotor(_:entries:entryID:entryLabel:)` builds the rotor directly from the same array driving the `List` -- no namespace, no per-row modifier.
+
+### Namespace form (when entries aren't a flat array driving the view)
+
+```swift
+@Namespace private var namespace
+
 List {
     ForEach(articles) { article in
         ArticleRow(article: article)
@@ -229,7 +246,7 @@ List {
 }
 ```
 
-User can twist rotor to "Headlines" and swipe to jump between article titles.
+Both compile and both produce the same user-facing rotor. User can twist rotor to "Headlines" and swipe to jump between article titles.
 
 ## Values for non-obvious state
 
@@ -314,6 +331,7 @@ func test_screenAccessibility() throws {
 
 ## See also
 
-- `02-dynamic-type-adaptation.md` -- text scaling
-- `04-motor-interaction.md` -- accessibility for physical disabilities
+- `references/accessibility/02-dynamic-type-adaptation.md#the-12-sizes` -- text scaling
+- `references/accessibility/04-motor-interaction.md#touch-targets` -- accessibility for physical disabilities
+- `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate, symbol/Phase/Keyframe gating
 - `~/Claude/vault/iOS Development/10 - Accessibility.md` -- full reference

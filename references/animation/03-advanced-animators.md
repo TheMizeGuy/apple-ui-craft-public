@@ -172,7 +172,28 @@ KeyframeTrack(\.scale) {
 
 ### Repeating keyframe animations
 
-KeyframeAnimator doesn't have built-in repeat. Use a Timer:
+`KeyframeAnimator` has a native continuous-loop initializer -- `repeating: Bool = true` -- plus a matching view-modifier overload. This is a SEPARATE overload from the `trigger:` initializer above, not a config flag on it:
+
+```swift
+KeyframeAnimator(initialValue: AnimationValues(), repeating: true) { values in
+    Image(systemName: "star.fill")
+        .scaleEffect(values.scale)
+        .opacity(values.opacity)
+} keyframes: { _ in
+    KeyframeTrack(\.scale) {
+        SpringKeyframe(1.3, duration: 0.6, spring: .smooth)
+        SpringKeyframe(1.0, duration: 0.6, spring: .smooth)
+    }
+    KeyframeTrack(\.opacity) {
+        LinearKeyframe(0.6, duration: 0.6)
+        LinearKeyframe(1.0, duration: 0.6)
+    }
+}
+```
+
+`repeating: false` plays the timeline once and then holds the value from its START (not mid-loop) -- useful when you want the repeating-shaped API without the loop.
+
+Only reach for a `Timer` when the re-trigger interval must VARY (jittered reminders, re-firing on a schedule the fixed continuous loop can't express):
 
 ```swift
 @State private var trigger = 0
@@ -186,7 +207,12 @@ KeyframeAnimator(initialValue: AnimationValues(), trigger: trigger) { values in
 .onReceive(timer) { _ in
     trigger += 1
 }
+.onDisappear {
+    timer.upstream.connect().cancel()   // .autoconnect() has no direct handle; re-connecting the upstream publisher yields the Cancellable to tear down
+}
 ```
+
+`PhaseAnimator` has NO `repeating:` overload -- its loop-vs-one-shot is controlled entirely by the presence or absence of `trigger:` (see "Trigger-based (one-shot)" above), not a parameter.
 
 ### When to use KeyframeAnimator
 
@@ -311,6 +337,37 @@ Animate SF Symbols with built-in, symbol-aware effects (covered in `design/05-sf
 .symbolEffect(.rotate)         // iOS 18+
 ```
 
+## Reduce Motion (CRITICAL)
+
+`PhaseAnimator` and `KeyframeAnimator` loops are NEVER auto-gated by the system -- nothing pauses them for you. Every continuous or trigger-replayed animator on this page needs an explicit branch on `@Environment(\.accessibilityReduceMotion)`.
+
+**PhaseAnimator -- freeze on a resting phase, don't just stop:**
+
+```swift
+@Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+var body: some View {
+    if reduceMotion {
+        Circle().fill(.blue).opacity(0.8)                 // resting phase, no cycling
+    } else {
+        PhaseAnimator(PulsePhase.allCases) { phase in
+            Circle().fill(.blue).scaleEffect(phase.scale).opacity(phase.opacity)
+        } animation: { phase in
+            switch phase {
+            case .small: .easeOut(duration: 0.8)
+            case .large: .easeIn(duration: 0.8)
+            }
+        }
+    }
+}
+```
+
+**KeyframeAnimator -- shrink to a crossfade, don't remove all feedback:** collapse positional/rotation amplitude toward zero while keeping the opacity track, or fall back to a plain `withAnimation(.easeInOut(duration: 0.2))` opacity change entirely. Removing all feedback can read as more broken than a calmer version -- the state change still has to communicate something.
+
+**Any `Timer`-driven re-trigger loop** (see "Repeating keyframe animations" above) must also be canceled in `.onDisappear` or on a `scenePhase` transition to `.background` -- an un-canceled `Timer.publish(...).autoconnect()` keeps firing and mutating `@State` on a view that no longer exists.
+
+This generalizes past this file: system auto-gating only covers Glass specular highlights, default push/sheet transitions, and one-shot discrete symbol effects. Any looping symbol effect, `PhaseAnimator`, or `KeyframeAnimator` is YOUR gate -- full substitution catalog: `references/accessibility/05-motion-accessibility.md` (OWNER).
+
 ## Common mistakes
 
 | Mistake | Problem | Fix |
@@ -321,10 +378,12 @@ Animate SF Symbols with built-in, symbol-aware effects (covered in `design/05-sf
 | Using PhaseAnimator for independent timing | All phases transition together | Use KeyframeAnimator |
 | `.repeatForever` on PhaseAnimator | Already cycles by default (without trigger) | Don't add `.repeatForever` |
 | CustomAnimation when spring would work | Reinventing the wheel | Use `.spring()` first |
+| Looping animator with no Reduce Motion branch | Vestibular-trigger motion never stops | Freeze on resting phase per the Reduce Motion section above |
 
 ## See also
 
-- `01-animation-fundamentals.md` -- when to use which animator
-- `02-spring-physics.md` -- spring parameters
-- `04-transitions-geometry.md` -- transitions are different from animators
+- `references/animation/01-animation-fundamentals.md#reduce-motion-critical` -- when to use which animator, RM double-gate
+- `references/animation/02-spring-physics.md#spring-presets` -- spring parameters
+- `references/animation/04-transitions-geometry.md#transitions` -- transitions are different from animators
+- `references/accessibility/05-motion-accessibility.md` -- full RM substitution catalog (OWNER)
 - `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md`

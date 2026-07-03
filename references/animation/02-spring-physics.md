@@ -23,9 +23,11 @@ The simplified API uses duration and bounce:
 
 ```swift
 .bouncy        // duration: 0.5, bounce: 0.3 -- noticeable bounce
-.snappy        // duration: 0.4, bounce: 0.15 -- minimal overshoot
+.snappy        // duration: 0.5, bounce: 0.15 -- minimal overshoot
 .smooth        // duration: 0.5, bounce: 0.0 -- gentle deceleration
 ```
+
+These numbers are not a house guess -- Apple's DocC pages for the `.bouncy(duration:extraBounce:)` / `.snappy(duration:extraBounce:)` / `.smooth(duration:extraBounce:)` static-function variants document the defaults verbatim: `duration: TimeInterval = 0.5` on all three, base `extraBounce` 0.3 / 0.15 / 0.0 respectively. The no-argument static vars (`.bouncy`, `.snappy`, `.smooth`) are the zero-argument case of the same function -- they inherit these defaults, not a separate spec. `bounce` and `dampingFraction` are the same axis: `bounce = 1 - dampingFraction`.
 
 Override defaults:
 
@@ -57,9 +59,9 @@ For gesture-driven animation that must track the finger:
 
 Lower response = faster tracking. Higher damping = settles quickly when released.
 
-## Spring parameter guide
+## Spring parameter guide (HOUSE CONVENTION)
 
-These are the values Apple uses for system animations. Match them.
+These per-interaction tuples are NOT lifted from Apple's system animations -- they are this file's tuned starting points for matching the feel of first-party apps. Only the preset defaults above (`.bouncy`/`.snappy`/`.smooth`) are Apple-documented; this table is a practical convention, not a citation.
 
 | Desired feel | Duration | Bounce | When to use |
 |---|---|---|---|
@@ -101,6 +103,8 @@ withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
     selectedItem = item
 }
 ```
+
+This drives a manual `matchedGeometryEffect` state toggle. For list-to-detail navigation on iOS 18+, prefer the system-owned `.navigationTransition(.zoom(sourceID:in:))` instead -- it drives its own interruptible spring and you don't (can't) supply one; see `references/animation/04-transitions-geometry.md#navigation-transition-with-matched-geometry-ios-18`. Reserve the manual spring shown here for same-screen expansions the zoom transition doesn't cover.
 
 ### Success bounce
 
@@ -183,8 +187,12 @@ Spring feel is hard to judge from code. Always:
 3. Compare to the closest equivalent in a first-party Apple app
 4. Adjust by 0.05 increments on `bounce` and 0.05 increments on `duration`
 
+## Reduce Motion
+
+Springs are decorative motion the user can turn off. Gate every spring-driven call site through the SAME `Animation?` accessor shown in `references/animation/01-animation-fundamentals.md#reduce-motion-critical`; full substitution catalog: `references/accessibility/05-motion-accessibility.md`.
+
 ## See also
 
-- `01-animation-fundamentals.md` -- when to use springs vs curves
-- `05-gesture-driven.md` -- interactive springs for gestures
+- `references/animation/01-animation-fundamentals.md#reduce-motion-critical` -- when to use springs vs curves, RM double-gate
+- `references/animation/05-gesture-driven.md#interactive-springs-for-gesture-handoff` -- interactive springs for gestures
 - `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md#spring-animations`

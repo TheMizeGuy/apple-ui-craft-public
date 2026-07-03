@@ -1,25 +1,25 @@
 # Dynamic Type Adaptation
 
-Users can adjust text size system-wide. Your layouts must survive everything from xSmall to AX5 (310% of default). This isn't a "nice to have" -- many users genuinely need AX5 to read your app.
+Users can adjust text size system-wide. Your layouts must survive everything from xSmall to AX5 (~312% of default -- body text grows from 17pt to 53pt). This isn't a "nice to have" -- many users genuinely need AX5 to read your app.
 
 ## The 12 sizes
 
-| Category | Identifier | Use |
-|---|---|---|
-| xSmall | `.xSmall` | Smallest standard |
-| Small | `.small` | |
-| Medium | `.medium` | |
-| Large | `.large` | DEFAULT |
-| Extra Large | `.xLarge` | |
-| Extra Extra Large | `.xxLarge` | |
-| Extra Extra Extra Large | `.xxxLarge` | Largest standard |
-| AX 1 | `.accessibility1` | Accessibility tier begins |
-| AX 2 | `.accessibility2` | |
-| AX 3 | `.accessibility3` | |
-| AX 4 | `.accessibility4` | |
-| AX 5 | `.accessibility5` | Largest -- 310% scale |
+| Category | Identifier | Scale factor (vs. `.large`) | Use |
+|---|---|---|---|
+| xSmall | `.xSmall` | ~0.82x | Smallest standard |
+| Small | `.small` | ~0.88x | |
+| Medium | `.medium` | ~0.94x | |
+| Large | `.large` | 1.0x | DEFAULT |
+| Extra Large | `.xLarge` | ~1.12x | |
+| Extra Extra Large | `.xxLarge` | ~1.23x | |
+| Extra Extra Extra Large | `.xxxLarge` | ~1.35x | Largest standard |
+| AX 1 | `.accessibility1` | ~1.64x | Accessibility tier begins |
+| AX 2 | `.accessibility2` | ~1.95x | |
+| AX 3 | `.accessibility3` | ~2.35x | |
+| AX 4 | `.accessibility4` | ~2.76x | |
+| AX 5 | `.accessibility5` | ~3.12x | Largest -- body 17pt -> 53pt |
 
-Standard sizes (`xSmall` through `xxxLarge`) typically don't break layouts. AX1-AX5 are where most layouts fail.
+Scale factors are computed from the `.body` text style's point ramp (14/15/16/17/19/21/23/28/33/40/47/53pt) relative to `.large`. Other text styles (e.g. `.largeTitle`) scale by different absolute point amounts but the same relative curve. Standard sizes (`xSmall` through `xxxLarge`) typically don't break layouts. AX1-AX5 are where most layouts fail.
 
 ## Reading current size
 
@@ -250,7 +250,7 @@ In simulator: Settings > Developer > Dynamic Type Sizes > select AX5, then test 
 
 ## See also
 
-- `01-voiceover-fundamentals.md` -- text labels also scale
-- `03-visual-accessibility.md` -- contrast and other visual settings
-- `design/03-typography-dynamic-type.md` -- typography reference
+- `references/accessibility/01-voiceover-fundamentals.md` -- text labels also scale
+- `references/accessibility/03-visual-accessibility.md#reduce-motion` -- contrast and other visual settings
+- `references/design/03-typography-dynamic-type.md` -- typography reference
 - `~/Claude/vault/iOS Development/10 - Accessibility.md`

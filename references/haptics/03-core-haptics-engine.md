@@ -3,7 +3,7 @@
 For custom haptic patterns beyond the built-in feedback types. Use Core Haptics when you need:
 - Custom timing or sequences
 - Dynamic intensity/sharpness modulation
-- Audio + haptic synchronization
+- Audio and haptic synchronization
 - AHAP file playback (designer-authored patterns)
 
 For most apps, the built-in `.sensoryFeedback` and `UIFeedbackGenerator` are sufficient. Reach for Core Haptics only for distinctive haptic experiences (games, music apps, productivity tools with rich feedback).
@@ -17,17 +17,19 @@ The gateway to the haptic server. Create, configure, start, manage lifecycle.
 ```swift
 import CoreHaptics
 
-class HapticManager {
+// iOS 17+ (@Observable). See references/_scaffolding/version-floor-registry.md.
+@Observable
+final class HapticEngineManager {
     private var engine: CHHapticEngine?
-    
-    func setupEngine() {
+
+    func start() {
         guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
-        
+
         do {
             engine = try CHHapticEngine()
             try engine?.start()
-            
-            // Reset handler: engine may stop unexpectedly (e.g., app backgrounded)
+
+            // Reset handler: engine may stop unexpectedly (e.g., audio session interruption)
             engine?.resetHandler = { [weak self] in
                 do {
                     try self?.engine?.start()
@@ -35,7 +37,7 @@ class HapticManager {
                     print("Failed to restart engine: \(error)")
                 }
             }
-            
+
             // Stopped handler: engine stopped due to system event
             engine?.stoppedHandler = { reason in
                 print("Engine stopped: \(reason)")
@@ -44,23 +46,35 @@ class HapticManager {
             print("Failed to start engine: \(error)")
         }
     }
+
+    func stop() {
+        engine?.stop()
+    }
 }
 ```
 
 ### When to start/stop
 
-```swift
-// App background -- stop engine to save resources
-func applicationDidEnterBackground() {
-    engine?.stop()
-}
+Drive the engine lifecycle from `\.scenePhase`, not UIKit's `applicationDidEnterBackground`/`applicationWillEnterForeground` -- those app-delegate callbacks have no place in a SwiftUI-first haptics file and don't fire for scene-based multiwindow apps the way a single-delegate mental model implies.
 
-// App foreground -- restart engine
-func applicationWillEnterForeground() {
-    do {
-        try engine?.start()
-    } catch {
-        // Handle error
+```swift
+struct ContentView: View {
+    @State private var hapticManager = HapticEngineManager()
+    @Environment(\.scenePhase) private var scenePhase
+
+    var body: some View {
+        MainContent()
+            .onAppear { hapticManager.start() }
+            .onChange(of: scenePhase) { _, newPhase in
+                switch newPhase {
+                case .active:
+                    hapticManager.start()
+                case .background, .inactive:
+                    hapticManager.stop()   // Save resources
+                @unknown default:
+                    break
+                }
+            }
     }
 }
 ```
@@ -84,10 +98,12 @@ A single haptic event in a pattern.
 |---|---|---|
 | `hapticIntensity` | 0.0 - 1.0 | Strength of vibration |
 | `hapticSharpness` | 0.0 - 1.0 | Sharp (high) vs soft (low) |
-| `attackTime` | 0.0 - ~1.0 | Fade-in time (continuous only) |
-| `decayTime` | 0.0 - ~1.0 | Fade-out time (continuous only) |
+| `attackTime` | `TimeInterval` seconds, can exceed 1.0 | Fade-in time (continuous only) |
+| `decayTime` | `TimeInterval` seconds, can exceed 1.0 | Fade-out time (continuous only) |
 | `releaseTime` | 0.0 - 1.0 | Release fade |
 | `sustained` | 0 or 1 | Whether to sustain at peak |
+
+Only `hapticIntensity` and `hapticSharpness` are normalized 0.0-1.0. `attackTime`/`decayTime`/`releaseTime` are time-based (`TimeInterval` seconds) -- a 2-second attack is legal, not clamped to 1.0.
 
 ### Building a transient event
 
@@ -248,16 +264,18 @@ do {
 }
 ```
 
-## Audio + haptic sync
+## Audio and haptic sync
 
-Core Haptics can play synchronized audio:
+Core Haptics can play synchronized audio, but a custom audio event REQUIRES a registered resource -- `CHHapticEvent(eventType: .audioCustom, parameters:relativeTime:)` with no `audioResourceID` does not compile. Register the resource first, then build the event from `audioResourceID:`:
 
 ```swift
+let resourceID = try engine?.registerAudioResource(audioFileURL)
+
 let audioEvent = CHHapticEvent(
-    eventType: .audioCustom,
+    audioResourceID: resourceID!,
     parameters: [
-        CHHapticEventParameter(parameterID: .audioPitch, value: 0.0),
-        CHHapticEventParameter(parameterID: .audioVolume, value: 1.0)
+        CHHapticEventParameter(parameterID: .audioVolume, value: 1.0),
+        CHHapticEventParameter(parameterID: .audioPitch, value: 0.0)
     ],
     relativeTime: 0
 )
@@ -271,18 +289,6 @@ let hapticEvent = CHHapticEvent(
 )
 
 let pattern = try CHHapticPattern(events: [audioEvent, hapticEvent], parameters: [])
-```
-
-For custom audio resources:
-
-```swift
-let resourceID = try engine?.registerAudioResource(audioFileURL)
-
-let audioEvent = CHHapticEvent(
-    audioResourceID: resourceID!,
-    parameters: [],
-    relativeTime: 0
-)
 ```
 
 ## Common patterns
@@ -389,6 +395,7 @@ Core Haptics is for:
 
 ## See also
 
-- `01-haptic-design-principles.md` -- when to design custom patterns
-- `02-swiftui-sensory-feedback.md` -- prefer this when built-ins suffice
+- `references/haptics/01-haptic-design-principles.md#haptic-placement-matrix` -- when to design custom patterns
+- `references/haptics/02-swiftui-sensory-feedback.md#built-in-feedback-types` -- prefer this when built-ins suffice
+- `references/platform/09-scene-lifecycle.md` -- `\.scenePhase` lifecycle in depth
 - `~/Claude/vault/iOS Development/77 - Core Haptics and Sensory Feedback.md` -- full reference with AHAP grammar

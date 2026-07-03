@@ -4,7 +4,7 @@ The principles that have guided every iOS design decision since iOS 7. These are
 
 ## The three pillars
 
-### 1. Clarity
+### Clarity
 
 Content is king. UI chrome exists to serve content, not to impress.
 
@@ -17,7 +17,7 @@ Content is king. UI chrome exists to serve content, not to impress.
 
 **Engineering implication:** If you can remove a visual element and the screen still communicates its purpose, remove it.
 
-### 2. Deference
+### Deference
 
 The interface defers to content. Fluid motion and a crisp, beautiful interface help people understand and interact with content without competing with it.
 
@@ -30,7 +30,7 @@ The interface defers to content. Fluid motion and a crisp, beautiful interface h
 
 **Engineering implication:** Use semantic colors that adapt. Use system materials. Let content -- not chrome -- be the visual focus.
 
-### 3. Depth
+### Depth
 
 Visual layers and realistic motion convey hierarchy, impart vitality, and facilitate understanding.
 
@@ -81,7 +81,7 @@ ScrollView {
         }
         .padding()
         .background(.white)
-        .cornerRadius(12)
+        .cornerRadius(12)  // Deprecated -- cornerRadius(_:antialiased:) -> .clipShape(.rect(cornerRadius:))
         .shadow(radius: 8)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.blue, lineWidth: 2))
     }
@@ -141,7 +141,7 @@ If the latter, remove it.
 
 ## See also
 
-- `02-liquid-glass.md` -- the current implementation of deference + depth
-- `03-typography-dynamic-type.md` -- how clarity manifests in text
-- `04-color-system.md` -- semantic colors as deference to system context
+- `references/design/02-liquid-glass.md#design-properties` -- the current implementation of deference + depth
+- `references/design/03-typography-dynamic-type.md` -- how clarity manifests in text
+- `references/design/04-color-system.md` -- semantic colors as deference to system context
 - `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md` -- full HIG reference

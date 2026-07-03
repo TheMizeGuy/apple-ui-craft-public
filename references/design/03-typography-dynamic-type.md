@@ -98,7 +98,7 @@ Users can adjust text size system-wide. There are 12 categories:
 | AX 4 | `.accessibility4` |
 | AX 5 | `.accessibility5` |
 
-The 5 AX sizes can scale text up to 310% of default. Your layouts MUST survive these.
+The 5 AX sizes can scale text up to ~312% of default (`.body` goes from 17pt to 53pt at AX5 -- 53/17 = 3.12x). Your layouts MUST survive these.
 
 ### Reading the current size
 
@@ -238,9 +238,10 @@ Always test with:
 | Custom font without `relativeTo:` | Doesn't scale with Dynamic Type | Add `relativeTo: .body` (or appropriate style) |
 | Truncating navigation titles | Inline title becomes "..." at AX5 | Use `.toolbarTitleDisplayMode(.large)` and let it expand |
 | Hardcoded VStack spacing | Cramped at AX5 | Use system spacing or scale with `@ScaledMetric` |
+| `.font(.extraLargeTitle)` / `.extraLargeTitle2` on iOS | Doesn't exist on iOS -- `Font.TextStyle.extraLargeTitle`/`.extraLargeTitle2` are visionOS 1.0+ ONLY | Cap at `.largeTitle`; the iOS ramp is 11 styles, there is no 12th |
 
 ## See also
 
-- `04-color-system.md` -- color hierarchy that pairs with text hierarchy
-- `accessibility/02-dynamic-type-adaptation.md` -- accessibility deep dive
+- `references/design/04-color-system.md` -- color hierarchy that pairs with text hierarchy
+- `references/accessibility/02-dynamic-type-adaptation.md` -- accessibility deep dive
 - `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md` -- Text and Font reference

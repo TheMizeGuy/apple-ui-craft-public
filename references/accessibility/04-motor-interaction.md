@@ -4,7 +4,7 @@ Users have varying motor abilities. Tremors, limited mobility, single-hand use, 
 
 ## Touch targets
 
-**44 x 44 pt minimum.** This is Apple's hard rule. WCAG 2.5.5 also requires it. No exceptions.
+**44 x 44 pt minimum.** This is Apple's hard rule -- no exceptions. WCAG cites two different levels here; don't conflate them: **2.5.8 Target Size (Minimum)** is Level AA and requires only 24 CSS px (WCAG 2.2); **2.5.5 Target Size (Enhanced)** is Level AAA and is the one that asks for 44 CSS px, but AAA criteria are aspirational, not baseline-required. Apple's 44pt is its own hard rule independent of which WCAG level you target -- ship 44pt regardless.
 
 | Surface | Minimum size |
 |---|---|
@@ -112,9 +112,9 @@ ItemRow(item: item)
     }
 ```
 
-## No complex gestures required (WCAG 2.5.5 + 2.5.4)
+## No complex gestures required (WCAG 2.5.1 Pointer Gestures)
 
-Multi-finger gestures, force touch, edge swipes -- these can be impossible for users with limited dexterity. Provide simpler alternatives.
+Multi-finger gestures, force touch, edge swipes -- these can be impossible for users with limited dexterity. Provide simpler alternatives. WCAG 2.5.1 (Level A) is the citation for "give path-based/multi-point gestures a single-pointer alternative" -- don't confuse it with 2.5.4 Motion Actuation, which is the separate criterion for device-motion triggers (shake-to-undo, tilt-to-scroll), not gestures.
 
 | Complex gesture | Alternative |
 |---|---|
@@ -125,6 +125,38 @@ Multi-finger gestures, force touch, edge swipes -- these can be impossible for u
 | Force touch peek | Long press menu (already simpler) |
 | Edge swipe back | Back button always present |
 | Three-finger drag | Single-finger drag alternative |
+
+## Native VoiceOver bridge APIs
+
+VoiceOver has its own gesture vocabulary for zoom, scroll, and drag/drop that bypasses standard touch handling entirely. Expose these modifiers so a custom view built on `MagnificationGesture`/`DragGesture` still works under VoiceOver -- a "+/-" button is a workaround; these modifiers make the ORIGINAL gesture itself accessible.
+
+```swift
+// iOS 16.0+. VoiceOver's zoom rotor invokes this instead of a MagnificationGesture.
+CustomImageView()
+    .accessibilityZoomAction { action in
+        switch action.direction {
+        case .zoomIn: zoomLevel *= 1.25
+        case .zoomOut: zoomLevel /= 1.25
+        @unknown default: break
+        }
+    }
+
+// iOS 16.0+. VoiceOver's three-finger scroll invokes this on a custom scrollable view
+// (List/ScrollView already expose scroll to VoiceOver automatically -- this is for
+// canvases, custom maps, and other non-standard scrollable content).
+CustomScrollableView()
+    .accessibilityScrollAction { edge in
+        scrollToNext(in: edge)
+    }
+
+// iOS 16.0+. Disambiguates drag source/destination for VoiceOver when a view has
+// more than one drag or drop interaction.
+FileIcon(filename: filename)
+    .accessibilityDragPoint(.center, description: Text("Move \(filename)"))
+
+DropZoneView()
+    .accessibilityDropPoint(.center, description: Text("Drop into \(folderName)"))
+```
 
 ## Keyboard shortcuts (iPad and Mac)
 
@@ -259,7 +291,7 @@ Button("Delete") {
 
 ## See also
 
-- `01-voiceover-fundamentals.md` -- VoiceOver accessibility
-- `02-dynamic-type-adaptation.md` -- text scaling
-- `03-visual-accessibility.md` -- color, motion, contrast
+- `references/accessibility/01-voiceover-fundamentals.md` -- VoiceOver accessibility
+- `references/accessibility/02-dynamic-type-adaptation.md#the-12-sizes` -- text scaling
+- `references/accessibility/03-visual-accessibility.md#reduce-motion` -- color, motion, contrast
 - `~/Claude/vault/iOS Development/10 - Accessibility.md`

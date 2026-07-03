@@ -92,12 +92,14 @@ var body: some View {
 
 ### What to do when Reduce Motion is on
 
-| Default behavior | Reduce Motion fallback |
+This is developer-owned motion -- custom `.transition()`, `matchedGeometryEffect`, and animated state you built. It is NOT what a default, unmodified `NavigationStack` push or system sheet presentation does on its own; see the auto-respect section below for that distinction.
+
+| Your motion | Reduce Motion fallback |
 |---|---|
-| Slide / push transition | Crossfade (`.opacity`) |
+| Custom slide / push `.transition()` | Crossfade (`.opacity`) |
 | Scale / bounce animation | Instant or shorter duration |
 | Parallax scroll effect | No parallax |
-| Hero matchedGeometry transition | Crossfade |
+| Custom `matchedGeometryEffect` hero transition, incl. `.navigationTransition(.zoom)` | Crossfade |
 | Spring physics | None or minimal |
 | Auto-play video / animation | Don't auto-play |
 | Particle effects | Disable |
@@ -120,16 +122,42 @@ withAnimation(reduceMotion ? nil : .spring(duration: 0.4)) {
 }
 ```
 
-### What system features auto-respect Reduce Motion
+### What system features actually auto-respect Reduce Motion
 
-| System | Behavior |
+Very little is auto-gated. Do not assume more than this list:
+
+| System behavior | Under Reduce Motion |
 |---|---|
-| Liquid Glass | No specular animation |
-| `.symbolEffect(.bounce)` | Reduced or none |
-| Sheet presentation | System uses cross-fade variant |
-| Navigation push | System uses cross-fade variant |
+| Liquid Glass specular highlight | Animation removed automatically |
+| One-shot, discrete symbol effects (e.g. `.bounce`, `.appear`) | Reduced/removed automatically |
+| Default (unmodified) `NavigationStack` push/pop | Unchanged -- still slides, see below |
+| Default (unmodified) sheet presentation | Unchanged -- still uses its standard transition, see below |
 
-You don't need to handle these manually.
+**The common claim "sheet and push transitions auto-crossfade under Reduce Motion" is false.** A bare `NavigationStack` push under `accessibilityReduceMotion` alone still slides. Crossfade for navigation and modal presentation is governed by a SEPARATE, writable setting -- Settings > Accessibility > Motion > **Prefer Cross-Fade Transitions** (`accessibilityPrefersCrossFadeTransitions`, iOS 26.4+, `{ get set }`). Read that key if your UI needs to detect the user's cross-fade preference; reading `accessibilityReduceMotion` alone tells you nothing about it.
+
+### What you must gate yourself
+
+Almost everything else is your responsibility:
+
+- **Looping symbol effects** -- `.pulse`, `.variableColor.iterative`, `.breathe`, `.rotate` with a repeating option -- do NOT stop under Reduce Motion on their own. Gate the `isActive:` argument yourself, or strip every symbol effect on a subtree with `.symbolEffectsRemoved(_:)`.
+- **Custom `.navigationTransition(.zoom)` and `matchedGeometryEffect` hero transitions** -- developer-authored; the system does not downgrade these under Reduce Motion.
+- **All custom, `PhaseAnimator`-driven, and `KeyframeAnimator`-driven motion** -- always your responsibility, no exceptions.
+
+```swift
+// Looping effect -- NOT auto-gated, gate isActive: yourself
+Image(systemName: "dot.radiowaves.left.and.right")
+    .symbolEffect(.variableColor.iterative, isActive: isSearching && !reduceMotion)
+
+// One-shot discrete effect -- IS auto-reduced by the system under Reduce Motion
+Image(systemName: "heart.fill")
+    .symbolEffect(.bounce, value: liked)
+
+// Strip every symbol effect on a subtree
+ContentView()
+    .symbolEffectsRemoved(reduceMotion)
+```
+
+Deep Reduce Motion mechanics -- the double-gate pattern (gate BOTH `withAnimation(` and `.animation(_:value:)` through one `Animation?`/nil accessor) -- live in `references/accessibility/05-motion-accessibility.md`; this section only covers what the system does and does not do for you.
 
 ## Reduce Transparency
 
@@ -253,6 +281,21 @@ Text("Brand")
     .font(.custom(legibilityWeight == .bold ? "BrandFont-Bold" : "BrandFont-Regular", size: 17, relativeTo: .body))
 ```
 
+## Environment key injectability (#Preview and testing)
+
+Not every accessibility environment key can be set with `.environment(_:_:)` in a `#Preview` or test harness -- some are read-only reflections of a system setting, and injecting them silently no-ops.
+
+| Get-only (cannot inject) | Writable (can inject) |
+|---|---|
+| `accessibilityReduceMotion` | `colorScheme` |
+| `accessibilityReduceTransparency` | `dynamicTypeSize` |
+| `colorSchemeContrast` | `legibilityWeight` |
+| `accessibilityDimFlashingLights` | `locale` |
+| `accessibilityPlayAnimatedImages` | `layoutDirection` |
+| | `accessibilityPrefersCrossFadeTransitions` (iOS 26.4+) |
+
+`legibilityWeight` is writable -- inject it in `#Preview` to test Bold Text without changing the Simulator setting. To preview a get-only state (Reduce Motion, Reduce Transparency, contrast), toggle the setting on the Simulator or device itself.
+
 ## Testing visual accessibility
 
 Settings > Accessibility > Display & Text Size:
@@ -281,8 +324,10 @@ Test your app with each. Many real users have multiple of these enabled.
 
 ## See also
 
-- `01-voiceover-fundamentals.md` -- text labels for screen readers
-- `02-dynamic-type-adaptation.md` -- text scaling
-- `04-motor-interaction.md` -- physical/motor accessibility
-- `design/04-color-system.md` -- semantic colors auto-adapt
+- `references/accessibility/01-voiceover-fundamentals.md` -- text labels for screen readers
+- `references/accessibility/02-dynamic-type-adaptation.md#the-12-sizes` -- text scaling
+- `references/accessibility/04-motor-interaction.md#touch-targets` -- physical/motor accessibility
+- `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate, symbol/Phase/Keyframe gating in depth
+- `references/accessibility/07-cognitive-hearing-assistive.md` -- captions, Live Captions, hearing and cognitive accessibility
+- `references/design/04-color-system.md` -- semantic colors auto-adapt
 - `~/Claude/vault/iOS Development/10 - Accessibility.md`

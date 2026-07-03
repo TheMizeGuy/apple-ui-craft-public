@@ -1,6 +1,6 @@
 # SF Symbols
 
-5,000+ icons designed by Apple to integrate visually with the system font (SF Pro). Free to use in any iOS/iPadOS/macOS/watchOS/tvOS/visionOS app.
+6,900+ icons (SF Symbols 7) designed by Apple to integrate visually with the system font (SF Pro). Free to use in any iOS/iPadOS/macOS/watchOS/tvOS/visionOS app. Treat the count as a soft marketing figure, not an authoritative API surface -- it grows every release.
 
 ## Why SF Symbols
 
@@ -113,6 +113,19 @@ Image(systemName: "person.fill.checkmark")
 
 Use for: brand-tinted icons, status communication with custom colors.
 
+### Gradient color rendering (SF Symbols 7, iOS 26+)
+
+Gradient fill is a SEPARATE, opt-in modifier layered on top of rendering mode -- rebuilding against the iOS 26 SDK does NOT automatically add gradients to existing hierarchical/multicolor icons:
+
+```swift
+Image(systemName: "heart.fill")
+    .symbolRenderingMode(.hierarchical)      // one tint, opacity tiers
+    .symbolColorRenderingMode(.gradient)     // each tier now an axial gradient instead of flat
+    .foregroundStyle(.pink)
+```
+
+`func symbolColorRenderingMode(_ mode: SymbolColorRenderingMode?) -> some View` -- `.flat` (default, solid fill per layer) or `.gradient` (axial gradient per layer). `nil` inherits the environment/system default.
+
 ## Variable values (iOS 16+)
 
 Some symbols accept a 0.0-1.0 value that changes their appearance:
@@ -165,6 +178,26 @@ Image(systemName: isPlaying ? "pause.fill" : "play.fill")
 | `.wiggle` | 18+ | Attention (alert, error) |
 | `.breathe` | 18+ | Ongoing activity |
 | `.rotate` | 18+ | Loading, refresh |
+| `.drawOn`/`.drawOff` | 26+ (SF Symbols 7) | Handwriting-style stroke-on/off, incl. as a `.transition()` |
+
+## Symbol effects and Reduce Motion
+
+Discrete, one-shot effects (`.bounce`, `.wiggle`, `.rotate` fired via `value:`) are safe by default -- they play once on a real state change and settle. **Indefinite (looping) effects do NOT stop under Reduce Motion automatically.** `.pulse`, `.variableColor.iterative`, `.breathe`, and any effect passed `options: .repeating`/`.repeat(.continuous)` -- including `.rotate` used as a loop -- keep animating regardless of the accessibility setting unless you gate them yourself:
+
+```swift
+@Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+Image(systemName: "dot.radiowaves.left.and.right")
+    .symbolEffect(.variableColor.iterative.reversing,
+                  options: .repeating,
+                  isActive: isBroadcasting && !reduceMotion)   // RM folds into isActive
+```
+
+Gate via the effect's own `isActive:` parameter -- never an `if reduceMotion { staticImage } else { animatedImage }` branch. The branch remounts the symbol (view-identity churn, spurious transition); `isActive: false` keeps the same view mounted and the effect simply stops on its rest frame. To strip every inherited symbol effect from a subtree at once, use `.symbolEffectsRemoved(_:)` (iOS 17+) as a single escape hatch instead of gating each `.symbolEffect()` call individually.
+
+For a symbol used as an insertion/removal transition, the correct spelling is `.transition(.symbolEffect(.drawOn))` -- there is no bare `.drawOn` case directly on `Transition`/`AnyTransition`.
+
+Icon-only controls (a `Button` whose label is only an `Image`, not wrapped in `Label`) need an explicit `.accessibilityLabel(_:)` -- see Accessibility below.
 
 ## Choosing the right symbol
 
@@ -194,7 +227,8 @@ Image(systemName: isPlaying ? "pause.fill" : "play.fill")
 | Camera | `camera`, `camera.fill` |
 | Photo | `photo`, `photo.fill` |
 | Send | `paperplane`, `paperplane.fill` |
-| Reply | `arrowshape.turn.up.left` |
+| Reply | `arrowshape.turn.up.backward` (NOT `.left` -- breaks RTL) |
+| Forward (message) | `arrowshape.turn.up.forward` |
 
 ## Localization
 
@@ -214,6 +248,7 @@ ALWAYS use directional symbols (`forward`/`backward`) instead of absolute (`left
 | `chevron.right` | `chevron.forward` |
 | `arrow.left` | `arrow.backward` |
 | `arrow.right` | `arrow.forward` |
+| `arrowshape.turn.up.left` (reply) | `arrowshape.turn.up.backward` |
 
 ## Custom symbols
 
@@ -269,7 +304,8 @@ HStack {
 
 ## See also
 
-- `03-typography-dynamic-type.md` -- text styles that pair with symbols
-- `accessibility/01-voiceover-fundamentals.md` -- accessibility labels for images
+- `references/design/03-typography-dynamic-type.md` -- text styles that pair with symbols
+- `references/accessibility/01-voiceover-fundamentals.md` -- accessibility labels for images
+- `references/accessibility/05-motion-accessibility.md` -- the general Reduce Motion double-gate contract this file's symbol-effect gating follows
 - SF Symbols app: download from Apple developer for full catalog
 - `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#sf-symbols`

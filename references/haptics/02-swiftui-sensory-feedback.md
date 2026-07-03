@@ -19,15 +19,18 @@ When `saveCompleted` changes, the success haptic plays.
 // Impact (default style)
 .sensoryFeedback(.impact, trigger: tapped)
 
-// Impact with weight
+// Impact with weight (.light/.medium/.heavy, default .medium)
 .sensoryFeedback(.impact(weight: .light), trigger: tapped)
 .sensoryFeedback(.impact(weight: .medium), trigger: tapped)
 .sensoryFeedback(.impact(weight: .heavy), trigger: tapped)
-.sensoryFeedback(.impact(weight: .soft), trigger: bounced)
-.sensoryFeedback(.impact(weight: .rigid), trigger: snapped)
 
-// Impact with custom intensity
+// Impact with flexibility (.rigid/.soft/.solid, no default -- separate factory, not a Weight case)
+.sensoryFeedback(.impact(flexibility: .soft), trigger: bounced)
+.sensoryFeedback(.impact(flexibility: .rigid), trigger: snapped)
+
+// Impact with custom intensity (either factory)
 .sensoryFeedback(.impact(weight: .heavy, intensity: 0.7), trigger: pressed)
+.sensoryFeedback(.impact(flexibility: .rigid, intensity: 0.7), trigger: pressed)
 
 // Notifications
 .sensoryFeedback(.success, trigger: saveCompleted)
@@ -135,7 +138,7 @@ Button("Delete", role: .destructive) {
             }
         }
 )
-.sensoryFeedback(.impact(weight: .rigid), trigger: snapCount)
+.sensoryFeedback(.impact(flexibility: .rigid), trigger: snapCount)
 ```
 
 ### Async outcome (success or failure)
@@ -270,7 +273,9 @@ struct MyView: View {
 | `UICanvasFeedbackGenerator` | iOS 17.5 | UIKit |
 | `.sensoryFeedback` modifier | iOS 17 | SwiftUI |
 | `SensoryFeedback` enum | iOS 17 | SwiftUI |
-| `.impact(weight:intensity:)` | iOS 17 | SwiftUI |
+| `.impact(weight:intensity:)` | iOS 17, visionOS 26.0 | SwiftUI |
+| `.impact(flexibility:intensity:)` | iOS 17, visionOS 26.0 | SwiftUI |
+| `.start` / `.stop` | iOS 17 (watchOS-primary) | SwiftUI |
 
 ## Common mistakes
 
@@ -288,6 +293,6 @@ struct MyView: View {
 
 ## See also
 
-- `01-haptic-design-principles.md` -- when and where to use haptics
-- `03-core-haptics-engine.md` -- custom patterns beyond built-in feedback
+- `references/haptics/01-haptic-design-principles.md#haptic-placement-matrix` -- when and where to use haptics
+- `references/haptics/03-core-haptics-engine.md#chhapticengine` -- custom patterns beyond built-in feedback
 - `~/Claude/vault/iOS Development/77 - Core Haptics and Sensory Feedback.md`

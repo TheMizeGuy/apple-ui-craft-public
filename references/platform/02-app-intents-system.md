@@ -73,6 +73,108 @@ struct ItemQuery: EntityQuery {
 }
 ```
 
+## Assistant Schemas (iOS 26)
+
+Two schema layers let Apple Intelligence and Siri understand what an intent or entity DOES, without phrase-matching your `AppShortcut` strings:
+
+```swift
+// iOS 26.0+. Conforms the intent to AppSchemaIntent -- the current, general form.
+@AppIntent(schema: .photos.createAssets)
+struct CreateAssetsIntent: AppIntent {
+    static let isAssistantOnly: Bool = true   // hide from Shortcuts/Siri phrase UI, expose only to Apple Intelligence
+    func perform() async throws -> some ReturnsValue<[PhotoAssetEntity]> { /* ... */ }
+}
+
+// iOS 18.0+. Conforms to AssistantSchemaIntent -- the older naming, still valid today.
+// Sibling macros: @AssistantEntity(schema:), @AssistantEnum(schema:).
+@AssistantIntent(schema: .photos.openAsset)
+struct OpenPhotoIntent: AppIntent {
+    @Parameter var target: PhotoAssetEntity   // parameter shape is fixed by the schema
+    func perform() async throws -> some IntentResult { .result() }
+}
+```
+
+Both macros compile and both are current -- they are two protocol families from different releases, not competing versions of the same thing:
+
+| Namespace | Protocol | Era | Domain count |
+|---|---|---|---|
+| `@AppIntent(schema:)` | `AppSchemaIntent` | iOS 26, current | 23: `assistant`, `audio`, `books`, `browser`, `calendar`, `camera`, `clock`, `files`, `journal`, `mail`, `maps`, `messages`, `notes`, `phone`, `photos`, `presentation`, `reader`, `reminders`, `spreadsheet`, `system`, `visualIntelligence`, `whiteboard`, `wordProcessor` |
+| `@AssistantIntent(schema:)` | `AssistantSchemaIntent` | iOS 18, Apple Intelligence subset | 15: the 23 above minus `audio`, `calendar`, `clock`, `maps`, `messages`, `notes`, `phone`, `reminders` |
+
+Treat the 15-domain catalog as the older namespace, not a stale figure to "correct up" to 23 -- both ship, both compile, and existing iOS 18-targeted code using `@AssistantIntent` stays correct. New code reaching for the widest domain set should use `@AppIntent(schema:)`.
+
+`isAssistantOnly: Bool` (default `false`) is the migration lever on both: set `true` to make an intent reachable only by Apple Intelligence/Siri, without disturbing users' existing phrase-based Shortcuts built against a separate intent.
+
+Availability: the iOS 18-era domains (`.presentation.*`, `.photos.*`, `.mail.*`, ...) are iOS 18.0+/iPadOS 18.0+/macOS 15.0+ (Catalyst)/visionOS 2.0+. The 8 domains iOS 26 adds (`audio`, `calendar`, `clock`, `maps`, `messages`, `notes`, `phone`, `reminders`) are iOS 26.0+. `AppSchemaIntent.assistant` (the `.assistant.activate` "open/activate my app" family) needs iOS/iPadOS **26.2+** specifically -- gate it separately from the 26.0 domains [plausible -- SDK-verify against the shipping Xcode 26.2 SDK before relying on it].
+
+If nothing fits your app's category, don't force a schema -- ship a plain `AppIntent` with `AppShortcutsProvider` phrases instead.
+
+## Interactive Snippets (iOS 26)
+
+The card an intent shows after running can contain LIVE SwiftUI whose controls run other intents and re-render the card in place, without opening the app. Two distinct result-type protocols -- do not conflate them:
+
+| Protocol | Behavior |
+|---|---|
+| `ShowsSnippetView` | Static SwiftUI card (iOS 16+). Fixed once returned. |
+| `ShowsSnippetIntent` | Interactive card (iOS 26.0+). Body is produced by a separate `SnippetIntent`; tapping a control re-runs its `perform()` and re-renders the card. |
+
+```swift
+// iOS 26.0+. The action intent hands off to a SnippetIntent instead of a static view.
+struct ClosestLandmarkIntent: AppIntent {
+    static let title: LocalizedStringResource = "Find Closest Landmark"
+    @Dependency var modelData: ModelData
+
+    func perform() async throws
+        -> some ReturnsValue<LandmarkEntity> & ShowsSnippetIntent & ProvidesDialog {
+        let landmark = try await modelData.closestLandmark()
+        return .result(
+            value: landmark,
+            dialog: IntentDialog(
+                full: "The closest landmark is \(landmark.name).",
+                supporting: "\(landmark.name) is in \(landmark.continent)."),
+            snippetIntent: LandmarkSnippetIntent(landmarkID: landmark.id))
+    }
+}
+
+// The SnippetIntent owns the card's live body; re-runs on every control tap inside it.
+struct LandmarkSnippetIntent: SnippetIntent {
+    static let title: LocalizedStringResource = "Landmark Snippet"
+    @Parameter var landmarkID: LandmarkEntity.ID
+    @Dependency var modelData: ModelData
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ShowsSnippetView {
+        let landmark = try await modelData.landmark(id: landmarkID)
+        return .result(view: LandmarkSnippetView(landmark: landmark))
+    }
+}
+
+struct LandmarkSnippetView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let landmark: Landmark
+
+    private var favoriteAnimation: Animation? { reduceMotion ? nil : .default }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(landmark.name).font(.headline)
+            // Controls inside a snippet MUST be intent-backed -- plain closures do not
+            // survive the out-of-process snippet host.
+            Button(intent: ToggleFavoriteIntent(id: landmark.id)) {
+                Label(landmark.isFavorite ? "Unfavorite" : "Favorite",
+                      systemImage: landmark.isFavorite ? "star.fill" : "star")
+            }
+        }
+        .padding()
+        .animation(favoriteAnimation, value: landmark.isFavorite)
+    }
+}
+```
+
+Controls inside an interactive snippet must be `Button(intent:)` / `Toggle(isOn:intent:)` -- the host re-invokes the matching `SnippetIntent` out-of-process, so a plain closure has nothing to call back into. Keep snippets glanceable: constrained height, no heavy scrolling. The snippet host respects Reduce Motion for its OWN re-render transition, but any `.animation`/`.transition` you add inside the view body needs the same nil-under-Reduce-Motion gate as every other SwiftUI animation.
+
+`.result(value:dialog:snippetIntent:)` defaults `snippetIntent:` to `EmptySnippetIntent()` when there's nothing interactive to show; `.result(value:opensIntent:dialog:snippetIntent:)` adds an explicit "open the app" affordance alongside the snippet.
+
 ## Siri integration
 
 App Shortcuts automatically work with Siri:
@@ -120,6 +222,35 @@ ControlWidgetToggle(
     }
 )
 ```
+
+### Opening the app from a control (iOS 26)
+
+A control extension can't call `UIApplication.shared.open(_:)` -- that API is unavailable outside the app process. Two correct paths:
+
+```swift
+// Preferred when the destination is expressible as an AppEntity: OpenIntent implies
+// openAppWhenRun and gives you a required `target`.
+struct OpenPlaylistIntent: OpenIntent {
+    static var title: LocalizedStringResource = "Open Playlist"
+    @Parameter(title: "Playlist") var target: PlaylistEntity
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        Router.shared.navigate(to: target.id)   // system foregrounds the app first
+        return .result()
+    }
+}
+
+// When you only have a URL, bridge through OpenURLIntent instead of touching UIApplication.
+struct OpenCaptureIntent: AppIntent {
+    static let title: LocalizedStringResource = "Open Capture"
+    func perform() async throws -> some IntentResult & OpensIntent {
+        .result(opensIntent: OpenURLIntent(URL(string: "myapp://capture")!))
+    }
+}
+```
+
+`openAppWhenRun` -- the older `Bool` that made a control foreground the app -- is **deprecated on iOS 26**; setting it `true` inside a control/widget extension now throws at runtime. Its replacement is `static var supportedModes: IntentModes` (iOS 26.0+): `.background` runs the intent with no app launch, `.foreground(.immediate/.dynamic/.deferred)` brings the app forward before, optionally, or right before completion. `OpenIntent` and the `OpenURLIntent` bridge above remain the right tools specifically for "this control opens the app somewhere" -- `supportedModes` covers everything else.
 
 ## Action button (iPhone 15 Pro+)
 
@@ -369,6 +500,8 @@ Use this to decide what's worth implementing:
 | Keyboard shortcuts | App targets iPad or Mac, has frequent actions |
 | Handoff | App has detail screens worth continuing on another device |
 | Live Activities | App has real-time ongoing events |
+| Assistant Schemas | App matches a first-party domain (mail, photos, files, browser, ...) and wants Siri-native semantic understanding for free |
+| Interactive Snippets | An intent's result is worth showing AND acting on inline in Siri/Spotlight, not just displaying |
 
 ## Common mistakes
 
@@ -382,10 +515,11 @@ Use this to decide what's worth implementing:
 | App Intent without entities | Can't be parameterized in Shortcuts | Add AppEntity for data operations |
 | Missing keyboard shortcuts on iPad | Poor iPad experience | Add `.keyboardShortcut()` to common actions |
 | Spotlight indexing without cleanup | Stale results | Delete on content change/removal |
+| `openAppWhenRun = true` in a Control/Widget extension | Throws at runtime on iOS 26 | `supportedModes: IntentModes`, or bridge via `OpenIntent`/`OpenURLIntent` |
 
 ## See also
 
-- `01-widgets-live-activities.md` -- widgets and Live Activities use App Intents
+- `references/platform/01-widgets-live-activities.md#interactive-widgets-ios-17` -- widgets and Live Activities use App Intents
 - `~/Claude/vault/iOS Development/47 - App Intents and Siri.md` -- full reference
 - `~/Claude/vault/iOS Development/34 - Deep Linking and Navigation.md` -- universal links, Spotlight
 - `~/Claude/vault/iOS Development/60 - TipKit.md` -- TipKit deep dive

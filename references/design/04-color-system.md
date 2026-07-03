@@ -44,11 +44,11 @@ VStack { ... }
     .background(Color(.secondarySystemBackground))
 ```
 
-For modern SwiftUI (iOS 16+), use `.background()` modifiers with system styles:
+For modern SwiftUI (iOS 16+), `.background(.background.secondary)` is available, but it is NOT equivalent to `secondarySystemBackground` -- `BackgroundStyle.secondary` is a hierarchical DIM of the ambient window background, not a calibrated elevation step. For the actual base-vs-grouped elevation ladder, use the `Color(.secondarySystemBackground)` family above:
 
 ```swift
 Card { ... }
-    .background(.background.secondary)
+    .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 16))
 ```
 
 ## Fill colors (for shapes)
@@ -104,12 +104,14 @@ Image(systemName: "info.circle").foregroundStyle(.blue)
 
 System colors:
 | `.red` | `.orange` | `.yellow` | `.green` | `.mint` | `.teal` | `.cyan` |
-| `.blue` | `.indigo` | `.purple` | `.pink` | `.brown` | `.gray` | `.black` | `.white` |
+| `.blue` | `.indigo` | `.purple` | `.pink` | `.brown` | `.gray` |
 
 These colors are not raw RGB values -- they adapt to:
 - Light/dark mode (slightly different shades)
 - Increased contrast
 - Color filters
+
+**`Color.black` and `Color.white` are the exception -- they are fixed literals, not semantic colors.** They do NOT adapt to dark mode or any accessibility setting (this is why `.foregroundColor(.black)`/`.foregroundStyle(.black)` goes invisible against a dark background above). Use `.primary`/`.secondary` or an asset-catalog color instead of `.black`/`.white` for anything that must remain legible across appearances.
 
 ## Custom colors via asset catalog
 
@@ -150,7 +152,7 @@ Text("Floating")
     .background(.regularMaterial, in: .rect(cornerRadius: 12))
 ```
 
-For iOS 26+, prefer `.glassEffect()` (see `02-liquid-glass.md`).
+For iOS 26+, prefer `.glassEffect()` (see `references/design/02-liquid-glass.md`).
 
 ## Gradients
 
@@ -219,22 +221,16 @@ if contrast == .increased {
 }
 ```
 
-## Tinted mode (iOS 26.1+)
+## Tinted Mode (iOS 26.1+)
 
-Users can apply system tints to UI elements. Liquid Glass elements automatically respect tint preferences. For custom UI:
-
-```swift
-@Environment(\.tintMode) var tintMode  // .automatic, .tinted, .none
-
-// Adapt your fills accordingly
-```
+Users can apply a system-wide tint to UI elements via Settings > Display & Brightness > Liquid Glass. This is a Settings toggle, not an API -- there is no `EnvironmentValues` key for it. Liquid Glass elements adapt automatically with zero code. To tint glass yourself (independent of the user's system preference), use `Glass.tint(_:)` -- owned by `references/design/02-liquid-glass.md#tint-and-interactivity`.
 
 ## Common mistakes
 
 | Mistake | Problem | Fix |
 |---|---|---|
 | `Color(red:green:blue:)` for brand colors | Doesn't adapt to dark mode | Use asset catalog with dark variant |
-| `.foregroundColor(.black)` | Invisible in dark mode | Use `.foregroundStyle(.primary)` |
+| `.foregroundColor(.black)` | Deprecated; also invisible in dark mode | Use `.foregroundStyle(.primary)` |
 | `.background(.white)` | Inverted in dark mode | Use `.background(.background)` or system background |
 | Color alone for meaning | Inaccessible to colorblind users | Pair with icon and text |
 | Custom color without high contrast variant | Invisible at Increased Contrast | Add high contrast asset variant |
@@ -243,7 +239,7 @@ Users can apply system tints to UI elements. Liquid Glass elements automatically
 
 ## See also
 
-- `02-liquid-glass.md` -- materials evolved into Liquid Glass
-- `03-typography-dynamic-type.md` -- text colors pair with typography
-- `accessibility/03-visual-accessibility.md` -- contrast, color, Smart Invert
+- `references/design/02-liquid-glass.md#tint-and-interactivity` -- `Glass.tint(_:)` contract; materials evolved into Liquid Glass
+- `references/design/03-typography-dynamic-type.md` -- text colors pair with typography
+- `references/accessibility/03-visual-accessibility.md` -- contrast, color, Smart Invert
 - `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#color`

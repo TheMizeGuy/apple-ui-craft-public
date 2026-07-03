@@ -131,21 +131,25 @@ withAnimation(nil) {
 
 Animating render-only properties is cheap. Animating layout-triggering properties is expensive.
 
-| Cheap (render-only) | Expensive (layout-triggering) |
+| Cheap (render-only) | Expensive (layout-triggering or per-frame off-screen render) |
 |---|---|
 | `.opacity` | `.frame(width:height:)` |
 | `.scaleEffect` | `.padding` |
 | `.rotationEffect` | Content changes (`Text`, `Image`) |
 | `.offset` (transform) | `.font` size changes |
-| `.blur` | `HStack`/`VStack` spacing |
-| `.brightness` | Adding/removing views |
-| `.saturation` | `.fixedSize` changes |
+| `.brightness` | `HStack`/`VStack` spacing |
+| `.saturation` | Adding/removing views |
+| | `.fixedSize` changes |
+| | `.blur(radius:)` animated -- off-screen render pass every frame |
+| | `.shadow(radius:/offset:)` animated -- same off-screen-pass cost; a static shadow is free |
+
+`.blur` and `.shadow` are cheap ONLY when their parameters are static. Animating either one's radius (or a shadow's offset) forces the compositor to recompute an off-screen pass every frame -- the top cause of scroll-list hitches. Never key `.blur`/`.shadow` to a scroll- or gesture-driven value; animate the opacity of a pre-blurred layer instead.
 
 **Rule:** Prefer `scaleEffect` over `frame` changes. Prefer `offset` (as transform) over layout offset.
 
 ## Reduce Motion (CRITICAL)
 
-Always check the user's Reduce Motion preference. Skip animations or replace with crossfade.
+Always check the user's Reduce Motion preference. Skip animations or replace with crossfade. **Double-gate:** both the explicit (`withAnimation`) and implicit (`.animation(_:value:)`) call sites must route through the SAME `Animation?` accessor -- `Animation` has no `.identity`, so `nil` is the only valid "off" value.
 
 ```swift
 @Environment(\.accessibilityReduceMotion) var reduceMotion
@@ -154,13 +158,21 @@ var animation: Animation? {
     reduceMotion ? nil : .spring(duration: 0.4, bounce: 0.2)
 }
 
+// Explicit call site
 withAnimation(animation) {
     showDetail.toggle()
 }
 
+// Implicit call site -- same accessor, not a second decision
+Circle()
+    .scaleEffect(showDetail ? 1.2 : 1.0)
+    .animation(animation, value: showDetail)
+
 // For transitions:
 .transition(reduceMotion ? .opacity : .slide.combined(with: .opacity))
 ```
+
+Gating only one call site is the most common Reduce Motion bug: a view animates correctly from a button tap (`withAnimation`) but still slides on every other state change because a sibling `.animation(_:value:)` on the same property was never wired to the same accessor. See `references/accessibility/05-motion-accessibility.md` for the full substitution catalog (transitions, `matchedGeometryEffect`, scroll parallax, looping symbol/phase/keyframe effects).
 
 ## Animation purpose
 
@@ -192,9 +204,10 @@ If an animation doesn't communicate one of these, remove it.
 
 ## See also
 
-- `02-spring-physics.md` -- spring parameters in depth
-- `03-advanced-animators.md` -- PhaseAnimator, KeyframeAnimator, CustomAnimation
-- `04-transitions-geometry.md` -- transitions and matchedGeometryEffect
-- `05-gesture-driven.md` -- interactive animation
-- `accessibility/03-visual-accessibility.md#reduce-motion`
+- `references/animation/02-spring-physics.md#spring-presets` -- spring parameters in depth
+- `references/animation/03-advanced-animators.md#phaseanimator` -- PhaseAnimator, KeyframeAnimator, CustomAnimation
+- `references/animation/04-transitions-geometry.md#transitions` -- transitions and matchedGeometryEffect
+- `references/animation/05-gesture-driven.md#interactive-springs-for-gesture-handoff` -- interactive animation
+- `references/accessibility/03-visual-accessibility.md#reduce-motion` -- Reduce Motion deep dive
+- `references/accessibility/05-motion-accessibility.md` -- full RM substitution catalog (OWNER)
 - `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md`
