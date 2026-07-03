@@ -1,7 +1,7 @@
 ---
 name: review-ios-ui
 description: |-
-  Review existing iOS UI code for Apple-native quality. Dispatches 3 specialists in parallel: apple-ui-reviewer (HIG + visual + Liquid Glass), animation-haptics-engineer (motion + tactile), and accessibility-engineer (VoiceOver + Dynamic Type + contrast + motor). Merges findings into a unified report with per-dimension verdicts. Triggers on "review my iOS UI", "check this screen", "does this feel Apple-native?", "audit the UI", "HIG review". When accessibility is the whole ask ("is my app accessible?"), use audit-accessibility instead.
+  Review existing iOS UI code for Apple-native quality. Dispatches 3 specialists in parallel: apple-ui-reviewer (HIG + visual + Liquid Glass), animation-haptics-engineer (motion + tactile), and accessibility-engineer (VoiceOver + Dynamic Type + contrast + motor). Merges findings into a unified report with per-dimension verdicts. Triggers on "review my iOS UI", "check this screen", "does this feel Apple-native?", "audit the UI", "HIG review". Also use proactively after any work that built or modified SwiftUI/UIKit UI: run it on the diff before claiming done, even when nobody asked for a review. When accessibility is the whole ask ("is my app accessible?"), use audit-accessibility instead.
 ---
 
 # Review iOS UI
