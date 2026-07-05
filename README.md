@@ -21,11 +21,19 @@ Targets **iOS 26** (Liquid Glass, `.sensoryFeedback`, `@Observable`, App Intents
 
 ## Installation
 
-Clone this repository, then add it to Claude Code as a plugin:
-
 ```bash
-git clone https://github.com/TheMizeGuy/apple-ui-craft-public.git
+# 1. Add this repo as a marketplace
+claude plugin marketplace add https://github.com/TheMizeGuy/apple-ui-craft-public.git
+
+# 2. Install the plugin
+claude plugin install apple-ui-craft@apple-ui-craft-public
+
+# 3. Restart Claude Code for the plugin to load
 ```
+
+After restart, verify with `claude plugin list`. Updates ship through the same channel: when a new release lands, run `claude plugin marketplace update apple-ui-craft-public` then `claude plugin update apple-ui-craft@apple-ui-craft-public`, or accept the update prompt in `/plugin`.
+
+Manual alternative: `git clone https://github.com/TheMizeGuy/apple-ui-craft-public.git` and load with `claude --plugin-dir <path>`.
 
 ## Skills
 
