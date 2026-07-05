@@ -1,6 +1,6 @@
 # apple-ui-craft
 
-A team of seven Fable 5 specialists embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
+A team of seven specialist agents -- running on the session model, always the strongest available Claude -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
 
 New here? The [Usage Guide](USAGE.md) walks through every skill with worked invocations. The [Architecture](ARCHITECTURE.md) has the full file map.
 
@@ -116,12 +116,12 @@ The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the
 
 ## Ultracode
 
-Under ultracode, every skill runs conductor-executor: the session model -- Fable 5 or Opus 4.8, interchangeably -- conducts (scope, verdicts, dedup, synthesis) and teams of Sonnet-5 executors at `xhigh` effort run the scoped grunt stages (recon, evidence sweeps, instrumentation inventory, component scaffolding, post-approval application). Specialists stay on the session model; verdicts are never delegated. The shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`. See [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
+Under ultracode, every skill runs conductor-executor: the session model conducts, Sonnet-5 executor teams at `xhigh` effort run the scoped grunt stages, and verdicts are never delegated. The canonical explanation lives in [`USAGE.md` -- How ultracode changes behavior](USAGE.md#how-ultracode-changes-behavior); the shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`.
 
 ## Backed by
 
-- Fable 5 or Opus 4.8 as the ultracode conductor -- interchangeable, either drives the workflow identically
-- Fable 5 for every agent by default; Sonnet 5 only as conductor-managed executors at `xhigh` effort; never Haiku
+- The session model as the ultracode conductor -- always the strongest available Claude, whichever model that is
+- The session model for every agent by default; Sonnet 5 only as conductor-managed executors at `xhigh` effort; never Haiku
 - 88-file iOS Development vault (~103,000 lines), distilled into the reference library
 - A Context7-verified version-floor registry (iOS 16 through iOS 27 beta)
 - GoodMem Learnings for prior debugging and audit findings

@@ -1,9 +1,8 @@
 ---
 name: animation-haptics-engineer
 description: |-
-  Read-only review and optimization of iOS animations and haptics -- SwiftUI spring physics, PhaseAnimator, KeyframeAnimator, matchedGeometryEffect, gesture-driven animation, symbol effects, Core Haptics, .sensoryFeedback, AHAP, and Reduce Motion compliance. Returns severity-tagged findings with exact spring parameters and haptic placements. Backed by Fable 5. Use when the user says "my animations don't feel right", "they feel web-like", "where should I add haptics?".
+  Read-only review and optimization of iOS animations and haptics -- SwiftUI spring physics, PhaseAnimator, KeyframeAnimator, matchedGeometryEffect, gesture-driven animation, symbol effects, Core Haptics, .sensoryFeedback, AHAP, and Reduce Motion compliance. Returns severity-tagged findings with exact spring parameters and haptic placements. Runs on the session model -- always the strongest available Claude. Use when the user says "my animations don't feel right", "they feel web-like", "where should I add haptics?".
 tools: Read, Grep, Glob, Bash, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
-model: fable
 color: yellow
 ---
 

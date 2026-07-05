@@ -1,9 +1,8 @@
 ---
 name: apple-ui-architect
 description: |-
-  Designs new iOS UI from scratch -- a screen, flow, component family, or full app interface. Produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptics, and accessibility from birth -- code you can drop into Xcode and build. Backed by Fable 5 + the plugin reference library + 88-file iOS vault + GoodMem + serena + Context7. Use when the user says "design the settings screen", "build me a list-to-detail flow with a hero transition", "create the UI for".
+  Designs new iOS UI from scratch -- a screen, flow, component family, or full app interface. Produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptics, and accessibility from birth -- code you can drop into Xcode and build. Runs on the session model (always the strongest available Claude) backed by the plugin reference library + 88-file iOS vault + GoodMem + serena + Context7. Use when the user says "design the settings screen", "build me a list-to-detail flow with a hero transition", "create the UI for".
 tools: Read, Grep, Glob, Bash, Write, Edit, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
-model: fable
 color: blue
 ---
 

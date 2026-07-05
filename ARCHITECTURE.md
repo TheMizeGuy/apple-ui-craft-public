@@ -4,7 +4,7 @@ Internal map of files, responsibilities, and cross-references. Not loaded by Cla
 
 ## Mission
 
-A team of seven Fable 5 specialists embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
+A team of seven specialist agents -- running on the session model, always the strongest available Claude -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
 
 ## Layout
 
@@ -21,7 +21,7 @@ apple-ui-craft/
 │   ├── craft-ios-ui/SKILL.md        "make this feel Apple-native" (full team)
 │   ├── audit-accessibility/SKILL.md "audit my app for accessibility" (a11y solo, deep)
 │   └── integrate-platform/SKILL.md  "make my app feel native beyond the UI" (platform solo)
-├── agents/                      (7 Fable 5 specialists)
+├── agents/                      (7 specialists, running on the session model)
 │   ├── apple-ui-architect.md          greenfield design + production SwiftUI
 │   ├── apple-ui-reviewer.md           HIG + visual + Liquid Glass audit
 │   ├── animation-haptics-engineer.md  motion + interaction/feel + tactile feedback
@@ -185,7 +185,7 @@ Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appe
 
 ## Ultracode conductor mode
 
-Under ultracode, every skill runs conductor-executor: the session model -- Fable 5 or Opus 4.8, interchangeably (either conducts identically) -- conducts (scope, verdicts, dedup, conflict resolution, synthesis) and Sonnet-5 xhigh executor teams run the scoped grunt stages (recon, per-screen evidence, instrumentation inventory, component scaffolding, post-approval mechanical application). Each skill carries its split-of-labor table and dimension-specific executor scoping; the shared dispatch mechanics, fan-out doctrine (executor teams scale to natural breadth -- the <=10/wave, <=20/turn caps apply to session-model agents only), executor prompt contract, and validation gate live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. Specialists stay `model: fable`; verdicts are never delegated; worktree isolation for parallel writes. Never Haiku; never Sonnet below xhigh.
+Under ultracode, every skill runs conductor-executor: the session model conducts, Sonnet-5 xhigh executor teams run the scoped grunt stages, and verdicts are never delegated. Each skill carries only its split-of-labor table and dimension-specific executor scoping; the shared dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants (never Haiku; never Sonnet below xhigh) live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
 
 ## Relationship to ios-code-review
 

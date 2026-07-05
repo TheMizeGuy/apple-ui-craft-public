@@ -55,6 +55,10 @@ Unified report with:
 - Performance fixes (concrete rewrites)
 - Top 3 priority actions
 
+## Execution mode
+
+Every agent this skill dispatches inherits the session model -- always the strongest available Claude. When the session model is already the strongest tier and the optimization scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry. Never block on, or call out to, a model that isn't the session model.
+
 ## Ultracode conductor mode
 
 When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard 2-specialist dispatch above unchanged.
@@ -68,4 +72,4 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set: absolute paths of `references/animation/*`, `references/interaction/*`, `references/haptics/*`, `references/performance/*` + `references/_scaffolding/version-floor-registry.md`.
 - Inline the severity scale and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (rows 1-3 Reduce-Motion gating, row 5 compositor cost, rows 9-10 transition/flash safety -- the motion-relevant rows; sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- The `animation-haptics-engineer` / `performance-engineer` specialists stay `model: fable` -- judgment reviewers, never executors.
+- The `animation-haptics-engineer` / `performance-engineer` specialists stay on the session model -- judgment reviewers, never executors.

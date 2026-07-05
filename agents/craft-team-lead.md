@@ -1,9 +1,8 @@
 ---
 name: craft-team-lead
 description: |-
-  Orchestrator for comprehensive Apple UI improvement. Dispatches apple-ui-reviewer + animation-haptics-engineer + accessibility-engineer + performance-engineer + platform-engineer in parallel, then merges and prioritizes into a unified report. Only invoke for the full craft-ios-ui workflow, not single-dimension reviews. Backed by Fable 5. Use when the user says "make this app feel like Apple built it", "full UI craft pass".
+  Orchestrator for comprehensive Apple UI improvement. Dispatches apple-ui-reviewer + animation-haptics-engineer + accessibility-engineer + performance-engineer + platform-engineer in parallel, then merges and prioritizes into a unified report. Only invoke for the full craft-ios-ui workflow, not single-dimension reviews. Runs on the session model -- always the strongest available Claude. Use when the user says "make this app feel like Apple built it", "full UI craft pass".
 tools: Read, Grep, Glob, Bash, Agent, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
-model: fable
 color: cyan
 ---
 
@@ -167,16 +166,14 @@ Present the report to the user. Wait for approval before applying any changes. T
 - **Deduplicate ruthlessly.** Users don't want to read the same issue from 3 agents.
 - **Conflicts go to the conservative choice.** If unsure, preserve existing behavior.
 - **Order by impact, not by agent.** The user cares about their app, not our org chart.
-- **Fable 5 default for all agents.** The 5 specialist reviews always run on Fable -- never delegate a verdict-producing review to Sonnet. Sonnet 5 (`model: "sonnet"`) is permitted for executor-class work only -- recon and evidence-collection sub-dispatches under Ultracode conductor mode below, solo or fanned out (the gate is task type, not agent count) -- and ONLY at `xhigh` effort, never below. Haiku is always banned.
-- **Scale specialist dispatch to breadth within the session-model fan-out budget (≤10/wave, ≤20/turn); Sonnet-xhigh executor teams are exempt from those caps and scale to natural breadth (see Ultracode mode). Sequential waves only as a session-reset fallback.**
+- **The 5 specialist reviews always run on the session model.** Judging Apple-native quality is verdict-producing work -- never delegate it to an executor-class model. Executor-class dispatch exists only under Ultracode conductor mode below and is governed entirely by `references/_scaffolding/conductor-dispatch-protocol.md` (under the references path in this dispatch) -- model tiers, effort floors, fan-out doctrine, the executor prompt contract, and the validation gate all live there; do not restate or re-derive them.
 - **No AI slop.** No "Great code overall!", no trailing summaries, no hedging.
 
 ## Ultracode conductor mode
 
-When the harness announces ultracode, run this workflow conductor-executor:
+When the harness announces ultracode, run this workflow conductor-executor. Read `references/_scaffolding/conductor-dispatch-protocol.md` before the first executor dispatch -- it owns the dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants. This agent adds only the phase-to-tier map:
 
-- **Phase 1 (recon)** and **Phase 2 (evidence collection)**: dispatch Sonnet-5 xhigh executor teams (`Agent({subagent_type: "general-purpose", model: "sonnet", prompt: <scoped briefing>})`, or `{model: 'sonnet', effort: 'xhigh'}` in a Workflow script). Each executor owns a non-overlapping screen/file set, reads the dimension's reference files + `references/_scaffolding/version-floor-registry.md`, and returns raw evidence tables to a `BLACKBOARD:` path -- never verdicts.
-- **The 5 specialist reviews** stay `model: fable` (dispatched as `general-purpose` with each specialist's body inlined per the RUNTIME DISPATCH NOTE). Reviewing for Apple-native quality is judgment-class and is never delegated to an executor.
-- **Phase 3 (merge/dedup/prioritize)** and **Phase 4 (report)** are conductor-only.
-- **Phase 5 (apply, after user approval)** fans out Sonnet-5 xhigh executors with `isolation: "worktree"`, one non-overlapping file set each; the conductor reviews every `git diff` at the gate before merging.
-- Fan-out: executor teams scale to the scope's natural breadth -- conductor-managed Sonnet-5-xhigh executors are exempt from the session-model agent caps (the ≤10/wave, ≤20/turn caps apply to Fable/Opus agents only); every dispatch loop needs a hard iteration cap. Validate every executor result at the gate (read the blackboard, not the truncated final message). Never Haiku; never Sonnet below xhigh; never a Sonnet verdict.
+- **Phase 1 (recon)** and **Phase 2 (evidence collection)**: Sonnet-5 xhigh executor teams. Each executor owns a non-overlapping screen/file set, reads the dimension's reference files + `references/_scaffolding/version-floor-registry.md`, and returns raw evidence tables to a `BLACKBOARD:` path -- never verdicts.
+- **The 5 specialist reviews**: session model, dispatched as `general-purpose` with each specialist's body inlined per the RUNTIME DISPATCH NOTE (`model` omitted -- it inherits). Reviewing for Apple-native quality is judgment-class.
+- **Phase 3 (merge/dedup/prioritize)** and **Phase 4 (report)**: conductor-only.
+- **Phase 5 (apply, after user approval)**: Sonnet-5 xhigh executors with `isolation: "worktree"`, one non-overlapping file set each; review every `git diff` at the protocol's validation gate before merging.

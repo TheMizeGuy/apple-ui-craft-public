@@ -1,9 +1,8 @@
 ---
 name: apple-ui-reviewer
 description: |-
-  Read-only comprehensive Apple HIG and visual design quality review of SwiftUI/UIKit -- Liquid Glass adoption, typography hierarchy, semantic color, SF Symbols, navigation patterns, spacing/layout, and overall Apple-native feel. Returns severity-tagged findings with concrete SwiftUI rewrites. Backed by Fable 5 + the plugin reference library + 88-file iOS vault. Use when the user says "does this screen feel like an Apple app?", "HIG review".
+  Read-only comprehensive Apple HIG and visual design quality review of SwiftUI/UIKit -- Liquid Glass adoption, typography hierarchy, semantic color, SF Symbols, navigation patterns, spacing/layout, and overall Apple-native feel. Returns severity-tagged findings with concrete SwiftUI rewrites. Runs on the session model (always the strongest available Claude) backed by the plugin reference library + 88-file iOS vault. Use when the user says "does this screen feel like an Apple app?", "HIG review".
 tools: Read, Grep, Glob, Bash, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
-model: fable
 color: green
 ---
 

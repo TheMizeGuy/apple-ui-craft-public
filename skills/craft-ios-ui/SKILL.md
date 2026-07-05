@@ -52,6 +52,44 @@ Comprehensive report with:
 - Prioritized improvement plan
 - Praise for well-implemented patterns
 
+## Finding format (worked example)
+
+Every finding in the merged report carries four parts: a severity tag, a `file:line` location, a `references/` citation, and a current -> suggested rewrite in verbatim-applicable SwiftUI. This is what a correct finding looks like:
+
+> **HIGH -- Favorite toggle gives no tactile confirmation** -- `RecipeCard.swift:31-36`
+>
+> The heart animates visually but fires no haptic, so the action feels weightless -- and the hard-coded `easeInOut` fights the toggle's snap. Pair the state change with `.sensoryFeedback` and let the default spring carry the motion. Reference: `references/haptics/02-swiftui-sensory-feedback.md#toggle`.
+
+```swift
+// current
+Button { isFavorite.toggle() } label: {
+    Image(systemName: isFavorite ? "heart.fill" : "heart")
+}
+.animation(.easeInOut(duration: 0.3), value: isFavorite)
+
+// suggested
+Button { isFavorite.toggle() } label: {
+    Image(systemName: isFavorite ? "heart.fill" : "heart")
+}
+.animation(.spring, value: isFavorite)
+.sensoryFeedback(.impact(weight: .light), trigger: isFavorite)
+```
+
+A finding missing any of the four parts fails the report gate below -- send it back to the producing specialist, never patch it up silently.
+
+## Report acceptance gate
+
+Check the team lead's merged report against each item before presenting it to the user:
+
+1. All 5 specialists reported -- a blackboard file exists per specialist and is >100 bytes.
+2. Every finding carries all four parts of the format above.
+3. The verdict table has all 6 rows (5 dimensions + Overall), each with a verdict from that dimension's fixed vocabulary.
+4. No finding appears twice -- duplicates flagged by multiple specialists are merged with both credited.
+5. The improvement plan is ordered by severity, then effort; every plan item names the finding(s) it addresses.
+6. Praise section present (empty is acceptable only for a genuinely weak codebase -- say so).
+
+One failed item -> one re-dispatch to the offending agent with the concrete gap named; a second failure -> fix the report directly and note the correction.
+
 ## When to use this vs. other skills
 
 | Goal | Skill | Agents | Time |
@@ -62,6 +100,10 @@ Comprehensive report with:
 | Deep accessibility-only audit | `audit-accessibility` | 1 | 5-10 min |
 | System-integration audit | `integrate-platform` | 1 | 5-10 min |
 | **The full treatment** | **`craft-ios-ui`** | **5 + lead** | **10-30 min** |
+
+## Execution mode
+
+Every agent this skill dispatches -- the orchestrator and its 5 specialists -- inherits the session model, always the strongest available Claude. When the session model is already the strongest tier and the review scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry. Never block on, or call out to, a model that isn't the session model.
 
 ## Ultracode conductor mode
 
@@ -76,4 +118,4 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set per dimension from the ARCHITECTURE reference<->agent matrix + `references/_scaffolding/version-floor-registry.md`.
 - When reviewing motion, translucency, or custom controls, inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- Stage-tier map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection run as Sonnet-xhigh executor teams; the 5 specialist reviews stay `model: fable`; merge and report (Process steps 3-4) are conductor-only; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated Sonnet-xhigh executors.
+- Stage-tier map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection run as Sonnet-xhigh executor teams; the 5 specialist reviews stay on the session model; merge and report (Process steps 3-4) are conductor-only; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated Sonnet-xhigh executors.

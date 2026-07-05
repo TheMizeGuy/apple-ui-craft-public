@@ -38,6 +38,10 @@ apple-ui-craft:platform-engineer
 
 All findings are advisory. The user chooses what to build.
 
+## Execution mode
+
+The specialist this skill dispatches inherits the session model -- always the strongest available Claude. When the session model is already the strongest tier and the integration scope is small, the orchestrator may run the audit inline in the main context (foreground) instead of dispatching a separate agent, without weakening the platform-engineer's read-only guarantee. Never block on, or call out to, a model that isn't the session model.
+
 ## Ultracode conductor mode
 
 When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard dispatch above unchanged.
@@ -51,4 +55,4 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set: absolute paths of `references/platform/` + `references/cross-platform/` + `references/_scaffolding/version-floor-registry.md`.
 - Executors report evidence and research, never rankings -- the conductor ranks. This skill stays advisory end to end: no executor writes project files. Scaffolding is a separate task the user must ask for after the report.
-- The `platform-engineer` specialist stays `model: fable` -- judgment reviewer, never an executor.
+- The `platform-engineer` specialist stays on the session model -- judgment reviewer, never an executor.

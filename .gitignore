@@ -3,3 +3,4 @@
 .claude/
 .remember/
 .anti-slop/
+node_modules/
