@@ -271,4 +271,3 @@ struct SampleTripsModifier: PreviewModifier {
 - `references/performance/02-scroll-list-performance.md` -- scroll-time hitch budget the N+1/prefetch fixes protect
 - `references/performance/06-concurrency-ui.md` -- `@ModelActor` off-main work as a specific case of the general concurrency rules
 - `references/accessibility/03-visual-accessibility.md#reduce-motion` -- the Reduce Motion transaction pattern used above
-- `~/Claude/vault/iOS Development/` -- `@Model`/`ModelContainer`/`ModelContext`/`@ModelActor` persistence internals

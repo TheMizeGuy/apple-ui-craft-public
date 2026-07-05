@@ -210,4 +210,3 @@ Keep regardless of Reduce Motion: haptics (governed by the system Haptics settin
 - `references/interaction/04-gesture-disambiguation.md` -- which recognizer wins a touch; scroll-vs-drag conflict resolution (OWNER)
 - `references/accessibility/04-motor-interaction.md#native-voiceover-bridge-apis` -- base `accessibilityDragPoint`/`DropPoint`/`ZoomAction`/`ScrollAction` signatures (OWNER)
 - `references/accessibility/05-motion-accessibility.md` -- full Reduce Motion substitution catalog (OWNER)
-- `~/Claude/vault/iOS Development/07 - SwiftUI Advanced Patterns.md#gestures`

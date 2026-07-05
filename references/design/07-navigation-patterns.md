@@ -395,5 +395,3 @@ When both restoration and an incoming link apply on the same cold launch, **the 
 - `references/design/02-liquid-glass.md` -- glass tab bar and toolbar buttons
 - `references/design/06-layout-spacing.md` -- safe area, toolbar layout
 - `references/patterns/05-modality-sheets.md` -- sheets, popovers, alerts, confirmationDialog, drag-to-dismiss
-- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md#navigation`
-- `~/Claude/vault/iOS Development/75 - SwiftUI on iPad and Adaptive Layout.md`

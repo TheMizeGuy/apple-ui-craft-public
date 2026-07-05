@@ -45,4 +45,3 @@ What CRITICAL/HIGH/MEDIUM/LOW looks like in this domain -- 1 line each, only whe
 ## See also
 
 - `references/<topic>/<file>.md#<heading-slug>` -- <why>
-- `~/Claude/vault/iOS Development/<file>.md` -- deep source

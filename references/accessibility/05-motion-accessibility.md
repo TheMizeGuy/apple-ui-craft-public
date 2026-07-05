@@ -253,4 +253,3 @@ Inside `body(content:phase:)`, apply modifiers to `content` -- never conditional
 - `references/animation/05-gesture-driven.md#reduce-motion` -- gesture-release settle gating, essential-vs-decorative split
 - `references/animation/06-scroll-driven-effects.md` -- scroll-linked parallax/fade Reduce Motion gating
 - `references/design/05-sf-symbols.md#symbol-effects-and-reduce-motion` -- full symbol-effect catalog and rendering modes
-- `~/Claude/vault/iOS Development/10 - Accessibility.md`

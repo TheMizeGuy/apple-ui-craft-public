@@ -272,4 +272,3 @@ For data visualization, prefer Swift Charts (`Chart { }`), which is accessible b
 - `references/accessibility/05-motion-accessibility.md#accessibility-contract` -- Reduce Motion double-gate contract
 - `references/accessibility/03-visual-accessibility.md#reduce-motion` -- what auto-gates vs what you own
 - `references/design/09-swift-charts.md` -- accessible-by-default alternative to hand-drawn data viz
-- `~/Claude/vault/iOS Development/` -- WWDC23 "Create rich documents with SwiftUI shaders" source material

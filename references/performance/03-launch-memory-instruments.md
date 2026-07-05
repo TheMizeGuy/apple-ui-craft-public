@@ -330,5 +330,3 @@ This file instruments performance -- it has no direct Reduce Motion, VoiceOver, 
 - `references/performance/06-concurrency-ui.md` -- off-main-thread fix catalog for hang root causes
 - `references/performance/07-build-performance.md` -- compile-time diagnostics (`-warn-long-function-bodies`, cross-module optimization) owner
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion contract this file's hang/hitch targets sit underneath
-- `~/Claude/vault/iOS Development/54 - Xcode Instruments Deep Dive.md` -- full Instruments reference
-- `~/Claude/vault/iOS Development/23 - Performance Optimization.md` -- deep source material

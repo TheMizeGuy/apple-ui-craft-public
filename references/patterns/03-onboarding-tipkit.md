@@ -226,4 +226,3 @@ CRITICAL: any code path that gates functionality behind a declinable permission,
 - `references/design/05-sf-symbols.md#rendering-modes` -- hierarchical rendering for hero/feature-row glyphs
 - `references/accessibility/03-visual-accessibility.md#reduce-motion` -- the system-vs-developer-owned motion boundary this file's page-advance gate follows
 - `references/accessibility/05-motion-accessibility.md#accessibility-contract` -- the double-gate accessor pattern
-- `~/Claude/vault/iOS Development/` -- deep source for TipKit and permission APIs

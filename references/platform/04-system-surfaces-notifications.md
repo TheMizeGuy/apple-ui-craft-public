@@ -246,4 +246,3 @@ CRITICAL: a push carrying sensitive content ships with no Notification Service E
 - `references/patterns/05-modality-sheets.md#confirmation-dialogs` -- `confirmationDialog` vs `.alert` (owner)
 - `references/patterns/04-loading-empty-error.md` -- `ContentUnavailableView` and `redacted` loading skeletons (owner)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate for any looping polish animation (owner)
-- `~/Claude/vault/iOS Development/` -- deep UserNotifications/UNNotificationContentExtension source material

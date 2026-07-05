@@ -162,4 +162,3 @@ Reduce Motion governs decorative motion, not feedback or intent -- gating the wr
 - `references/interaction/03-direct-manipulation-drag.md` -- 1:1 tracking, momentum, and rubber-banding built on top of the interruptibility model here
 - `references/performance/03-launch-memory-instruments.md#hangs-hitches-and-the-swiftui-instrument` -- frame-budget table and field measurement (MetricKit, Instruments)
 - `references/accessibility/05-motion-accessibility.md` -- full Reduce Motion substitution catalog (OWNER)
-- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md#spring-animations`

@@ -249,4 +249,3 @@ CRITICAL: a required-data form with dismissal enabled silently discards user wor
 - `references/design/07-navigation-patterns.md#deep-linking` -- hierarchical/tab navigation that these modals interrupt
 - `references/haptics/02-swiftui-sensory-feedback.md` -- the full `.impact`/`.sensoryFeedback` contract
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate for any modal content you animate yourself
-- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md#navigation` -- deep source

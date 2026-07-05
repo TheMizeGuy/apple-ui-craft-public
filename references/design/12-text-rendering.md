@@ -282,4 +282,3 @@ Use `.explicit` behavior for content whose language you know at runtime (user-ge
 - `references/design/13-canvas-shaders.md` -- writing `.metal` shader functions, `ShaderLibrary`, performance
 - `references/accessibility/05-motion-accessibility.md#accessibility-contract` -- Reduce Motion double-gate contract
 - `references/animation/03-advanced-animators.md#keyframeanimator` -- driving a `TextRenderer` from `KeyframeAnimator`
-- `~/Claude/vault/iOS Development/` -- TextRenderer, Text.Layout deep source

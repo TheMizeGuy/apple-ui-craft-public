@@ -331,4 +331,3 @@ For images shown in lists, decode at target size on a background thread before d
 
 - `references/performance/02-scroll-list-performance.md#off-screen-rendering` -- list-specific optimization, off-screen render cost
 - `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` -- animation cost baseline
-- `~/Claude/vault/iOS Development/23 - Performance Optimization.md` -- full reference

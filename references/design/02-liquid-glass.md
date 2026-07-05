@@ -211,4 +211,3 @@ Glass rendering is GPU-composited. iOS 26's device floor (approximately A13 / iP
 - `references/design/01-apple-design-philosophy.md#deference` -- why Liquid Glass exists
 - `references/accessibility/03-visual-accessibility.md#reduce-transparency` -- a11y adaptation
 - `references/cross-platform/05-visionos.md` -- `glassBackgroundEffect` and visionOS-native glass
-- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md` -- full HIG section

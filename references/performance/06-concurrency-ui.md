@@ -269,4 +269,3 @@ func settle(_ base: Animation) -> Animation? { reduceMotion ? nil : base }   // 
 - `references/performance/01-swiftui-rendering.md` -- image handling and decode-off-main for lists
 - `references/performance/02-scroll-list-performance.md` -- off-main image decode/downsample during scroll
 - `references/design/07-navigation-patterns.md#empty-states-ios-17` -- `ContentUnavailableView` styling for `.failed`/empty branches
-- `~/Claude/vault/iOS Development/` -- Swift concurrency deep source

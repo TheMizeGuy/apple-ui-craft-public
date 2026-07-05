@@ -213,4 +213,3 @@ CRITICAL: a pinch-targetable custom view with no `.hoverEffect()` or hit-test co
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate (owner)
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- the 44pt baseline this file's 60pt gaze-target floor extends
 - `references/cross-platform/01-ipados-multiplatform.md#pointer-and-hover` -- contrast with iPad's touch-hardware hover model
-- `~/Claude/vault/iOS Development/` -- deep visionOS spatial source material

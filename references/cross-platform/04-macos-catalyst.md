@@ -190,4 +190,3 @@ CRITICAL: a command reachable only via a hover-revealed control or held modifier
 - `references/platform/02-app-intents-system.md#keyboard-shortcuts-ipad-and-mac` -- base `.keyboardShortcut` patterns this file's Mac deltas extend (owner)
 - `references/accessibility/07-cognitive-hearing-assistive.md#voice-control-switch-control-and-full-keyboard-access` -- Full Keyboard Access contract (owner; distinct from `.keyboardShortcut()`)
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate (owner)
-- `~/Claude/vault/iOS Development/` -- deep macOS/Catalyst source material

@@ -144,4 +144,3 @@ If the latter, remove it.
 - `references/design/02-liquid-glass.md#design-properties` -- the current implementation of deference + depth
 - `references/design/03-typography-dynamic-type.md` -- how clarity manifests in text
 - `references/design/04-color-system.md` -- semantic colors as deference to system context
-- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md` -- full HIG reference

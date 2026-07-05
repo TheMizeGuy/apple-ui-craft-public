@@ -208,4 +208,3 @@ CRITICAL: restoration state written only on `.background`, silently discarding u
 - `references/patterns/04-loading-empty-error.md` -- `redacted(reason: .placeholder)` loading-skeleton pattern (owner)
 - `references/performance/02-scroll-list-performance.md` -- scroll rendering cost, as distinct from restoring scroll position
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate (owner)
-- `~/Claude/vault/iOS Development/` -- deep Scene/SwiftUI lifecycle source material

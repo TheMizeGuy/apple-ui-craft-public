@@ -334,4 +334,3 @@ func test_screenAccessibility() throws {
 - `references/accessibility/02-dynamic-type-adaptation.md#the-12-sizes` -- text scaling
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- accessibility for physical disabilities
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate, symbol/Phase/Keyframe gating
-- `~/Claude/vault/iOS Development/10 - Accessibility.md` -- full reference

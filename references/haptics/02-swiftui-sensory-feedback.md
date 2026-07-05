@@ -295,4 +295,3 @@ struct MyView: View {
 
 - `references/haptics/01-haptic-design-principles.md#haptic-placement-matrix` -- when and where to use haptics
 - `references/haptics/03-core-haptics-engine.md#chhapticengine` -- custom patterns beyond built-in feedback
-- `~/Claude/vault/iOS Development/77 - Core Haptics and Sensory Feedback.md`

@@ -386,4 +386,3 @@ This generalizes past this file: system auto-gating only covers Glass specular h
 - `references/animation/02-spring-physics.md#spring-presets` -- spring parameters
 - `references/animation/04-transitions-geometry.md#transitions` -- transitions are different from animators
 - `references/accessibility/05-motion-accessibility.md` -- full RM substitution catalog (OWNER)
-- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md`

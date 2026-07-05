@@ -269,4 +269,3 @@ Any property SwiftUI binds to directly needs its side-effect logic in `didSet` o
 - `references/performance/06-concurrency-ui.md#task-and-taskid` -- full `.task`/`.task(id:)` cancellation semantics and concurrency isolation
 - `references/design/07-navigation-patterns.md#deep-linking` -- `NavigationPath` persistence, restoration, and scene-scoping for routers
 - `references/animation/01-animation-fundamentals.md#reduce-motion-critical` -- `.animation(value:)` mechanics this file's Pattern 4 builds on
-- `~/Claude/vault/iOS Development/` -- SwiftUI state management deep source

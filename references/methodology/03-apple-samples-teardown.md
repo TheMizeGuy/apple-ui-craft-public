@@ -291,4 +291,3 @@ CRITICAL: n/a to this file directly -- see the owning API file's severity guide 
 - `references/interaction/05-press-feedback-states.md#composable-capstone-pressablestyle` -- the press-scale `ButtonStyle` used by hero cards
 - `references/accessibility/05-motion-accessibility.md#accessibility-contract` -- the Reduce Motion accessor every animated recipe above routes through
 - `references/methodology/04-whatsnew-sota-log.md` -- companion file: what changed in the OS since these patterns were extracted
-- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md` -- deep source

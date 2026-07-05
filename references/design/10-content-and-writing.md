@@ -157,4 +157,3 @@ Every pattern above IS the VoiceOver experience -- a verb-first button, a specif
 - `references/design/12-text-rendering.md#controlling-how-text-fits` -- truncation, `lineLimit`, `minimumScaleFactor` APIs
 - `references/accessibility/01-voiceover-fundamentals.md#accessibility-labels` -- when a separate accessibility label is actually needed
 - `references/accessibility/06-localization-rtl.md` -- String Catalog plumbing, RTL mirroring, pluralization mechanics
-- `~/Claude/vault/iOS Development/` -- HIG Writing, Buttons, Alerts source pages

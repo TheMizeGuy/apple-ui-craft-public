@@ -186,4 +186,3 @@ A `.highPriorityGesture` that greedily claims every touch can also swallow the s
 - `references/interaction/05-press-feedback-states.md` -- `Button`/`ButtonStyle` press lifecycle (OWNER)
 - `references/accessibility/04-motor-interaction.md#no-complex-gestures-required-wcag-251-pointer-gestures` -- single-pointer alternative requirement (WCAG 2.5.1, Level A)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate (OWNER)
-- `~/Claude/vault/iOS Development/07 - SwiftUI Advanced Patterns.md#gestures`

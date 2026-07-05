@@ -200,4 +200,3 @@ Bugs cluster at the corners -- locale x Dynamic Type x layout direction:
 - `references/accessibility/01-voiceover-fundamentals.md` -- VoiceOver label/hint/value contract this file's localized strings feed into
 - `references/accessibility/02-dynamic-type-adaptation.md` -- the AX1-AX5 scale this file's expansion corner-cases against
 - `references/patterns/00-screen-archetypes-index.md` -- where localization QA fits in a screen's build checklist
-- `~/Claude/vault/iOS Development/` -- String Catalogs, RTL, Foundation formatting deep source

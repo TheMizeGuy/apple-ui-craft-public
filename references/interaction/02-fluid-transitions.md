@@ -146,4 +146,3 @@ The interactive pop/scrub itself is direct manipulation and stays under Reduce M
 - `references/interaction/01-fluid-smoothness-interruptible.md` -- the retargeting mechanism behind "interruptible," `Transaction.tracksVelocity` (OWNER)
 - `references/interaction/03-direct-manipulation-drag.md#momentum-projecting-the-throw` -- velocity-projection math shared with the scrubbed-transition commit decision (OWNER)
 - `references/accessibility/05-motion-accessibility.md` -- full Reduce Motion substitution catalog (OWNER)
-- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md#transitions`

@@ -153,4 +153,3 @@ CRITICAL: a primary action reachable only by Double Tap or Wrist Flick with no t
 - `references/platform/03-controls-standby.md` -- the relevance-scoping table shared with Live Activities and controls (owner)
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- 44pt baseline this file's scarce screen real estate must still honor
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate (owner)
-- `~/Claude/vault/iOS Development/` -- deep watchOS source material

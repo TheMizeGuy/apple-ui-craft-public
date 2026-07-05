@@ -166,4 +166,3 @@ CRITICAL: `WebView`/`WebPage` shipped as the ONLY implementation with a deployme
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate for native chrome drawn around a `WebView` (owner)
 - `references/design/07-navigation-patterns.md#search` -- SwiftUI's `.findNavigator`/`.searchable` family this file's find integration reuses
 - `references/_scaffolding/version-floor-registry.md#ios-26x` -- the unified 26.0 boundary WebView/WebPage share with Liquid Glass and Foundation Models
-- `~/Claude/vault/iOS Development/` -- deep WebKit source material

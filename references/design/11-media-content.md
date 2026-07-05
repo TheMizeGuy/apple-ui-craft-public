@@ -209,4 +209,3 @@ CRITICAL: autoplay with no motion/setting gate, or flashing media with no `acces
 - `references/accessibility/03-visual-accessibility.md` -- Reduce Transparency, Smart Invert, seizure safety (owner)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate (owner)
 - `references/platform/01-widgets-live-activities.md` -- Now Playing / `MPNowPlayingInfoCenter` integration for audio apps
-- `~/Claude/vault/iOS Development/` -- deep AVKit/PhotosUI source material

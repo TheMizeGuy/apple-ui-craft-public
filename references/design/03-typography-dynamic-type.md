@@ -244,4 +244,3 @@ Always test with:
 
 - `references/design/04-color-system.md` -- color hierarchy that pairs with text hierarchy
 - `references/accessibility/02-dynamic-type-adaptation.md` -- accessibility deep dive
-- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md` -- Text and Font reference

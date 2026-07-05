@@ -293,7 +293,7 @@ ColorTarget()
     }
 ```
 
-For complex Transferable conformance, see `~/Claude/vault/iOS Development/50 - Drag Drop Clipboard and Share.md`.
+For complex Transferable conformance, see `references/patterns/10-drag-drop.md#transferable-conformance-the-contract`.
 
 ## Pull to refresh
 
@@ -377,4 +377,3 @@ if #available(iOS 27, *) {
 - `references/interaction/01-fluid-smoothness-interruptible.md` -- interruptibility, velocity handoff (OWNER)
 - `references/interaction/03-direct-manipulation-drag.md` -- deep drag/pinch/rotate cookbook + accessibility alternatives (OWNER)
 - `references/accessibility/05-motion-accessibility.md` -- full RM substitution catalog (OWNER)
-- `~/Claude/vault/iOS Development/07 - SwiftUI Advanced Patterns.md#gestures`

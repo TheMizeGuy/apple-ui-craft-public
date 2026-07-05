@@ -202,8 +202,3 @@ Agent-to-reference (distinct context -- relative from the agent file):
 ```
 ../references/<topic>/<file>.md
 ```
-
-Vault citations (authoring-time provenance only -- shipped findings cite `references/`):
-```
-~/Claude/vault/iOS Development/<file>.md#section
-```

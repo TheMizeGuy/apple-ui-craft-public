@@ -294,4 +294,3 @@ Button("Delete") {
 - `references/accessibility/01-voiceover-fundamentals.md` -- VoiceOver accessibility
 - `references/accessibility/02-dynamic-type-adaptation.md#the-12-sizes` -- text scaling
 - `references/accessibility/03-visual-accessibility.md#reduce-motion` -- color, motion, contrast
-- `~/Claude/vault/iOS Development/10 - Accessibility.md`

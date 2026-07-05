@@ -247,4 +247,3 @@ CRITICAL: a hover-only affordance (row action, resize handle) with no touch/keyb
 - `references/patterns/05-modality-sheets.md#popovers` -- popover-vs-sheet adaptivity (owner)
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate (owner)
 - `references/cross-platform/04-macos-catalyst.md`, `05-visionos.md`, `02-watchos.md`, `03-tvos.md` -- per-platform deep dives
-- `~/Claude/vault/iOS Development/` -- deep SwiftUI-on-iPad source material

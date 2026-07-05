@@ -180,4 +180,3 @@ CRITICAL: a `Canvas`-drawn chart shipped with zero accessibility layer, or a tru
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate for chart transitions (owner)
 - `references/haptics/02-swiftui-sensory-feedback.md#basic-syntax` -- `.sensoryFeedback(.selection, trigger:)` for scrub feedback (owner)
 - `references/design/11-media-content.md` -- image/video rendering pipeline for non-chart visual media
-- `~/Claude/vault/iOS Development/` -- deep Swift Charts source material

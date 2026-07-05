@@ -184,4 +184,3 @@ CRITICAL: a control ships with no App-Group-safe state and crashes/no-ops when i
 - `references/platform/02-app-intents-system.md#action-button-iphone-15-pro` -- App Intents' own Action Button entry point
 - `references/platform/01-widgets-live-activities.md#rendering-modes-and-liquid-glass-tinting` -- `\.widgetRenderingMode`, `.widgetAccentable()` (owner)
 - `references/haptics/02-swiftui-sensory-feedback.md` -- `.sensoryFeedback` for Action Button press confirmation
-- `~/Claude/vault/iOS Development/` -- deep WidgetKit/ControlWidget source material

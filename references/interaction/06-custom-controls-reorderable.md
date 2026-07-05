@@ -247,4 +247,3 @@ if #available(iOS 27, *) {
 - `references/design/02-liquid-glass.md#glasseffectcontainer-multi-element-glass` -- `GlassEffectContainer`/`glassEffectID` morph mechanics (OWNER)
 - `references/haptics/02-swiftui-sensory-feedback.md` -- `SensoryFeedback` case catalog (OWNER)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate (OWNER)
-- `~/Claude/vault/iOS Development/50 - Drag Drop Clipboard and Share.md`

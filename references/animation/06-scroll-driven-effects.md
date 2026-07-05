@@ -181,4 +181,3 @@ Content is never hidden under Reduce Motion -- the card/row/header still appears
 - `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` -- compositor-safe vs expensive property cost table (OWNER)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate contract (OWNER)
 - `references/haptics/02-swiftui-sensory-feedback.md#pull-to-refresh` -- `SensoryFeedback` threshold-haptic API
-- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md`

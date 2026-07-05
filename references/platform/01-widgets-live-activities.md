@@ -412,5 +412,3 @@ Design update cadence around the real event, not an assumed rate ceiling. Exceed
 ## See also
 
 - `references/platform/02-app-intents-system.md#app-intents` -- App Intents power widget interactions
-- `~/Claude/vault/iOS Development/30 - App Extensions and WidgetKit.md`
-- `~/Claude/vault/iOS Development/74 - Live Activities and Dynamic Island.md`

@@ -195,5 +195,3 @@ Cannot be done in simulator. Always:
 
 - `references/haptics/02-swiftui-sensory-feedback.md#built-in-feedback-types` -- the SwiftUI API (owner of `SensoryFeedback`, weight/flexibility, start/stop)
 - `references/haptics/03-core-haptics-engine.md#chhapticengine` -- Core Haptics for custom patterns
-- `~/Claude/vault/iOS Development/77 - Core Haptics and Sensory Feedback.md` -- full reference
-- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#haptics`

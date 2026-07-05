@@ -195,4 +195,3 @@ Springs are decorative motion the user can turn off. Gate every spring-driven ca
 
 - `references/animation/01-animation-fundamentals.md#reduce-motion-critical` -- when to use springs vs curves, RM double-gate
 - `references/animation/05-gesture-driven.md#interactive-springs-for-gesture-handoff` -- interactive springs for gestures
-- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md#spring-animations`

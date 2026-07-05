@@ -177,4 +177,3 @@ CRITICAL: a trapped Menu button with no dismissal path. HIGH: body/button text u
 - `references/accessibility/01-voiceover-fundamentals.md` -- VoiceOver navigates the same focus engine the remote drives
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate (owner)
 - `references/platform/02-app-intents-system.md` -- iOS deep-link surfaces use App Intents; Top Shelf uses URL actions instead
-- `~/Claude/vault/iOS Development/` -- deep tvOS source material

@@ -165,4 +165,3 @@ CRITICAL: a layout that clips or truncates essential content at AX5 with no refl
 - `references/cross-platform/01-ipados-multiplatform.md#choosing-the-top-level-shape` -- the concrete iPad top-level shape decision, pointer/hover, windowing (owner)
 - `references/design/07-navigation-patterns.md#navigationsplitview-ios-16` -- base `NavigationSplitView` mechanics, `columnVisibility` (owner)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate for animated layout transitions (owner)
-- `~/Claude/vault/iOS Development/` -- deep adaptive-layout source material

@@ -268,4 +268,3 @@ CRITICAL: an AI entry point renders with no availability check and crashes/error
 - `references/platform/02-app-intents-system.md#opening-the-app-from-a-control-ios-26` -- `supportedModes`/`IntentModes`, the `openAppWhenRun` migration (owner)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate for streaming/generation animation (owner)
 - `references/patterns/04-loading-empty-error.md` -- `ContentUnavailableView`/`redacted` primitives reused for AI loading states (owner)
-- `~/Claude/vault/iOS Development/` -- deep Foundation Models/App Intents source material

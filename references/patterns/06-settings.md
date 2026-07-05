@@ -255,4 +255,3 @@ CRITICAL: a preference silently fails to persist (missing `@Observable` persist 
 - `references/design/02-liquid-glass.md#accessibility-auto-adaptation` -- Reduce Transparency behavior a `Form` inherits for free
 - `references/accessibility/02-dynamic-type-adaptation.md` -- Dynamic Type scaling for row labels and footers
 - `references/cross-platform/04-macos-catalyst.md` -- full macOS Settings-scene and windowing conventions
-- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md#form` -- deep source

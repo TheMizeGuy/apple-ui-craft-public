@@ -182,4 +182,3 @@ CRITICAL: a permission or review prompt fired cold on first launch with no primi
 - `references/patterns/05-modality-sheets.md#accessibility-contract` -- the shared system-presented-transition Reduce Motion contract
 - `references/platform/04-system-surfaces-notifications.md` -- rich notification content, grouping, `relevanceScore`, Apple Intelligence interplay
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- 44×44pt minimum for any hand-rolled priming button
-- `~/Claude/vault/iOS Development/12 - Platform Integration.md` -- deep source

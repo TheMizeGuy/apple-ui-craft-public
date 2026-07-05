@@ -107,7 +107,7 @@ CRITICAL: an iOS-27-beta-only symbol shipped ungated as the primary example -- w
 
 ## Source sessions and durable citations
 
-Cite these by name rather than a vault path so a citation never 404s for an agent that can't open `~/Claude/vault/`:
+Cite these by name rather than an internal file path so a citation never 404s for an agent that can't open the author's private notes:
 
 - WWDC25 "Get to know the new design system" (session #356) -- the Liquid Glass design-system introduction behind the iOS 26.0 entry above.
 - WWDC25 "Meet Liquid Glass," "Build a SwiftUI app with Liquid Glass," "Applying Liquid Glass to custom views" -- the API sessions `design/02-liquid-glass.md` and this log's 26.0 entry draw from.
@@ -122,4 +122,3 @@ Cite these by name rather than a vault path so a citation never 404s for an agen
 - `references/platform/06-apple-intelligence-ui.md#foundation-models-sessions-streaming-and-tool-calling-ui` -- the Apple Intelligence surfaces this log only dates
 - `references/platform/02-app-intents-system.md#assistant-schemas-ios-26` -- the assistant-schema requirement introduced by the 26.4 Siri revamp
 - `references/methodology/03-apple-samples-teardown.md` -- companion file: how these APIs compose into screens, extracted from real sample code
-- `~/Claude/vault/iOS Development/01 - Apple HIG and Design Philosophy.md` -- deep source

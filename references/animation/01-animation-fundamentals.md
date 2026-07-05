@@ -210,4 +210,3 @@ If an animation doesn't communicate one of these, remove it.
 - `references/animation/05-gesture-driven.md#interactive-springs-for-gesture-handoff` -- interactive animation
 - `references/accessibility/03-visual-accessibility.md#reduce-motion` -- Reduce Motion deep dive
 - `references/accessibility/05-motion-accessibility.md` -- full RM substitution catalog (OWNER)
-- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md`

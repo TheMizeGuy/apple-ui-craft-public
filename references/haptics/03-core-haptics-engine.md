@@ -398,4 +398,3 @@ Core Haptics is for:
 - `references/haptics/01-haptic-design-principles.md#haptic-placement-matrix` -- when to design custom patterns
 - `references/haptics/02-swiftui-sensory-feedback.md#built-in-feedback-types` -- prefer this when built-ins suffice
 - `references/platform/09-scene-lifecycle.md` -- `\.scenePhase` lifecycle in depth
-- `~/Claude/vault/iOS Development/77 - Core Haptics and Sensory Feedback.md` -- full reference with AHAP grammar

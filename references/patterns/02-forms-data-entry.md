@@ -193,4 +193,3 @@ CRITICAL: a numeric-keyboard field with no dismiss affordance traps the user wit
 - `references/haptics/02-swiftui-sensory-feedback.md#built-in-feedback-types` -- `.selection`/`.error`/`.success` triggers for controls and submit
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- 44pt floor for any hand-rolled control
 - `references/accessibility/05-motion-accessibility.md#accessibility-contract` -- the Reduce Motion double-gate for animated validation state
-- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md` -- deep source

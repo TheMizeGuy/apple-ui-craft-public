@@ -242,4 +242,3 @@ Users can apply a system-wide tint to UI elements via Settings > Display & Brigh
 - `references/design/02-liquid-glass.md#tint-and-interactivity` -- `Glass.tint(_:)` contract; materials evolved into Liquid Glass
 - `references/design/03-typography-dynamic-type.md` -- text colors pair with typography
 - `references/accessibility/03-visual-accessibility.md` -- contrast, color, Smart Invert
-- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#color`

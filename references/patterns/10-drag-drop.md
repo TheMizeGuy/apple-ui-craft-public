@@ -281,4 +281,3 @@ CRITICAL: drag is the sole path to a required action with no accessible alternat
 - `references/design/02-liquid-glass.md` -- the material system the iOS 26 drag preview renders through
 - `references/accessibility/04-motor-interaction.md#drag-operations-have-single-pointer-alternatives-wcag-257` -- the non-drag-alternative requirement
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate for any custom hover animation
-- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md#drag-and-drop` -- deep source

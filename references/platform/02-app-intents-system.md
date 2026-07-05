@@ -520,7 +520,3 @@ Use this to decide what's worth implementing:
 ## See also
 
 - `references/platform/01-widgets-live-activities.md#interactive-widgets-ios-17` -- widgets and Live Activities use App Intents
-- `~/Claude/vault/iOS Development/47 - App Intents and Siri.md` -- full reference
-- `~/Claude/vault/iOS Development/34 - Deep Linking and Navigation.md` -- universal links, Spotlight
-- `~/Claude/vault/iOS Development/60 - TipKit.md` -- TipKit deep dive
-- `~/Claude/vault/iOS Development/50 - Drag Drop Clipboard and Share.md` -- drag/drop, ShareLink

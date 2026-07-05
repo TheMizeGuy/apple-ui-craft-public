@@ -403,4 +403,3 @@ Full substitution catalog and the `Animation?`/`nil` double-gate mechanics live 
 - `references/animation/01-animation-fundamentals.md#reduce-motion-critical` -- when to use transitions vs animations, RM double-gate
 - `references/animation/02-spring-physics.md#spring-presets` -- spring parameters for transition animations
 - `references/accessibility/05-motion-accessibility.md` -- full RM substitution catalog (OWNER)
-- `~/Claude/vault/iOS Development/81 - SwiftUI Animation Deep Dive.md#transitions`

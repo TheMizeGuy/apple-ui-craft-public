@@ -330,4 +330,3 @@ Test your app with each. Many real users have multiple of these enabled.
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate, symbol/Phase/Keyframe gating in depth
 - `references/accessibility/07-cognitive-hearing-assistive.md` -- captions, Live Captions, hearing and cognitive accessibility
 - `references/design/04-color-system.md` -- semantic colors auto-adapt
-- `~/Claude/vault/iOS Development/10 - Accessibility.md`

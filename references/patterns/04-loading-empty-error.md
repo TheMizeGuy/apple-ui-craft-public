@@ -210,4 +210,3 @@ CRITICAL: a redacted skeleton left tappable/navigable, or a background refresh f
 - `references/patterns/09-auth-account.md#flow-states-loading-cancel-error-success` -- this same load-state discipline applied to a sign-in flow
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- the 44pt floor for `ContentUnavailableView` actions
 - `references/accessibility/05-motion-accessibility.md#accessibility-contract` -- the Reduce Motion double-gate for shimmer/transition motion
-- `~/Claude/vault/iOS Development/` -- deep source for `ContentUnavailableView` and resilience patterns

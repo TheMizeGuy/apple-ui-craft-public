@@ -328,5 +328,3 @@ Form {
 
 - `references/design/07-navigation-patterns.md` -- safe area + navigation interplay
 - `references/accessibility/04-motor-interaction.md` -- 44pt touch target rule + WCAG citations
-- `~/Claude/vault/iOS Development/06 - SwiftUI Fundamentals.md#layout`
-- `~/Claude/vault/iOS Development/75 - SwiftUI on iPad and Adaptive Layout.md`

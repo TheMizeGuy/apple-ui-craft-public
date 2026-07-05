@@ -355,4 +355,3 @@ if #available(iOS 26.4, *) {
 - `references/accessibility/04-motor-interaction.md#switch-control` and `#voice-control` -- baseline coverage this file adds depth to
 - `references/accessibility/05-motion-accessibility.md#autoplay-and-flashing-content-gates----the-other-motion-settings` -- the independent Motion settings table (autoplay, flashing lights, animated images)
 - `references/haptics/04-sound-audio-ux.md#accessibility-contract` -- sound-design decisions (never-sole-channel, Silent Mode) this file's hearing section builds on
-- `~/Claude/vault/iOS Development/10 - Accessibility.md` -- full reference

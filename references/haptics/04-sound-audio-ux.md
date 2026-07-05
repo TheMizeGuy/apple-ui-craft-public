@@ -259,4 +259,3 @@ Hearing-specific accessibility depth (captions, `MediaAccessibility`, Sound Reco
 - `references/haptics/03-core-haptics-engine.md#audio-and-haptic-sync` -- tight-sync `audioCustom` pattern mechanics
 - `references/accessibility/07-cognitive-hearing-assistive.md#hearing-accessibility` -- captions, Sound Recognition, mono audio, MFi hearing devices
 - `references/cross-platform/05-visionos.md` -- spatial audio in the broader visionOS surface
-- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#playing-audio` -- deep source

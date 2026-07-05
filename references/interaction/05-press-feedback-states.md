@@ -278,4 +278,3 @@ if #available(iOS 26, *) {
 - `references/design/02-liquid-glass.md#tint-and-interactivity` -- `Glass.interactive()` press behavior (OWNER)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate (OWNER)
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- 44x44pt minimum hit region (OWNER)
-- `~/Claude/vault/iOS Development/07 - SwiftUI Advanced Patterns.md#gestures`

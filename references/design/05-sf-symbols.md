@@ -308,4 +308,3 @@ HStack {
 - `references/accessibility/01-voiceover-fundamentals.md` -- accessibility labels for images
 - `references/accessibility/05-motion-accessibility.md` -- the general Reduce Motion double-gate contract this file's symbol-effect gating follows
 - SF Symbols app: download from Apple developer for full catalog
-- `~/Claude/vault/iOS Development/09 - Human Interface Guidelines.md#sf-symbols`

@@ -176,4 +176,3 @@ Enable via `OTHER_SWIFT_FLAGS -cross-module-optimization` in Xcode (SwiftPM: `-X
 
 - `references/performance/01-swiftui-rendering.md#view-decomposition` -- runtime re-render boundary, the sibling half of body decomposition
 - `references/performance/04-state-architecture.md` -- `@Observable`/`@ViewBuilder` patterns that keep bodies small by construction
-- `~/Claude/vault/iOS Development/` -- Swift compiler internals deep source

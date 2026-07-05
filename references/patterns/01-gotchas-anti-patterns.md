@@ -201,4 +201,3 @@ Every gotcha above that touches motion or transparency is developer-owned unless
 - `references/performance/01-swiftui-rendering.md#animation-cost-layout-vs-render` -- animation cost table, shadow/blur cost
 - `references/performance/02-scroll-list-performance.md#off-screen-rendering` -- off-screen render triggers
 - `references/haptics/02-swiftui-sensory-feedback.md` -- `.sensoryFeedback` trigger semantics (OWNER)
-- `~/Claude/vault/iOS Development/` -- deep source material for every gotcha above

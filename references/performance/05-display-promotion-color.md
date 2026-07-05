@@ -184,4 +184,3 @@ This is a developer-owned gate, not system-automatic -- `TimelineView` has no kn
 - `references/performance/02-scroll-list-performance.md#off-screen-rendering` -- render-cost sources that eat the frame budget this file protects
 - `references/design/02-liquid-glass.md` -- Glass materials that sample HDR/P3 content behind them
 - `references/accessibility/03-visual-accessibility.md#reduce-motion` -- the double-gate pattern this file's `TimelineView` example follows
-- `~/Claude/vault/iOS Development/` -- ProMotion and Core Animation deep source

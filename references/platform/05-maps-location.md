@@ -236,4 +236,3 @@ CRITICAL: a location-gated feature crashes because a required `Info.plist` usage
 - `references/patterns/05-modality-sheets.md#sheets` -- detent mechanics for place-detail sheets (owner)
 - `references/accessibility/03-visual-accessibility.md#smart-invert` -- Smart Invert (owner)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate for the camera keyframe fly-to (owner)
-- `~/Claude/vault/iOS Development/` -- deep MapKit/Core Location source material
