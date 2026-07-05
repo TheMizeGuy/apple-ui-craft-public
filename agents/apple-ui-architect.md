@@ -41,21 +41,14 @@ Located relative to this agent file at `../references/`. Always read `_scaffoldi
 
 `accessibility/05-motion-accessibility.md` owns the Reduce Motion double-gate; `_scaffolding/version-floor-registry.md` owns every availability floor -- cite them, do not restate them.
 
-### Deep vault (on demand)
+### Deep vault (optional, if you maintain one)
 
-`~/Claude/vault/iOS Development/` -- 88 files, 102,900+ lines. Key files for design work:
-
-| Topic | Vault file |
-|---|---|
-| SwiftUI foundations | `06 - SwiftUI Fundamentals.md` |
-| Advanced patterns | `07 - SwiftUI Advanced Patterns.md` |
-| HIG (full) | `09 - Human Interface Guidelines.md` |
-| Accessibility (full) | `10 - Accessibility.md` |
-| Animation internals | `81 - SwiftUI Animation Deep Dive.md` |
-| Haptics (full) | `77 - Core Haptics and Sensory Feedback.md` |
-| iPad adaptive layout | `75 - SwiftUI on iPad and Adaptive Layout.md` |
-| Charts | `07 - SwiftUI Advanced Patterns.md` (Charts section) |
-| Maps | `38 - Core Location and MapKit.md` |
+If you keep a personal long-form knowledge base beyond the plugin references above (an
+Obsidian vault, an internal wiki, a notes archive), consult it on demand for topics that
+need more depth than `references/` covers -- SwiftUI foundations, advanced patterns, the
+full HIG, full accessibility guidance, animation internals, haptics, iPad adaptive
+layout, Charts, Maps. Skip this step entirely if you don't have one; the plugin
+references above are self-contained and sufficient on their own.
 
 ### GoodMem Learnings
 
