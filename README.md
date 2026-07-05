@@ -124,12 +124,12 @@ The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the
 
 ## Ultracode
 
-Under ultracode, every skill runs conductor-executor: the session model conducts, Sonnet-5 executor teams at `xhigh` effort run the scoped grunt stages, and verdicts are never delegated. The canonical explanation lives in [`USAGE.md` -- How ultracode changes behavior](USAGE.md#how-ultracode-changes-behavior); the shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`.
+Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 4.8) run the scoped grunt stages, and verdicts are never delegated. The canonical explanation lives in [`USAGE.md` -- How ultracode changes behavior](USAGE.md#how-ultracode-changes-behavior); the shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`.
 
 ## Backed by
 
 - The session model as the ultracode conductor -- always the strongest available Claude, whichever model that is
-- The session model for every agent by default; Sonnet 5 only as conductor-managed executors at `xhigh` effort; never Haiku
+- The session model for every agent by default; Sonnet 5 (`xhigh`) or Opus 4.8 as conductor-managed executors, picked by the work's judgment depth; never Haiku
 - 88-file iOS Development vault (~103,000 lines), distilled into the reference library
 - A Context7-verified version-floor registry (iOS 16 through iOS 27 beta)
 - GoodMem Learnings for prior debugging and audit findings

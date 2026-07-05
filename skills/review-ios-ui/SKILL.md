@@ -60,7 +60,7 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Executor teams (Sonnet 5, ALWAYS `effort: xhigh`) |
+| Conductor (session model -- never delegated) | Executor teams (conductor-selected: Sonnet 5 ALWAYS `effort: xhigh`, or Opus 4.8) |
 |---|---|
 | Per-dimension verdicts, severity grading, finding dedup across dimensions, final report synthesis | Per-screen evidence sweeps (one executor per screen group): HIG deviations, contrast pairs, touch-target measurements, Dynamic Type breakpoints -- raw evidence tables for the conductor and the 3 specialists to grade |
 

@@ -9,7 +9,8 @@ of sync with the fan-out doctrine once already.
 ## Mode
 
 The session model CONDUCTS -- always the strongest available Claude, whichever model
-that is -- and teams of Sonnet 5 executors at `xhigh` effort run the scoped grunt stages.
+that is -- and conductor-selected executor teams (Sonnet 5 @ `xhigh`, or Opus 4.8 for leg-work needing
+deeper judgment) run the scoped grunt stages.
 Judgment work never moves down: severity grades, rankings, apply/no-apply decisions,
 design origination, and final synthesis are conductor-class or specialist-class (running
 on the session model), always.
@@ -18,19 +19,19 @@ on the session model), always.
 
 - Agent tool: `Agent({subagent_type: "general-purpose", model: "sonnet", prompt: <scoped
   briefing>})` -- a session at xhigh means executors inherit xhigh. In Workflow scripts
-  pass `{model: 'sonnet', effort: 'xhigh'}` explicitly.
+  pass `{model: 'sonnet', effort: 'xhigh'}` (or `{model: 'opus'}`) explicitly.
 - Plugin specialist agents (`apple-ui-craft:*`) stay on the session model (`model`
   omitted from their frontmatter -- it inherits) -- judgment reviewers, never executors.
-  Sonnet executors are always plain `general-purpose` with the scoped briefing inlined.
-- The Sonnet gate is task TYPE, not agent count -- a single executor-class dispatch is
+  Executors are always plain `general-purpose` with the scoped briefing inlined.
+- The executor gate is task TYPE, not agent count -- a single executor-class dispatch is
   fine.
 
 ## Fan-out
 
 - Scale executor teams to the scope's natural breadth (one executor per screen group,
   surface, component family, or file set) -- never a round-number quota.
-- Conductor-managed Sonnet-5-xhigh executor teams are exempt from the session-model agent
-  caps; the <=10/wave, <=20/turn caps apply to session-model agents only.
+- Conductor-managed executor teams (Sonnet or Opus) are exempt from the session-model agent
+  caps (>20 Opus executors in one turn still needs explicit sign-off); the <=10/wave, <=20/turn caps apply to session-model agents only.
 - Every dispatch loop needs a hard iteration cap; Workflow loops also guard on
   `budget.remaining()`.
 - Executors writing files in parallel use `isolation: "worktree"`; read-only sweeps do
@@ -60,7 +61,7 @@ work over directly. Never a third executor attempt.
 
 ## Hard invariants
 
-Never Haiku. Never Sonnet below `xhigh`. Never a Sonnet verdict. Nothing in this protocol
+Never Haiku. Never Sonnet below `xhigh`. Never an executor verdict. Nothing in this protocol
 may block on, or call out to, a model that isn't the session model -- if the session model
 is already the strongest available tier and a stage is small enough, the conductor may run
 it inline in the main context instead of dispatching, without weakening any read-only or

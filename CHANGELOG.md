@@ -2,6 +2,10 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.2.6 -- 2026-07-05
+
+- Executor model selection v2 (tracks the private source): executor-class dispatches are conductor-selected -- Sonnet 5 at `xhigh` for mechanical, well-specified stages, or Opus 4.8 when the leg-work needs deeper judgment. Replaced every Sonnet-only executor phrasing across README, USAGE, ARCHITECTURE, the conductor dispatch protocol, the team lead, and all six skill split-of-labor tables; invariants now read "Never Haiku. Never Sonnet below `xhigh`. Never an executor verdict." More than 20 Opus executors in one turn still needs explicit user sign-off.
+
 ## 0.2.5 -- 2026-07-05
 
 - Un-pinned every agent's `model: fable` frontmatter; agents now inherit the session model (always the strongest available Claude) instead of a named model, so the plugin keeps working across model transitions.

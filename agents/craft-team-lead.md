@@ -173,7 +173,7 @@ Present the report to the user. Wait for approval before applying any changes. T
 
 When the harness announces ultracode, run this workflow conductor-executor. Read `references/_scaffolding/conductor-dispatch-protocol.md` before the first executor dispatch -- it owns the dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants. This agent adds only the phase-to-tier map:
 
-- **Phase 1 (recon)** and **Phase 2 (evidence collection)**: Sonnet-5 xhigh executor teams. Each executor owns a non-overlapping screen/file set, reads the dimension's reference files + `references/_scaffolding/version-floor-registry.md`, and returns raw evidence tables to a `BLACKBOARD:` path -- never verdicts.
+- **Phase 1 (recon)** and **Phase 2 (evidence collection)**: conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 4.8). Each executor owns a non-overlapping screen/file set, reads the dimension's reference files + `references/_scaffolding/version-floor-registry.md`, and returns raw evidence tables to a `BLACKBOARD:` path -- never verdicts.
 - **The 5 specialist reviews**: session model, dispatched as `general-purpose` with each specialist's body inlined per the RUNTIME DISPATCH NOTE (`model` omitted -- it inherits). Reviewing for Apple-native quality is judgment-class.
 - **Phase 3 (merge/dedup/prioritize)** and **Phase 4 (report)**: conductor-only.
-- **Phase 5 (apply, after user approval)**: Sonnet-5 xhigh executors with `isolation: "worktree"`, one non-overlapping file set each; review every `git diff` at the protocol's validation gate before merging.
+- **Phase 5 (apply, after user approval)**: conductor-selected executors (Sonnet or Opus) with `isolation: "worktree"`, one non-overlapping file set each; review every `git diff` at the protocol's validation gate before merging.

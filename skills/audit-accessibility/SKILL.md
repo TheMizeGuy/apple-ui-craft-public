@@ -59,7 +59,7 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Executor teams (Sonnet 5, ALWAYS `effort: xhigh`) |
+| Conductor (session model -- never delegated) | Executor teams (conductor-selected: Sonnet 5 ALWAYS `effort: xhigh`, or Opus 4.8) |
 |---|---|
 | Scope decision, severity verdicts, WCAG-level grading, finding dedup, final report synthesis -- accessibility verdicts are always conductor-class | Per-screen a11y evidence collection against the engineer's 5-dimension check tables; VoiceOver label/trait/order inventory; contrast-pair computation sweeps; Dynamic Type breakpoint capture |
 

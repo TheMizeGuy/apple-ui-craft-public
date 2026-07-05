@@ -185,7 +185,7 @@ Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appe
 
 ## Ultracode conductor mode
 
-Under ultracode, every skill runs conductor-executor: the session model conducts, Sonnet-5 xhigh executor teams run the scoped grunt stages, and verdicts are never delegated. Each skill carries only its split-of-labor table and dimension-specific executor scoping; the shared dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants (never Haiku; never Sonnet below xhigh) live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
+Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 4.8) run the scoped grunt stages, and verdicts are never delegated. Each skill carries only its split-of-labor table and dimension-specific executor scoping; the shared dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants (never Haiku; never Sonnet below xhigh) live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
 
 ## Relationship to ios-code-review
 
