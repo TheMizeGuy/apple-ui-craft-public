@@ -169,10 +169,11 @@ A chart that conveys real information is NOT accessible until it has BOTH per-ma
 | `Canvas`-drawn chart with no accessibility layer | Zero VoiceOver access -- invisible to assistive tech | `Chart`/`Chart3D`, or manual `accessibilityChartDescriptor` |
 | Per-row sparkline built with a full `Chart` in a `LazyVGrid` | Latent perf CRITICAL -- axis/scale/legend machinery per cell | A plain `Path` for a 60×24 trend hint |
 | Rainbow color scale for a magnitude heatmap | No perceptual order, fails CVD and looks unprofessional | Single-hue lightness ramp (`Gradient(colors: [.blue.opacity(0.1), .blue])`) |
+| Two y-scales on one plot (dual-axis: a second series overlaid via a `ZStack` of `Chart`s or a rescaled second `yStart`) | The alignment of the two scales is arbitrary, so the chart invents a correlation the data does not contain -- the #1 chart-design mistake | Two stacked charts sharing an x-domain, small multiples, or index both series to a common base (=100 at t0) on one axis |
 
 ## Severity guide
 
-CRITICAL: a `Canvas`-drawn chart shipped with zero accessibility layer, or a truncated y-axis baseline presented as fact. HIGH: `SectorMark`/`Chart3D` used below its floor with no `#available` gate; color-only series encoding with no `.symbol(by:)` fallback. MEDIUM: missing `AXChartDescriptor` on a chart that already has per-mark labels; unbounded chart height inside a `ScrollView`. LOW: a legend shown for a 1-2 series chart where direct annotation would read faster. NIT: `.interpolationMethod(.catmullRom)` on count data that should use `.monotone`.
+CRITICAL: a `Canvas`-drawn chart shipped with zero accessibility layer, or a truncated y-axis baseline presented as fact. HIGH also covers a dual-axis overlay (two y-scales on one plot) presented as a single chart. HIGH: `SectorMark`/`Chart3D` used below its floor with no `#available` gate; color-only series encoding with no `.symbol(by:)` fallback. MEDIUM: missing `AXChartDescriptor` on a chart that already has per-mark labels; unbounded chart height inside a `ScrollView`. LOW: a legend shown for a 1-2 series chart where direct annotation would read faster. NIT: `.interpolationMethod(.catmullRom)` on count data that should use `.monotone`.
 
 ## See also
 
