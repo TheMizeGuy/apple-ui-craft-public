@@ -10,7 +10,7 @@
       "name": "apple-ui-craft",
       "description": "Principal-engineer-grade Apple UI craft for iOS 26. Seven agents, running on the session model (always the strongest available Claude), that design, review, optimize, and craft SwiftUI so it feels like Apple built it -- Liquid Glass, spring animation, intentional haptics, accessibility from birth, SwiftUI performance, and deep platform + cross-platform integration (widgets, Live Activities, App Intents, Apple Intelligence, WebView, watchOS/tvOS/visionOS/CarPlay). Six skills: design-ios (greenfield screen/flow creation), review-ios-ui (HIG + visual + interaction audit), optimize-ios-ui (animation + haptics + performance tuning), craft-ios-ui (full 5-specialist team sweep), audit-accessibility (deep a11y audit), integrate-platform (system-integration audit). Backed by a self-contained reference library across 12 domains (see ARCHITECTURE.md) distilled from an 88-document iOS vault (~103,000 lines), a Context7-verified version-floor registry, GoodMem learnings, and serena navigation. Under ultracode the session model conducts, and Sonnet-5-xhigh executor teams run the scoped grunt stages. Read-only review by default; findings apply only on explicit user approval.",
       "source": "./",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "category": "design",
       "homepage": "https://github.com/TheMizeGuy/apple-ui-craft-public"
     }

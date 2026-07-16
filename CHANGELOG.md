@@ -2,6 +2,10 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.2.7 -- 2026-07-16
+
+- `references/design/11-media-content.md` gains a "Text over images: scrim and progressive blur" section: bottom-weighted `LinearGradient` scrim as the default treatment, masked-material progressive blur (`Rectangle().fill(.regularMaterial).mask { LinearGradient }`, the Apple media-catalog sample pattern -- no public variable-blur modifier exists) as the premium layer, contrast checked against the darkest converged region, gradient onset kept below the focal subject, and the Reduce Transparency degradation note. Matching anti-pattern row and severity entries (text-on-raw-photo HIGH; full-frame dim where a scrim was warranted MEDIUM).
+
 ## 0.2.6 -- 2026-07-05
 
 - Executor model selection v2 (tracks the private source): executor-class dispatches are conductor-selected -- Sonnet 5 at `xhigh` for mechanical, well-specified stages, or Opus 4.8 when the leg-work needs deeper judgment. Replaced every Sonnet-only executor phrasing across README, USAGE, ARCHITECTURE, the conductor dispatch protocol, the team lead, and all six skill split-of-labor tables; invariants now read "Never Haiku. Never Sonnet below `xhigh`. Never an executor verdict." More than 20 Opus executors in one turn still needs explicit user sign-off.

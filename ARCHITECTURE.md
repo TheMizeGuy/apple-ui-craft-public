@@ -45,7 +45,7 @@ apple-ui-craft/
     │   ├── 08-adaptive-layout-ipad.md       ViewThatFits, size classes, AnyLayout, reflow
     │   ├── 09-swift-charts.md               Chart marks, axes, interactivity, Chart3D
     │   ├── 10-content-and-writing.md        microcopy, content design (P2)
-    │   ├── 11-media-content.md              VideoPlayer, PhotosPicker, HDR, PiP
+    │   ├── 11-media-content.md              VideoPlayer, PhotosPicker, HDR, PiP, text-over-image scrims
     │   ├── 12-text-rendering.md             TextRenderer, Text.Layout, DrawingOptions (P2)
     │   └── 13-canvas-shaders.md             Canvas, Metal shaders in SwiftUI (P2)
     ├── animation/

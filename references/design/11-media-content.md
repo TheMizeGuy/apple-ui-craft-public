@@ -154,6 +154,49 @@ session.controls.append(slider)
 
 `AVCaptureSystemZoomSlider`/`AVCaptureSystemExposureBiasSlider` mirror the built-in Camera app for free; `AVCaptureSlider(_:symbolName:in:)` (continuous) or `AVCaptureSlider(_:symbolName:values:)` (discrete) expose a custom parameter. `.onCameraCaptureEvent { }` (SwiftUI, AVKit, iOS 18+) is the hardware-button hook (volume buttons, Camera Control press, AirPods H2 stem click on iOS 26) -- always ship an on-screen shutter too, since Switch Control/VoiceOver users and unsupported hardware need it.
 
+## Text over images: scrim and progressive blur
+
+Text set directly on a photo is a legibility defect: contrast depends on whatever pixels sit behind each glyph. A full-frame dim (`Color.black.opacity(0.5)` over everything) reads, but dulls the very image the layout is built around. The two shipping-grade treatments:
+
+**Gradient scrim** — the default. The image displays untouched, then converges into a text-readable zone behind the copy:
+
+```swift
+Image("hero")
+    .resizable()
+    .aspectRatio(contentMode: .fill)
+    .overlay(alignment: .bottom) {
+        LinearGradient(
+            stops: [
+                .init(color: .clear, location: 0),
+                .init(color: .black.opacity(0.35), location: 0.55),
+                .init(color: .black.opacity(0.82), location: 1)
+            ],
+            startPoint: .top, endPoint: .bottom
+        )
+    }
+    .overlay(alignment: .bottomLeading) { heroCopy.padding() }
+```
+
+**Progressive blur (masked material)** — the premium layer on top of the scrim. There is no public "variable blur" modifier; the sanctioned form is a material fill masked by a `LinearGradient`, so blur ramps up toward the text zone while the rest of the image stays sharp (this is the pattern Apple's own media-catalog sample uses):
+
+```swift
+.overlay {
+    Rectangle()
+        .fill(.regularMaterial)
+        .mask {
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0.45),
+                    .init(color: .black, location: 0.85)
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+        }
+}
+```
+
+Rules: verify the copy's contrast against the *darkest converged region* of the scrim, not the image average; keep the gradient's onset below the focal subject so the transition never bands across a face; a Reduce Transparency check matters here — materials collapse to near-opaque, so the masked-material variant degrades gracefully by design (see `references/accessibility/03-visual-accessibility.md`).
+
 ## Availability + fallbacks
 
 ```swift
@@ -197,10 +240,11 @@ if #available(iOS 17.0, *) {
 | `PHPhotoLibrary.requestAuthorization` + custom grid for "attach a photo" | Unnecessary permission prompt + Info.plist key | `PhotosPicker` (out-of-process, zero authorization) |
 | Decoded `Image(uiImage:)` with no `.accessibilityIgnoresInvertColors()` | Smart Invert paints an inverted photo | Add the modifier on every photo/video/map/chart |
 | `AVCaptureSlider` imported from `AVKit` | Wrong framework -- compile error | `import AVFoundation` |
+| Caption text straight on a photo, or a full-frame 50% dim | Legibility is luck / the dim kills the image | Bottom-weighted `LinearGradient` scrim; masked-material progressive blur for the premium treatment (see Text over images) |
 
 ## Severity guide
 
-CRITICAL: autoplay with no motion/setting gate, or flashing media with no `accessibilityDimFlashingLights` check -- seizure-safety and vestibular violations. HIGH: custom scrubber replacing `VideoPlayer` with no accessibility parity; `AVCaptureSlider` imported from the wrong framework (compile error). MEDIUM: missing `.accessibilityIgnoresInvertColors()` on photo/video content; naive seek-to-zero loop shipped as "looping." LOW: `.high` dynamic range on a grid thumbnail. NIT: legend/caption text not wrapped in real `Text` for Dynamic Type.
+CRITICAL: autoplay with no motion/setting gate, or flashing media with no `accessibilityDimFlashingLights` check -- seizure-safety and vestibular violations. HIGH: custom scrubber replacing `VideoPlayer` with no accessibility parity; `AVCaptureSlider` imported from the wrong framework (compile error); text set directly on a photo with no scrim securing contrast. MEDIUM: missing `.accessibilityIgnoresInvertColors()` on photo/video content; naive seek-to-zero loop shipped as "looping"; full-frame dim overlay where a gradient scrim was warranted. LOW: `.high` dynamic range on a grid thumbnail. NIT: legend/caption text not wrapped in real `Text` for Dynamic Type.
 
 ## See also
 
