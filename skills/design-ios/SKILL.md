@@ -109,3 +109,10 @@ Design origination is NOT an executor task -- the `apple-ui-architect` produces 
 - Reference set: absolute paths of the relevant `references/design/*`, `references/animation/*`, `references/interaction/*` + `references/_scaffolding/version-floor-registry.md`.
 - Inline the production-SwiftUI rules (system fonts/semantic colors/44pt/RM double-gate/#available gating/no phantom APIs).
 - The `apple-ui-architect` / `accessibility-engineer` are pinned to Opus 5 at dispatch -- design + a11y verdicts are never grunt-executor work.
+
+## No review ledger
+
+`design-ios` generates rather than reviews, so it has no prior run to diff
+against and writes no review ledger and no CI artifact. Every reviewing skill
+does: `references/review/04-run-artifacts.md#which-skill-writes-what`.
+

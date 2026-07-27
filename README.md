@@ -60,7 +60,7 @@ Manual alternative: `git clone https://github.com/TheMizeGuy/apple-ui-craft-publ
 
 ## Reference library
 
-**90 reference files** (~23,000 lines) in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 13 content domains plus `_scaffolding` (14 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
+**92 reference files** (~23,000 lines) in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 13 content domains plus `_scaffolding` (14 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
 
 ```
 references/
@@ -72,7 +72,7 @@ references/
 │                    manipulation, gesture disambiguation, press feedback, custom controls
 ├── haptics/         design principles, SensoryFeedback, Core Haptics, sound/audio UX
 ├── accessibility/   VoiceOver, Dynamic Type, visual, motor, motion, localization/RTL,
-│                    cognitive/hearing/assistive
+│                    cognitive/hearing/assistive, the WCAG 2.2 A/AA mapping
 ├── patterns/        screen archetypes, gotchas, forms, onboarding, loading/empty/error,
 │                    modality, settings, feedback, paywall/StoreKit, auth, drag-drop
 ├── performance/     rendering, scroll/list, launch/memory, state architecture,
@@ -84,7 +84,8 @@ references/
 │                    error recovery, navigation and information architecture, states/
 │                    feedback/affordances, the adaptive review method
 ├── review/          HOW to review: the canonical finding format, the evidence pipeline,
-│                    and density and economy (the waste dimension)
+│                    density and economy (the waste dimension), and the run-artifact
+│                    contracts (review ledger + CI verdict)
 ├── exemplars/       end-to-end worked screens (glass, motion+haptics, a11y, perf, platform)
 ├── methodology/     component API design, previews/QA, Apple sample teardowns, what's-new log
 └── _scaffolding/    file template, the single version-floor registry, and the shared
@@ -99,12 +100,12 @@ Per-domain file counts:
 | patterns | 11 | cross-platform | 6 |
 | platform | 9 | usability | 5 |
 | performance | 8 | exemplars | 5 |
-| accessibility | 7 | haptics | 4 |
+| accessibility | 8 | haptics | 4 |
 | animation | 6 | methodology | 4 |
-| | | review | 3 |
+| | | review | 4 |
 | | | `_scaffolding` | 3 |
 
-**Total: 90 files** across 13 content domains plus `_scaffolding`.
+**Total: 92 files** across 13 content domains plus `_scaffolding`.
 
 The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the single source of truth for availability floors, deprecated APIs, and the PHANTOM list -- APIs that do not exist and must never be emitted. Every reference file cites it rather than restating floors.
 

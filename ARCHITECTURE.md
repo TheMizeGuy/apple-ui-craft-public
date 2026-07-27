@@ -29,7 +29,7 @@ apple-ui-craft/
 │   ├── performance-engineer.md        SwiftUI perf, rendering, scroll, state, launch, memory
 │   ├── platform-engineer.md           platform + cross-platform integration
 │   └── craft-team-lead.md             orchestrator for craft-ios-ui multi-pass
-└── references/                  (12 domains -- self-contained knowledge files)
+└── references/                  (14 directories -- self-contained knowledge files)
     ├── _scaffolding/
     │   ├── _TEMPLATE.md                     reference-file skeleton (authoring-only)
     │   ├── conductor-dispatch-protocol.md   shared ultracode dispatch mechanics (all 6 skills point here)
@@ -74,7 +74,8 @@ apple-ui-craft/
     │   ├── 04-motor-interaction.md          OWNER: 44pt/WCAG, Switch Control, Voice Control, drag alt
     │   ├── 05-motion-accessibility.md       OWNER: Reduce Motion double-gate (highest inbound)
     │   ├── 06-localization-rtl.md           String Catalogs, pluralization, layoutDirection, RTL
-    │   └── 07-cognitive-hearing-assistive.md  AssistiveAccess, captions, Live Captions (P2)
+    │   ├── 07-cognitive-hearing-assistive.md  AssistiveAccess, captions, Live Captions (P2)
+    │   └── 08-wcag-2-2-mapping.md          OWNER: every WCAG 2.2 A/AA criterion -> iOS mechanism + owning reference
     ├── patterns/                            (true HIG UX flows)
     │   ├── 00-screen-archetypes-index.md    map: ~12 archetypes -> files + APIs
     │   ├── 01-gotchas-anti-patterns.md      OWNER: #Preview env-key gotcha, RM double-gate idiom
@@ -148,11 +149,17 @@ tests/                            (0.3.0 -- zero-dependency gates, Node >= 18 st
     ├── score-review.mjs          recall + precision gate (floors 0.8)
     ├── selftest.mjs              46 cases verifying the scorer itself
     └── examples/sample-findings.json   a by-the-book run (16/16)
+
+ci/                               (0.3.1 -- the verdict gate a reviewed repo runs)
+├── gate.mjs                      consumes the artifact; binds to the last UI-touching sha, fails closed
+├── verdict-artifact-schema.json  canonical; gate.mjs parses it at runtime
+├── selftest.mjs                  30 cases, every fail-closed path pinned
+└── README.md                     adoption guide for a reviewed repo
 ```
 
 Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship the core; P2 files add depth. Exemplars are labeled "signature-drafted, build-pending" (no Xcode build in this repo). Some P2 files (design/12-13, methodology, carplay, cognitive/hearing) are depth-pass additions.
 
-**Reference inventory (90 files, ~23,000 lines):** design 13, patterns 11, platform 9, performance 8, accessibility 7, animation 6, interaction 6, cross-platform 6, usability 5, exemplars 5, haptics 4, methodology 4, review 3, `_scaffolding` 3. That is 13 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
+**Reference inventory (92 files, ~23,000 lines):** design 13, patterns 11, platform 9, performance 8, accessibility 8, animation 6, interaction 6, cross-platform 6, usability 5, exemplars 5, haptics 4, methodology 4, review 4, `_scaffolding` 3. That is 13 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
 
 ## Agent <-> skill mapping
 
@@ -176,7 +183,7 @@ Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appe
 | `apple-ui-architect` | design/* (all), patterns/* (all), animation/*, interaction/*, haptics/01-02, accessibility/01-06, performance/04, platform/09, methodology/01-02, methodology/04, **usability/01 (step 3, task flow) + usability/02-05**, **review/03** (whether regular width is earned), exemplars/* (all -- worked screens to steal structure from). Start: design/01-02, patterns/00-01, usability/01 |
 | `apple-ui-reviewer` | design/* (all), patterns/* (all), interaction/*, accessibility/01-05, methodology/03-04 (Apple-sample calibration + API currency), **review/01-03 (format, evidence, density)**, **usability/01-05 (dimensions 9-12)**. Start: review/01-02, design/01-02, design/07, patterns/01. Runs the 11-row a11y/perf gate |
 | `animation-haptics-engineer` | animation/* (all), interaction/* (all), haptics/* (all), accessibility/05, **review/01-02**. Owns interaction/ + haptics/ |
-| `accessibility-engineer` | accessibility/* (all), design/03-04, design/06, patterns/01, **review/01-02**, **usability/01-05** (the structural WCAG criteria: 3.3.x, 3.2.3, and the Dynamic Type analogues of 1.4.4/1.4.10). Owns accessibility/ |
+| `accessibility-engineer` | accessibility/* (all, and **08-wcag-2-2-mapping.md is the audit checklist**), design/03-04, design/06, patterns/01, **review/01-02**, **usability/01-05** (the structural WCAG criteria: 3.3.x, 3.2.3, and the Dynamic Type analogues of 1.4.4/1.4.10). Owns accessibility/ |
 | `performance-engineer` | performance/* (all), animation/01, interaction/01, **review/01-02**. Owns performance/ |
 | `platform-engineer` | platform/* (all), cross-platform/* (all), design/07, patterns/03 + patterns/10 (TipKit, drag-drop surfaces in its matrix), **review/01-02**, **usability/01** (integrations are entry points into flows). Owns platform/ + cross-platform/ |
 | `craft-team-lead` | Routes only; reads **review/01** deeply, because merge and dedup key on its dimension registry and field names. All other references reachable through the specialists above -- zero orphans |
@@ -222,6 +229,9 @@ and dedup key on.
 | Finding format, severity, confidence, dimension registry | `references/review/01-finding-format.md` | Every agent, skill, and the team-lead merge key on these exact strings |
 | Evidence modes and the geometry evidence rule | `references/review/02-evidence-pipeline.md` | Bounds what each mode may claim; `NOT ASSESSED` is a legal verdict and is carried through unchanged |
 | Corpus ground truth | `tests/corpus/labels.json` | Each label's `ruleRef` must be defined in the reference named in its `owner` field |
+| Review ledger (schema v1) | `references/review/04-run-artifacts.md` | `.claude/apple-ui-craft/last-review.json` in the REVIEWED repo; informational version, powers the delta report |
+| CI verdict artifact (schema v1) | `ci/verdict-artifact-schema.json` | `gate.mjs` parses the schema at runtime and HARD-REJECTS a `schemaVersion` mismatch |
+| WCAG 2.2 A/AA coverage | `references/accessibility/08-wcag-2-2-mapping.md` | The audit checklist; an uncited criterion is otherwise indistinguishable from an unmet one |
 
 ## Ultracode conductor mode
 

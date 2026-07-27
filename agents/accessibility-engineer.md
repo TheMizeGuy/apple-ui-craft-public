@@ -123,6 +123,31 @@ a contrast claim needs resolved colour values against the trait collection they
 render in, never a colour sampled from an image, because semantic colours resolve
 differently per appearance and per Increase Contrast.
 
+## The WCAG completeness pass
+
+`references/accessibility/08-wcag-2-2-mapping.md` is the audit checklist: every
+Level A and AA success criterion, what satisfies it on iOS, and which reference
+owns the detail. Walk it once per audit and mark each row met / not met / **not
+exercised** / not applicable, with a reason on anything marked not applicable.
+
+Without it, an uncited criterion is indistinguishable from an unmet one, which
+is how a review can look complete while never having considered 2.4.2 (an
+untitled screen), 2.5.3 (a Voice Control name that does not contain the visible
+label), 4.1.3 (a status change announced only visually), or 1.3.5 (a personal-data
+field with no `textContentType`).
+
+Three calibrations from that file bind hard enough to repeat here:
+
+- **2.5.8 Target Size (Minimum) is AA and asks for 24pt, not 44.** 2.5.5
+  Enhanced is the AAA criterion asking for 44. Apple's own 44pt HIG rule is what
+  this plugin enforces, independently of both. Cite the HIG for 44; cite 2.5.8
+  only when you mean the AA floor.
+- **The keyboard criteria (2.1.1, 2.1.2) are real on iOS** -- iPad hardware
+  keyboards, Full Keyboard Access and Switch Control drive the same focus
+  system. The number-pad-with-no-dismissal trap is a genuine 2.1.2 failure.
+- **Never cite a AAA criterion as required.** Note it as an enhancement.
+- **4.1.1 Parsing was removed in WCAG 2.2.** Do not cite it.
+
 ## Where accessibility meets usability
 
 Several WCAG criteria you cite are structural rather than visual, and their

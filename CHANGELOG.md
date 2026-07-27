@@ -2,6 +2,84 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.3.1 -- 2026-07-27
+
+Completes 0.3.0. Three items were deferred there on a judgement call about
+value-per-effort; this release takes all three, because two were real gaps and
+one was a half-finished audit.
+
+### WCAG 2.2 coverage was uncountable
+
+The plugin cited 29 distinct success criteria scattered across seven references
+with no index, so `accessibility-engineer`'s standing instruction to "cite the
+WCAG criterion where applicable" could not be discharged: **there was no way to
+tell an unmet criterion from an uncited one.** Several of the most iOS-central
+criteria were covered in prose and mapped to nothing at all -- `accessibilityLabel`
+(1.1.1), `navigationTitle` (2.4.2), Voice Control naming (2.5.3), status changes
+announced only visually (4.1.3), and `textContentType` (1.3.5).
+
+New `references/accessibility/08-wcag-2-2-mapping.md` maps **every** Level A and
+AA criterion to its iOS mechanism and its owning reference, and is now the
+audit's checklist. It also records the three places WCAG and iOS genuinely
+disagree, which is where wrong citations come from:
+
+- **2.5.8 Target Size (Minimum) is AA and asks for 24pt, not 44.** 2.5.5
+  Enhanced is the AAA criterion asking for 44. Apple's 44pt HIG rule is
+  independent of both and is what this plugin enforces.
+- **The keyboard criteria (2.1.1, 2.1.2) are real on iOS**, not web-only: iPad
+  hardware keyboards, Full Keyboard Access and Switch Control drive the same
+  focus system. The number-pad-with-no-dismissal trap is a genuine 2.1.2 failure.
+- **4.1.1 Parsing was removed in WCAG 2.2.** Do not cite it.
+
+### The review ledger
+
+Every reviewing skill now writes `.claude/apple-ui-craft/last-review.json` in the
+reviewed repo and reads any prior one first, so a repeat review answers the
+second-most-useful question a user asks -- not "what is wrong" but **"what
+changed since last time"**: NEW, RESOLVED, STILL OPEN, REGRESSED, IMPROVED.
+
+Two fields keep a narrow run from lying about a wide one. `dimensions` carries
+forward any prior finding whose dimension nobody looked at this run, rather than
+counting it RESOLVED; without it, running `optimize-ios-ui` after `craft-ios-ui`
+would report every accessibility finding as fixed. `notAssessed` does the same
+for a dimension the evidence mode could not reach. `design-ios` writes no ledger
+and says so: it generates rather than reviews, so it has no prior run to diff.
+
+### The CI verdict gate
+
+`ci/` is new: a gate a reviewed repo runs to fail a build when the craft review
+covering the current UI change is missing, stale, unreadable, or not green.
+
+Two design rules, both taken from watching a sibling plugin's gate ship broken
+in exactly these ways:
+
+- **The artifact binds to the last UI-touching commit, not `HEAD`.** An artifact
+  can never name the commit it is committed into, so a `HEAD`-bound gate is
+  unsatisfiable by its own documented happy path. The selftest pins this with a
+  repo whose `HEAD` is deliberately a docs commit.
+- **The gate fails closed.** A broken `git` query, an empty path list, a missing
+  directory, a malformed artifact, or a history with no UI-adjacent commit all
+  fail. "No UI-adjacent files changed, PASS" means a gate reports safety
+  whenever its own inputs break.
+
+`NOT_ASSESSED` is a first-class verdict value and it **fails**. Treating it as a
+pass would make reviewing less the cheapest route to a green build, inverting the
+evidence rule 0.3.0 just established.
+
+`ci/gate.mjs` parses `ci/verdict-artifact-schema.json` at runtime rather than
+reimplementing it, so the schema is the single source of truth for the enums.
+`ci/selftest.mjs` is 30 cases and is now part of `tests/run-all.sh`.
+
+Only `craft-ios-ui` may write the artifact, because it is the only skill that
+runs every specialist and can fill the required verdict set honestly. A partial
+pass points the user at it rather than writing invented verdicts -- which is the
+entire reason the required set can be trusted.
+
+### Counts
+
+References 91 to 92. Gates: 1,140 reference citations, 46 scorer selftests, 30
+CI selftests, 16 of 16 corpus labels.
+
 ## 0.3.0 -- 2026-07-27
 
 Usability, adaptation, economy, and the plugin's first test surface. This

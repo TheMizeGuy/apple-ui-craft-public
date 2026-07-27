@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/TheMizeGuy/apple-ui-craft/ci/verdict-artifact-schema.json",
+  "title": "apple-ui-craft CI verdict artifact",
+  "description": "Canonical schema for the artifact ci/gate.mjs consumes. The gate parses THIS FILE at runtime rather than reimplementing it, so the enums here are the single source of truth. Narrative contract: references/review/04-run-artifacts.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sha", "timestamp", "reviewer", "scope", "verdicts", "overall", "blocker_findings", "high_findings"],
+  "properties": {
+    "schemaVersion": {
+      "description": "Hard-rejected by the gate on mismatch. Bump on any field addition, rename or type change.",
+      "const": 1
+    },
+    "sha": {
+      "description": "The gate's binding key: the last commit that touched a UI-adjacent path, NOT HEAD. An artifact cannot name the commit it is committed into.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "pr": {
+      "description": "Optional lookup convenience. Never a substitute for sha.",
+      "type": ["string", "integer"]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "reviewer": { "type": "string", "minLength": 1 },
+    "scope": { "type": "string", "minLength": 1 },
+    "evidenceMode": {
+      "type": "string",
+      "enum": ["Runtime", "Source", "Screenshots", "Design file"]
+    },
+    "verdicts": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Six required keys. density and platform may be omitted: only those two can be genuinely inapplicable to a project.",
+      "required": ["visual", "usability", "adaptive", "accessibility", "motion", "performance"],
+      "properties": {
+        "visual": { "$ref": "#/definitions/verdict" },
+        "usability": { "$ref": "#/definitions/verdictOrUnassessed" },
+        "adaptive": { "$ref": "#/definitions/verdictOrUnassessed" },
+        "accessibility": { "$ref": "#/definitions/verdictOrUnassessed" },
+        "motion": { "$ref": "#/definitions/verdictOrUnassessed" },
+        "performance": { "$ref": "#/definitions/verdictOrUnassessed" },
+        "density": { "$ref": "#/definitions/verdict" },
+        "platform": { "$ref": "#/definitions/verdict" }
+      }
+    },
+    "overall": { "$ref": "#/definitions/verdict" },
+    "blocker_findings": {
+      "description": "The CRITICAL findings. The gate fails on a non-empty array, and also on a CRITICAL appearing in high_findings.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/finding" }
+    },
+    "high_findings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/finding" }
+    }
+  },
+  "definitions": {
+    "verdict": {
+      "type": "string",
+      "enum": ["GREEN", "YELLOW", "RED"]
+    },
+    "verdictOrUnassessed": {
+      "description": "NOT_ASSESSED is a first-class value on the evidence-bounded dimensions and it FAILS the gate. Treating it as a pass would make a screenshots-only review a route to a green build.",
+      "type": "string",
+      "enum": ["GREEN", "YELLOW", "RED", "NOT_ASSESSED"]
+    },
+    "finding": {
+      "type": "object",
+      "required": ["id", "dimension", "severity", "file", "title"],
+      "properties": {
+        "id": {
+          "description": "Widen this pattern alongside any dimension enum change, or new-dimension findings fail on the id slug and the error points at the wrong field.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "dimension": {
+          "description": "Verbatim from the dimension registry in references/review/01-finding-format.md.",
+          "type": "string",
+          "enum": [
+            "Liquid Glass",
+            "Typography hierarchy",
+            "Color system",
+            "SF Symbols",
+            "Navigation patterns",
+            "Layout and spacing",
+            "Micro-interactions",
+            "Density and economy",
+            "Task flow and journey",
+            "Information architecture and navigation structure",
+            "Error recovery and state integrity",
+            "Adaptive layout and Dynamic Type",
+            "Animation",
+            "Haptics",
+            "VoiceOver",
+            "Dynamic Type",
+            "Visual accessibility",
+            "Motor accessibility",
+            "Cognitive and hearing accessibility",
+            "Rendering performance",
+            "Scroll and list performance",
+            "Launch and memory",
+            "Platform integration",
+            "Cross-platform reach"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "NIT"]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["Hard defect", "Quality defect", "Pattern smell", "Taste note"]
+        },
+        "file": { "type": "string", "minLength": 1 },
+        "line": {
+          "description": "Optional. When present it must be >= 1: omit the key rather than writing 0.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "string" }
+      }
+    }
+  }
+}

@@ -61,6 +61,18 @@ Unified report with:
 
 Every agent this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the optimization scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry.
 
+
+## Review ledger (write it, without asking)
+
+At the end of every run, write `.claude/apple-ui-craft/last-review.json` in the
+REVIEWED repo, and read any existing one first to produce a delta report (NEW /
+RESOLVED / STILL OPEN / REGRESSED / IMPROVED). Schema, matching rules, and the
+two fields that stop a narrow run from erasing a wide one (`dimensions` and
+`notAssessed`): `references/review/04-run-artifacts.md#review-ledger-schema-v1`.
+
+A missing or unreadable ledger is an empty prior run, never an error. A ledger
+from a different scope is not a prior run for this scope.
+
 ## Ultracode conductor mode
 
 When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard 2-specialist dispatch above unchanged.
