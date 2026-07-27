@@ -16,6 +16,7 @@ Clone this repository, then add it to Claude Code as a plugin:
 
 ```bash
 git clone https://github.com/TheMizeGuy/apple-ui-craft-public.git
+claude --plugin-dir ./apple-ui-craft-public
 ```
 
 No build step, no configuration. The plugin is Markdown-only: skills, agents, and a reference library. It uses GoodMem, serena, and Context7 when they are available in your session and degrades gracefully when they are not.
@@ -145,11 +146,11 @@ Reviews are **read-only by default.** Findings are advisory. The orchestrator ap
 When your session is running under **ultracode**, every skill switches to conductor-executor mode automatically. You do not do anything differently; the split happens under the hood:
 
 - **The session model conducts -- always the strongest available Claude, whichever model that is.** It decides scope, grades severity, deduplicates findings, resolves conflicts, and synthesizes the final report. Every verdict is the conductor's, and the workflow runs identically regardless of which model is currently strongest.
-- **Conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 4.8) do the grunt stages** -- reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application. Each executor is scoped through the skill: a non-overlapping file set, the dimension's reference paths plus the version-floor registry, the severity scale plus the skill's inlined check tables, and a blackboard + escalation contract. Executors report **evidence, never verdicts**. The shared dispatch mechanics, fan-out doctrine (executor teams scale to natural breadth), and validation gate live in `references/_scaffolding/conductor-dispatch-protocol.md`.
-- **The specialist reviewers stay on the session model.** Judging Apple-native quality is never delegated to an executor.
+- **Conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 5) do the grunt stages** -- reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application. Each executor is scoped through the skill: a non-overlapping file set, the dimension's reference paths plus the version-floor registry, the severity scale plus the skill's inlined check tables, and a blackboard + escalation contract. Executors report **evidence, never verdicts**. The shared dispatch mechanics, fan-out doctrine (executor teams scale to natural breadth), and validation gate live in `references/_scaffolding/conductor-dispatch-protocol.md`.
+- **The specialist reviewers run on Opus 5, pinned at dispatch.** Judging Apple-native quality is never delegated to a grunt executor.
 - **Every executor result is gated** -- the conductor reads the durable blackboard (not the truncated final message), spot-checks claims against the actual files, and re-grades before anything reaches you.
 
-Without ultracode, the skills run their standard direct dispatch. The model invariants hold either way: never Haiku, never Sonnet below `xhigh`, never an executor-authored verdict.
+Without ultracode, the skills run their standard direct dispatch. The model invariants hold either way: never Haiku, never Sonnet below `xhigh`, never an executor verdict.
 
 
 ## The reference library
@@ -179,9 +180,9 @@ Run both before shipping: one clears the gate, the other earns the delight.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `craft-ios-ui` produces nothing, or the team lead can't fan out to specialists | Dispatched via the plugin namespace, which silently strips the `Agent` tool at runtime | Dispatch `craft-team-lead` as `general-purpose` with its agent-file body inlined as the prompt prefix (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md` and the Dispatch section of `skills/craft-ios-ui/SKILL.md`) |
-| The GoodMem search step is silently skipped | The GoodMem MCP is not configured, or is unreachable, in this session | Expected behavior -- no memory service is required. If you do run GoodMem, substitute your own space and reranker IDs into the `goodmem_memories_retrieve` call shown in the agent file |
+| The GoodMem search step is silently skipped | The GoodMem MCP is not configured, or is unreachable, in this session | Expected behavior -- no memory service is required. The space and reranker IDs inlined in the agent files are the plugin author's; substitute your own if you run GoodMem |
 | A finding or design suggests an API that does not compile | Training data is stale for iOS-26-era APIs (Liquid Glass, `.sensoryFeedback`, App Intents) | Check `references/_scaffolding/version-floor-registry.md`'s PHANTOM list, and verify the API shape with Context7 before applying the suggestion |
-| Reviews run standard direct dispatch instead of conductor-executor with executor teams | The harness has not announced ultracode for this session, or ultracode is off | Expected fallback -- every skill runs its standard dispatch (see [How ultracode changes behavior](#how-ultracode-changes-behavior)) without executor teams; no action needed |
+| Reviews run standard direct dispatch instead of conductor-executor mode | The harness has not announced ultracode for this session, or ultracode is off | Expected fallback -- every skill runs its standard dispatch (see [How ultracode changes behavior](#how-ultracode-changes-behavior)) without executor teams; no action needed |
 | `review-ios-ui` only runs 3 specialists, not all 5 | By design -- `review-ios-ui` scopes to visual + motion + accessibility only | Use `craft-ios-ui` for the full 5-specialist sweep that adds performance and platform-integration coverage |
 
 ## FAQ
@@ -198,4 +199,4 @@ Run both before shipping: one clears the gate, the other earns the delight.
 
 **How do I get the most out of a review?** Scope it. Point a skill at the screen or flow you care about rather than the whole project, and you get denser, more actionable findings.
 
-**Which model runs this?** Under ultracode, whichever model your session is on conducts -- always the strongest available Claude, and the workflow runs identically regardless of which model that is. The grunt stages run on conductor-selected executors: Sonnet 5 at `xhigh` effort, or Opus 4.8 when the leg-work needs deeper judgment. Without ultracode, the session model runs the dispatch directly. The invariants never change: never Haiku, never Sonnet below `xhigh`, never an executor-authored verdict.
+**Which model runs this?** Under ultracode, whichever model your session is on conducts -- always the strongest available Claude, and the workflow runs identically regardless of which model that is. The grunt stages run on conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5). Without ultracode, the session model runs the dispatch directly. The invariants never change: never Haiku, never Sonnet below `xhigh`, never an executor verdict.

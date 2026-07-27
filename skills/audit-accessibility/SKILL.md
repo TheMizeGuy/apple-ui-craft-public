@@ -41,6 +41,8 @@ matrix (what changes under each accessibility setting).
 ## Output
 
 - Accessibility verdict: INCLUSIVE / ADEQUATE / GAPS / EXCLUDING
+- The evidence mode and which accessibility settings were actually exercised. A setting that was not turned on is reported `not exercised`, never OK -- a clean cell filled from a default-configuration screenshot is a false negative on the users this audit exists for (`references/review/02-evidence-pipeline.md#configuration-coverage`)
+- Findings in the canonical format (`references/review/01-finding-format.md`), each carrying its `WCAG:` and `Who is affected:` lines
 - Findings by screen, severity-tagged (CRITICAL = exclusion or WCAG A/AA violation)
 - Per-finding: WCAG criterion + level, affected assistive technology, concrete SwiftUI rewrite
 - Settings matrix: behavior under Reduce Motion, Reduce Transparency, Increase Contrast,
@@ -51,7 +53,7 @@ All findings are advisory. The user chooses what to apply.
 
 ## Execution mode
 
-The specialist this skill dispatches inherits the session model -- always the strongest available Claude. When the session model is already the strongest tier and the audit scope is small, the orchestrator may run the audit inline in the main context (foreground) instead of dispatching a separate agent, without weakening the accessibility-engineer's read-only guarantee. Never block on, or call out to, a model that isn't the session model.
+The specialist this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the audit scope is small, the orchestrator may run the audit inline in the main context (foreground) instead of dispatching a separate agent, without weakening the accessibility-engineer's read-only guarantee.
 
 ## Ultracode conductor mode
 
@@ -59,11 +61,11 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Executor teams (conductor-selected: Sonnet 5 ALWAYS `effort: xhigh`, or Opus 4.8) |
+| Conductor (session model -- never delegated) | Conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) |
 |---|---|
 | Scope decision, severity verdicts, WCAG-level grading, finding dedup, final report synthesis -- accessibility verdicts are always conductor-class | Per-screen a11y evidence collection against the engineer's 5-dimension check tables; VoiceOver label/trait/order inventory; contrast-pair computation sweeps; Dynamic Type breakpoint capture |
 
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set: absolute paths of `references/accessibility/` + `references/_scaffolding/version-floor-registry.md`.
 - Inline the severity scale and the relevant dimension tables from `agents/accessibility-engineer.md` -- its 5-dimension framework is the checklist executors collect evidence against.
-- The `accessibility-engineer` specialist stays on the session model -- judgment reviewer, never an executor.
+- The `accessibility-engineer` specialist is pinned to Opus 5 at dispatch -- judgment reviewer, never a grunt executor.

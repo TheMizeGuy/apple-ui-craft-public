@@ -45,7 +45,8 @@ Defaults to the entire project. Can be scoped to specific screens/directories.
 
 Comprehensive report with:
 - Executive summary
-- Per-dimension verdicts (visual, animation+haptics, accessibility, performance, platform)
+- The evidence mode and coverage as the report's first line -- it bounds every verdict below it
+- Per-dimension verdicts (visual, density and economy, usability and flow, adaptive layout, animation+haptics, accessibility, performance, platform)
 - Findings organized by screen/flow
 - Cross-cutting findings
 - Platform integration opportunity map
@@ -83,7 +84,7 @@ Check the team lead's merged report against each item before presenting it to th
 
 1. All 5 specialists reported -- a blackboard file exists per specialist and is >100 bytes.
 2. Every finding carries all four parts of the format above.
-3. The verdict table has all 6 rows (5 dimensions + Overall), each with a verdict from that dimension's fixed vocabulary.
+3. The verdict table has all 9 rows (visual design, density and economy, usability and flow, adaptive layout, animation + haptics, accessibility, performance, platform integration, Overall), each with a verdict from that dimension's fixed vocabulary. `NOT ASSESSED` is a legal value on the four evidence-bounded rows and is carried through from the specialist unchanged -- never promoted to a clean verdict during synthesis.
 4. No finding appears twice -- duplicates flagged by multiple specialists are merged with both credited.
 5. The improvement plan is ordered by severity, then effort; every plan item names the finding(s) it addresses.
 6. Praise section present (empty is acceptable only for a genuinely weak codebase -- say so).
@@ -103,7 +104,7 @@ One failed item -> one re-dispatch to the offending agent with the concrete gap 
 
 ## Execution mode
 
-Every agent this skill dispatches -- the orchestrator and its 5 specialists -- inherits the session model, always the strongest available Claude. When the session model is already the strongest tier and the review scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry. Never block on, or call out to, a model that isn't the session model.
+This skill's `craft-team-lead` orchestrator conducts on the session model; its 5 specialist reviews are pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24). When the session model is already the strongest tier and the review scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry.
 
 ## Ultracode conductor mode
 
@@ -111,11 +112,11 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Executor teams (conductor-selected: Sonnet 5 ALWAYS `effort: xhigh`, or Opus 4.8) |
+| Conductor (session model -- never delegated) | Conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) |
 |---|---|
 | Scope decision, severity verdicts, finding dedup + conflict resolution, apply/no-apply judgment, final report synthesis, anything security- or accessibility-verdict-shaped | Recon inventory (map screens/views per scope, SwiftUI-vs-UIKit split, deployment target); per-screen evidence collection against each specialist's checklist; post-approval mechanical application of approved findings (worktree-isolated, one screen-set per executor) |
 
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set per dimension from the ARCHITECTURE reference<->agent matrix + `references/_scaffolding/version-floor-registry.md`.
 - When reviewing motion, translucency, or custom controls, inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- Stage-tier map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection run as conductor-selected executor teams (Sonnet-xhigh or Opus 4.8); the 5 specialist reviews stay on the session model; merge and report (Process steps 3-4) are conductor-only; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated Sonnet-xhigh executors.
+- Stage-tier map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection run as conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 5); the 5 specialist reviews are pinned to Opus 5 at dispatch; merge and report (Process steps 3-4) are conductor-only; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated conductor-selected executors.

@@ -1,6 +1,6 @@
 # apple-ui-craft
 
-A team of seven specialist agents -- running on the session model, always the strongest available Claude -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
+A team of seven specialist agents -- reviewers and architect pinned to Opus 5 at dispatch, the team lead conducting on the session model -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
 
 New here? The [Usage Guide](USAGE.md) walks through every skill with worked invocations. The [Architecture](ARCHITECTURE.md) has the full file map.
 
@@ -60,7 +60,7 @@ Manual alternative: `git clone https://github.com/TheMizeGuy/apple-ui-craft-publ
 
 ## Reference library
 
-**82 reference files** in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 11 content domains plus `_scaffolding` (12 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
+**90 reference files** (~23,000 lines) in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 13 content domains plus `_scaffolding` (14 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
 
 ```
 references/
@@ -80,6 +80,11 @@ references/
 ├── platform/        widgets/Live Activities, App Intents, controls/StandBy, system
 │                    surfaces, maps, Apple Intelligence, WebView, app clips, scene lifecycle
 ├── cross-platform/  iPadOS, watchOS, tvOS, macOS/Catalyst, visionOS, CarPlay
+├── usability/       can a person FINISH the task: task flows and journeys, forms and
+│                    error recovery, navigation and information architecture, states/
+│                    feedback/affordances, the adaptive review method
+├── review/          HOW to review: the canonical finding format, the evidence pipeline,
+│                    and density and economy (the waste dimension)
 ├── exemplars/       end-to-end worked screens (glass, motion+haptics, a11y, perf, platform)
 ├── methodology/     component API design, previews/QA, Apple sample teardowns, what's-new log
 └── _scaffolding/    file template, the single version-floor registry, and the shared
@@ -90,27 +95,45 @@ Per-domain file counts:
 
 | Domain | Files | Domain | Files |
 |---|--:|---|--:|
-| design | 13 | animation | 6 |
-| patterns | 11 | interaction | 6 |
-| platform | 9 | cross-platform | 6 |
+| design | 13 | interaction | 6 |
+| patterns | 11 | cross-platform | 6 |
+| platform | 9 | usability | 5 |
 | performance | 8 | exemplars | 5 |
 | accessibility | 7 | haptics | 4 |
-| | | methodology | 4 |
+| animation | 6 | methodology | 4 |
+| | | review | 3 |
 | | | `_scaffolding` | 3 |
 
-**Total: 82 files** across 11 content domains plus `_scaffolding`.
+**Total: 90 files** across 13 content domains plus `_scaffolding`.
 
 The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the single source of truth for availability floors, deprecated APIs, and the PHANTOM list -- APIs that do not exist and must never be emitted. Every reference file cites it rather than restating floors.
 
 ## Severity scale
 
+Canonical definition, along with the finding template, the confidence enum, and
+the dimension registry: `references/review/01-finding-format.md`.
+
 | Tag | Meaning |
 |---|---|
-| CRITICAL | Breaks user experience (a11y blocker, < 44pt touch target, missing Reduce Motion, Liquid Glass obscuring content) |
-| HIGH | Degrades experience noticeably (wrong navigation, missing haptics, animation fights user) |
+| CRITICAL | Breaks user experience (a11y blocker, < 44pt touch target, missing Reduce Motion, Liquid Glass obscuring content, content unreachable in a supported configuration, irreversible destruction with no confirmation and no undo) |
+| HIGH | Degrades experience noticeably (wrong navigation, missing haptics, animation fights user, input lost on back or termination, a missing empty or error state, clipping at accessibility text sizes, an iPad running a stretched phone layout) |
 | MEDIUM | Quality gap (suboptimal spring, generic spacing, missing SF Symbol) |
 | LOW | Polish (slightly better timing, additional haptic surface) |
-| NIT | Taste preference (sparing) |
+| NIT | Taste preference (sparing). Waste with no measurement attached belongs here |
+
+Findings also carry a confidence class -- Hard defect, Quality defect, Pattern
+smell, or Taste note -- because severity and confidence are different questions.
+A hard defect can be LOW, and a quality defect can be HIGH.
+
+## Some dimensions cannot be judged from one screenshot
+
+Task flow, information architecture, error recovery, adaptive layout under
+Dynamic Type, animation feel, and performance need a sequence, a configuration
+change, or a measurement. When the available evidence cannot show them, the
+review returns **NOT ASSESSED** for those dimensions rather than a clean verdict.
+A clean verdict from a single static frame is a false negative on exactly the
+defect class a static frame cannot contain, so the plugin declines to give one.
+Every report states its evidence mode and coverage as its first line.
 
 ## Hard rules
 
@@ -120,16 +143,18 @@ The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the
 4. Apple-native or nothing. Every suggestion makes the app feel MORE first-party.
 5. Springs over curves. Default spring; justify any timing curve.
 6. Haptics are intentional. Never decoration.
-7. No AI slop. Direct, specific, authoritative.
+7. Never a clean verdict on a dimension the evidence could not see.
+8. Measured claims carry the measurement. Geometry from element frames, contrast from resolved colour values, performance from Instruments -- never a pixel estimate or a sampled screenshot colour.
+9. No AI slop. Direct, specific, authoritative.
 
 ## Ultracode
 
-Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 4.8) run the scoped grunt stages, and verdicts are never delegated. The canonical explanation lives in [`USAGE.md` -- How ultracode changes behavior](USAGE.md#how-ultracode-changes-behavior); the shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`.
+Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) run the scoped grunt stages, and verdicts are never delegated. The canonical explanation lives in [`USAGE.md` -- How ultracode changes behavior](USAGE.md#how-ultracode-changes-behavior); the shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`.
 
 ## Backed by
 
 - The session model as the ultracode conductor -- always the strongest available Claude, whichever model that is
-- The session model for every agent by default; Sonnet 5 (`xhigh`) or Opus 4.8 as conductor-managed executors, picked by the work's judgment depth; never Haiku
+- Opus 5 (pinned at dispatch) for every specialist agent, the session model as conductor; Sonnet 5 (`xhigh`) or Opus 5 as conductor-managed executors; never Haiku
 - 88-file iOS Development vault (~103,000 lines), distilled into the reference library
 - A Context7-verified version-floor registry (iOS 16 through iOS 27 beta)
 - GoodMem Learnings for prior debugging and audit findings

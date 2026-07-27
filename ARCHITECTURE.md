@@ -4,7 +4,7 @@ Internal map of files, responsibilities, and cross-references. Not loaded by Cla
 
 ## Mission
 
-A team of seven specialist agents -- running on the session model, always the strongest available Claude -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
+A team of seven specialist agents -- reviewers and architect pinned to Opus 5 at dispatch, the team lead conducting on the session model -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
 
 ## Layout
 
@@ -21,7 +21,7 @@ apple-ui-craft/
 │   ├── craft-ios-ui/SKILL.md        "make this feel Apple-native" (full team)
 │   ├── audit-accessibility/SKILL.md "audit my app for accessibility" (a11y solo, deep)
 │   └── integrate-platform/SKILL.md  "make my app feel native beyond the UI" (platform solo)
-├── agents/                      (7 specialists, running on the session model)
+├── agents/                      (7 agents: reviewers + architect on Opus 5 at dispatch; team lead conducts on session model)
 │   ├── apple-ui-architect.md          greenfield design + production SwiftUI
 │   ├── apple-ui-reviewer.md           HIG + visual + Liquid Glass audit
 │   ├── animation-haptics-engineer.md  motion + interaction/feel + tactile feedback
@@ -119,16 +119,40 @@ apple-ui-craft/
     │   ├── 03-accessibility.md              composes the accessibility references
     │   ├── 04-perf-list.md                  composes the performance references
     │   └── 05-platform-integration.md       composes platform + widgets
-    └── methodology/                         (P2)
-        ├── 01-component-api-design.md       reusable component API design
-        ├── 02-previews-design-qa.md         #Preview matrices, design QA
-        ├── 03-apple-samples-teardown.md     how Apple does it (sample teardowns)
-        └── 04-whatsnew-sota-log.md          what's-new / SOTA delta log
+    ├── methodology/                         (P2)
+    │   ├── 01-component-api-design.md       reusable component API design
+    │   ├── 02-previews-design-qa.md         #Preview matrices, design QA
+    │   ├── 03-apple-samples-teardown.md     how Apple does it (sample teardowns)
+    │   └── 04-whatsnew-sota-log.md          what's-new / SOTA delta log
+    ├── usability/                           (0.3.0 -- can a person FINISH the task)
+    │   ├── 01-task-flows-and-journeys.md    OWNER: flow map, entry inventory, step budgets, carried state, dead ends, break tests
+    │   ├── 02-forms-and-error-recovery.md   OWNER: validation timing, error copy, focus on failure, confirm-vs-undo, partial failure, data loss
+    │   ├── 03-navigation-and-information-architecture.md  OWNER: navigation models, depth/breadth, wayfinding, back semantics, deep-link survival
+    │   ├── 04-states-feedback-and-affordances.md  OWNER: the 10-state set, latency budgets, silent success, affordances, disabled anti-patterns
+    │   └── 05-adaptive-review-method.md     OWNER: sizing-strategy classification, the five axes, size matrix, ROBUST/ADEQUATE/FRAGILE/BROKEN rubric
+    └── review/                              (0.3.0 -- HOW to review, shared by every agent)
+        ├── 01-finding-format.md             OWNER: finding template, severity scale, confidence enum, dimension registry
+        ├── 02-evidence-pipeline.md          OWNER: review modes, geometry evidence rule, configuration + state coverage
+        └── 03-density-and-economy.md        OWNER: window utilisation, leftover sizing, length, distance -- the WASTE dimension
+```
+
+```
+tests/                            (0.3.0 -- zero-dependency gates, Node >= 18 stdlib)
+├── run-all.sh                    every gate; the definition of done
+├── check-references.mjs          every references/...#anchor citation resolves
+├── README.md                     the runbook
+├── corpus/
+│   ├── fixtures/*.swift          10 fixtures with planted defects + 1 clean control
+│   └── labels.json               ground truth (16 labels, ruleRef -> owning reference)
+└── harness/
+    ├── score-review.mjs          recall + precision gate (floors 0.8)
+    ├── selftest.mjs              46 cases verifying the scorer itself
+    └── examples/sample-findings.json   a by-the-book run (16/16)
 ```
 
 Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship the core; P2 files add depth. Exemplars are labeled "signature-drafted, build-pending" (no Xcode build in this repo). Some P2 files (design/12-13, methodology, carplay, cognitive/hearing) are depth-pass additions.
 
-**Reference inventory (82 files):** design 13, patterns 11, platform 9, performance 8, accessibility 7, animation 6, interaction 6, cross-platform 6, exemplars 5, haptics 4, methodology 4, `_scaffolding` 3. That is 11 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
+**Reference inventory (90 files, ~23,000 lines):** design 13, patterns 11, platform 9, performance 8, accessibility 7, animation 6, interaction 6, cross-platform 6, usability 5, exemplars 5, haptics 4, methodology 4, review 3, `_scaffolding` 3. That is 13 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
 
 ## Agent <-> skill mapping
 
@@ -149,13 +173,15 @@ Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appe
 
 | Agent | Owns / reads |
 |---|---|
-| `apple-ui-architect` | design/* (all), patterns/* (all), animation/*, interaction/*, haptics/01-02, accessibility/01-06, performance/04, platform/09, methodology/01-02, methodology/04, exemplars/* (all -- worked screens to steal structure from). Start: design/01-02, patterns/00-01 |
-| `apple-ui-reviewer` | design/* (all), patterns/* (all), interaction/*, accessibility/01-05, methodology/03-04 (Apple-sample calibration + API currency). Start: design/01-02, design/07, patterns/01. Runs the 11-row a11y/perf gate |
-| `animation-haptics-engineer` | animation/* (all), interaction/* (all), haptics/* (all), accessibility/05. Owns interaction/ + haptics/ |
-| `accessibility-engineer` | accessibility/* (all), design/03-04, design/06, patterns/01. Owns accessibility/ |
-| `performance-engineer` | performance/* (all), animation/01, interaction/01. Owns performance/ |
-| `platform-engineer` | platform/* (all), cross-platform/* (all), design/07, patterns/03 + patterns/10 (TipKit, drag-drop surfaces in its matrix). Owns platform/ + cross-platform/ |
-| `craft-team-lead` | Routes only; reads none deeply. All references reachable through the specialists above -- zero orphans |
+| `apple-ui-architect` | design/* (all), patterns/* (all), animation/*, interaction/*, haptics/01-02, accessibility/01-06, performance/04, platform/09, methodology/01-02, methodology/04, **usability/01 (step 3, task flow) + usability/02-05**, **review/03** (whether regular width is earned), exemplars/* (all -- worked screens to steal structure from). Start: design/01-02, patterns/00-01, usability/01 |
+| `apple-ui-reviewer` | design/* (all), patterns/* (all), interaction/*, accessibility/01-05, methodology/03-04 (Apple-sample calibration + API currency), **review/01-03 (format, evidence, density)**, **usability/01-05 (dimensions 9-12)**. Start: review/01-02, design/01-02, design/07, patterns/01. Runs the 11-row a11y/perf gate |
+| `animation-haptics-engineer` | animation/* (all), interaction/* (all), haptics/* (all), accessibility/05, **review/01-02**. Owns interaction/ + haptics/ |
+| `accessibility-engineer` | accessibility/* (all), design/03-04, design/06, patterns/01, **review/01-02**, **usability/01-05** (the structural WCAG criteria: 3.3.x, 3.2.3, and the Dynamic Type analogues of 1.4.4/1.4.10). Owns accessibility/ |
+| `performance-engineer` | performance/* (all), animation/01, interaction/01, **review/01-02**. Owns performance/ |
+| `platform-engineer` | platform/* (all), cross-platform/* (all), design/07, patterns/03 + patterns/10 (TipKit, drag-drop surfaces in its matrix), **review/01-02**, **usability/01** (integrations are entry points into flows). Owns platform/ + cross-platform/ |
+| `craft-team-lead` | Routes only; reads **review/01** deeply, because merge and dedup key on its dimension registry and field names. All other references reachable through the specialists above -- zero orphans |
+
+`references/review/` is read by every agent: `01-finding-format.md` is the single source of truth for the finding template, severity scale, confidence enum, and dimension registry, and `02-evidence-pipeline.md` is the single source of truth for review modes and the geometry evidence rule. An agent that restates either is a bug in that agent file, since the merge gate follows only one copy.
 | exemplars/ | Read by apple-ui-architect (all 5) and routed by team-lead to the owning specialist (01 architect/reviewer, 02 animation-haptics, 03 accessibility, 04 performance, 05 platform) |
 
 ## Hard rules baked into every agent
@@ -175,17 +201,31 @@ Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appe
 
 ## Severity scale (shared by all agents)
 
+**Canonical since 0.3.0: `references/review/01-finding-format.md`.** Agents read
+that file, not this section; the table below is the human-facing summary and the
+reference wins on any disagreement. That file additionally owns the finding
+template, the four-class confidence enum, and the dimension registry that merge
+and dedup key on.
+
 | Tag | Meaning |
 |---|---|
-| CRITICAL | Breaks user experience: crash, accessibility blocker, 44pt touch target violation, animation causing nausea, Liquid Glass misuse that obscures content |
-| HIGH | Degrades experience noticeably: wrong navigation pattern, missing haptics on committed mutations, animation timing that fights the user, no Reduce Motion support |
-| MEDIUM | Quality gap: suboptimal spring parameters, generic spacing instead of Apple metrics, missing SF Symbol where appropriate, haptic on wrong trigger |
+| CRITICAL | Breaks user experience: crash, accessibility blocker, 44pt touch target violation, animation causing nausea, Liquid Glass misuse that obscures content, content unreachable in a supported configuration, irreversible destruction with neither confirmation nor undo |
+| HIGH | Degrades experience noticeably: wrong navigation pattern, missing haptics on committed mutations, animation timing that fights the user, no Reduce Motion support, typed input lost on back or termination, a missing empty or error state, clipping at AX5, a stretched-phone iPad layout |
+| MEDIUM | Quality gap: suboptimal spring parameters, generic spacing instead of Apple metrics, missing SF Symbol where appropriate, haptic on wrong trigger, label drift between tab/title/heading |
 | LOW | Polish: slightly better timing, additional haptic surface, minor spacing refinement, could use newer API |
-| NIT | Taste preference -- include sparingly |
+| NIT | Taste preference -- include sparingly. **Waste with no measurement attached belongs here**; with a measurement it is MEDIUM or HIGH |
+
+## Data contracts
+
+| Contract | Owner | Notes |
+|---|---|---|
+| Finding format, severity, confidence, dimension registry | `references/review/01-finding-format.md` | Every agent, skill, and the team-lead merge key on these exact strings |
+| Evidence modes and the geometry evidence rule | `references/review/02-evidence-pipeline.md` | Bounds what each mode may claim; `NOT ASSESSED` is a legal verdict and is carried through unchanged |
+| Corpus ground truth | `tests/corpus/labels.json` | Each label's `ruleRef` must be defined in the reference named in its `owner` field |
 
 ## Ultracode conductor mode
 
-Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 4.8) run the scoped grunt stages, and verdicts are never delegated. Each skill carries only its split-of-labor table and dimension-specific executor scoping; the shared dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants (never Haiku; never Sonnet below xhigh) live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
+Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) run the scoped grunt stages, and verdicts are never delegated. Each skill carries only its split-of-labor table and dimension-specific executor scoping; the shared dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants (never Haiku; never Sonnet below xhigh) live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
 
 ## Relationship to ios-code-review
 
@@ -201,4 +241,8 @@ references/<topic>/<file>.md#<heading-slug>
 Agent-to-reference (distinct context -- relative from the agent file):
 ```
 ../references/<topic>/<file>.md
+```
+
+Vault citations (authoring-time provenance only -- shipped findings cite `references/`):
+```
 ```

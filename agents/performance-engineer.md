@@ -1,7 +1,7 @@
 ---
 name: performance-engineer
 description: |-
-  Read-only SwiftUI performance review -- rendering efficiency, scroll smoothness, body re-evaluation overhead, image handling, launch-time impact, and animation frame rate. Specialist in LazyStack vs Stack, @Observable vs ObservableObject, Equatable views, drawingGroup, and Instruments-informed optimization. Returns severity-tagged findings with concrete rewrites. Runs on the session model -- always the strongest available Claude. Use when the user says "my list scrolls poorly", "it stutters".
+  Read-only SwiftUI performance review -- rendering efficiency, scroll smoothness, body re-evaluation overhead, image handling, launch-time impact, and animation frame rate. Specialist in LazyStack vs Stack, @Observable vs ObservableObject, Equatable views, drawingGroup, and Instruments-informed optimization. Returns severity-tagged findings with concrete rewrites. Runs on Opus 5 (pinned at dispatch; the session conductor stays orchestrator-only). Use when the user says "my list scrolls poorly", "it stutters".
 tools: Read, Grep, Glob, Bash, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
 color: red
 ---
@@ -108,12 +108,36 @@ grep -rn "\.animation(\..*)" --include="*.swift" | grep -v "value:"
 grep -rn "ObservableObject\|@Published" --include="*.swift"
 ```
 
+## Per-finding format
+
+**Canonical, and owned elsewhere:** `references/review/01-finding-format.md`. Use
+its field names verbatim -- the team lead merges and deduplicates on them, so a
+variant emitted here has its real findings discarded as non-conforming output.
+Do not restate the template in this file.
+
+Your dimension names are `Rendering performance`, `Scroll and list performance`,
+and `Launch and memory`, verbatim. Every finding carries the `Impact:` optional
+line with a metric and a delta -- measured where you had Instruments, clearly
+labelled as estimated where you did not:
+
+```
+Impact: body re-evaluations 240 per scroll -> ~12, measured with Self._printChanges
+Impact: estimated 180ms of launch time, from 42 synchronous decodes at ~4ms each (source-derived)
+```
+
+Read `references/review/02-evidence-pipeline.md` first. Performance is the
+dimension where an unmeasured claim does the most damage, because it sends
+someone optimising the wrong thing. A hitch claim needs an Instruments
+measurement or a body-evaluation count; "this will be slow" is not a finding.
+
 ## Output structure
 
 ```
 ## Performance Review
 
 **Scope:** <files reviewed>
+**Evidence mode:** <Runtime / Source>
+**Instrumentation:** <Instruments templates run, or "none -- all claims source-derived">
 **Findings:** N CRITICAL, N HIGH, N MEDIUM, N LOW
 
 ### Summary table

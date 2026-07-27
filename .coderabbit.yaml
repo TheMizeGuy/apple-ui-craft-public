@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# NOTE: CodeRabbit reads this file from the DEFAULT branch — it takes effect
+# after the first push to main. Validate with `@coderabbitai configuration`
+# in any PR. Exemplars (when those checkouts exist on this machine):
+# the CodeRabbit schema linked above.
+
+# Inherit org-wide baseline from TheMizeGuy/coderabbit. Scalars below override
+# central config; arrays merge with dedupe.
+inheritance: true
+
+language: "en-US"
+tone_instructions: >
+  Be direct and technical. Skip pleasantries. Focus on bugs, correctness, and
+  doctrine violations over style. Context: apple-ui-craft — the Apple UI craft
+  plugin (design, review, optimize, accessibility, platform integration for
+  iOS/SwiftUI).
+early_access: true
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  commit_status: true
+  fail_commit_status: false
+  enable_prompt_for_ai_agents: true
+  abort_on_close: true
+
+  instructions: |
+    apple-ui-craft is a Claude Code plugin,
+    not an application: six user-invoked skills, seven agents, and a ~95-file
+    reference knowledge base across 14 domains, plus zero-dependency Node test
+    scripts. Content IS the product — a change to a reference file or an agent
+    body changes runtime behaviour exactly as much as a code change does. This repo is a scrubbed public mirror; it is regenerated from a private
+    source and must never be hand-edited to add content.
+
+    BLOCKING rules (flag as error, not nitpick):
+
+    - Model policy: agent frontmatter must carry NO `model:` pin, and no dated
+      model ID (e.g. a `-20250101` suffix) may appear anywhere. Models are
+      pinned at DISPATCH with undated aliases only. Flag any reintroduced
+      frontmatter pin, any dated ID, and any change lowering effort below
+      `xhigh`.
+
+    - Version-bump lockstep: a version change must touch all four together in
+      the same commit — `.claude-plugin/plugin.json`, `CHANGELOG.md`,
+      and `.claude-plugin/marketplace.json`. Flag a bump that touches fewer.
+
+    - Matrix lockstep: any agent, skill, or reference file added, removed, or
+      renamed MUST update the `ARCHITECTURE.md` matrices AND the `README.md`
+      tables in the same commit. A new reference nothing points at is
+      unreachable to every agent and therefore dead weight.
+
+    - Reference citations must resolve. Every `references/<path>.md#anchor` in
+      shipped content must name a real file and a real heading.
+      `node tests/check-references.mjs` enforces this; a PR that breaks it is
+      an error. A citation that does not resolve is a SILENT capability loss —
+      the agent follows the pointer, finds nothing, and degrades without
+      reporting it.
+
+    - Self-containment: no agent, skill, or reference may depend on an external
+      directory) for knowledge the `references/` library does not already
+      carry. Vault citations are optional provenance only, and the one place an
+      agent names the vault states the graceful-degradation rule. Flag any new
+      load-bearing external dependency as an error.
+
+    - Finding-format single source of truth: `references/review/01-finding-format.md`
+      owns the finding template, severity scale, confidence enum, and dimension
+      registry. An agent body that restates the template or invents a dimension
+      name is a bug — `craft-team-lead` merges and deduplicates on those exact
+      strings, so a variant has its findings discarded as non-conforming.
+
+    - Corpus and references move together. `tests/corpus/labels.json` is ground
+      truth for `tests/harness/score-review.mjs`. A `ruleRef` whose defect is
+      not defined in the reference named in its `owner` field is a corpus that
+      tests nothing. A doctrine change that alters what should be flagged needs
+      a fixture added or relabelled in the same change, not just a paragraph
+      edited.
+
+    - Availability discipline: floors come from
+      `references/_scaffolding/version-floor-registry.md` and nowhere else. An
+      iOS-26-only API shown at a lower deployment floor needs
+      `#available(iOS 26, *)` plus a real fallback (never "left as an
+      exercise"); iOS-27 symbols need `#available(iOS 27, *)` plus a
+      `// SDK-verify` comment and must stay out of primary examples. Never emit
+      an API on the registry's PHANTOM list.
+
+    - Reduce Motion double-gate: gate BOTH `withAnimation(` and
+      `.animation(_:value:)` through one `Animation?`/nil accessor. Looping
+      symbol effects and `PhaseAnimator`/`KeyframeAnimator` loops are never
+      system-auto-gated. Flag any example that gates only one.
+
+    - No emojis anywhere in shipped content — skills, agents, references, docs,
+      or the findings format.
+
+    - Zero dependencies: no `package.json`, bundler, or lockfile without a
+      deliberate decision recorded in `CLAUDE.md`. Node >= 18 stdlib only.
+
+    - Mirror hygiene: `CLAUDE.md` and machine-specific content never reach the
+      public mirror. Flag any NEW absolute `/Users/...` path added to a file
+      outside `CLAUDE.md`.
+
+    - CI: if a GitHub Actions workflow is ever added, it must target Namespace
+      runners (`nscloud-*` labels). Never `ubuntu-latest`, `macos-15`, or any
+      other GitHub-hosted label.
+
+    Style notes (nitpick, not blocking): the voice is principal-Apple-engineer —
+    direct, specific, no hedging, no "at least N" lower bounds, no trailing
+    summaries, no AI slop. Every reviewer finding carries a severity tag, a
+    `references/...#slug` citation, and verbatim-applicable SwiftUI.
+
+  path_filters:
+    - "!**/node_modules/**"
+    # Intentionally-defective regression fixtures. Their defects are the point,
+    # and every "fix" destroys the test. Reviewing them is pure noise.
+    - "!tests/corpus/fixtures/**"
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"

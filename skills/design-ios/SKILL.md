@@ -1,7 +1,7 @@
 ---
 name: design-ios
 description: |-
-  Design new iOS UI from scratch -- a screen, a flow, a component, or a full app interface. Dispatches the apple-ui-architect agent, running on the session model (always the strongest available Claude), for production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptic feedback, and accessibility from birth -- then the accessibility-engineer to audit the fresh code before both reports return. Triggers on "design a [screen/flow/component]", "build me a [screen]", "create the UI for", "design the [dashboard/settings/onboarding]". Also use proactively: any new screen, view, or component in an iOS/SwiftUI project starts here, even when the request is just "add a settings page" and never says design.
+  Design new iOS UI from scratch -- a screen, a flow, a component, or a full app interface. Dispatches the apple-ui-architect agent, pinned to Opus 5 at dispatch, which maps the user's task flow before any screen exists, states an explicit adaptive contract per component, ships every state rather than only the loaded one, and produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptic feedback, and accessibility from birth -- then the accessibility-engineer to audit the fresh code before both reports return. Triggers on "design a [screen/flow/component]", "build me a [screen]", "create the UI for", "design the [dashboard/settings/onboarding]". Also use proactively: any new screen, view, or component in an iOS/SwiftUI project starts here, even when the request is just "add a settings page" and never says design.
 ---
 
 # Design iOS UI
@@ -81,12 +81,16 @@ Run every check against the architect's output; do not present the deliverable u
 | No fixed font sizes | `grep -n "font(.system(size:"` | Zero hits, or each carries a `relativeTo:` and a rationale line |
 | Reduce Motion gated | Every `withAnimation(` / `.animation(` site | Each paired with a Reduce Motion accessor, or listed in the rationale as motion-safe |
 | Stage 2 ran | Accessibility report present | Findings, or an explicit pass, for all 5 audit dimensions |
+| Task frame stated | Stage 1 output has a Task frame section | Task, observable success condition, entry points, frequency -- or one line saying it is a standalone component with no task around it |
+| Flow map present | Stage 1 output has a Flow map table | No empty `State carried in`, `Failure modes`, or `Exit paths` cell; each empty cell is a defect being designed in |
+| Adaptive contract stated | Stage 1 output has an Adaptive contract table | A sizing strategy per component, and it is never "fixed" for content |
+| States shipped | Stage 1 output has a State coverage table | Loading, loaded, empty, and error all rendered; zero-results wherever there is a filter; every terminal state carries an onward action |
 
 Any failed check goes back to the producing stage with the concrete gap named -- one re-dispatch, then escalate to the user rather than shipping a known miss.
 
 ## Execution mode
 
-Every agent this skill dispatches inherits the session model -- always the strongest available Claude. When the session model is already the strongest tier and the design scope is small, the orchestrator may produce the design inline in the main context (foreground) instead of dispatching a separate agent, without weakening the accessibility-engineer's read-only guarantee in Stage 2. Never block on, or call out to, a model that isn't the session model.
+Every agent this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the design scope is small, the orchestrator may produce the design inline in the main context (foreground) instead of dispatching a separate agent, without weakening the accessibility-engineer's read-only guarantee in Stage 2.
 
 ## Ultracode conductor mode
 
@@ -94,9 +98,9 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Executor teams (conductor-selected: Sonnet 5 ALWAYS `effort: xhigh`, or Opus 4.8) |
+| Conductor (session model -- never delegated) | Conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) |
 |---|---|
-| The design itself (information hierarchy, aesthetic decisions, navigation model, animation/haptic choices) and final synthesis -- design is judgment-class and stays with the architect (session model); the accessibility verdict stays with the accessibility-engineer (Stage 2, also session model) | Component scaffolding from the conductor/architect-approved design spec (one executor per component family); token/asset plumbing; preview-matrix generation (Dynamic Type x color scheme x Reduce Motion) |
+| The design itself (information hierarchy, aesthetic decisions, navigation model, animation/haptic choices) and final synthesis -- design is judgment-class and stays with the architect (Opus 5, pinned at dispatch); the accessibility verdict stays with the accessibility-engineer (Stage 2, also Opus 5) | Component scaffolding from the conductor/architect-approved design spec (one executor per component family); token/asset plumbing; preview-matrix generation (Dynamic Type x color scheme x Reduce Motion) |
 
 Design origination is NOT an executor task -- the `apple-ui-architect` produces the design and the primary SwiftUI. Executors only fan out to scaffold approved component families and generate the preview matrix once the architecture is set, then the conductor and the accessibility pass gate the result.
 
@@ -104,4 +108,4 @@ Design origination is NOT an executor task -- the `apple-ui-architect` produces 
 - Each executor owns one approved component family (non-overlapping) and gets the approved spec inline.
 - Reference set: absolute paths of the relevant `references/design/*`, `references/animation/*`, `references/interaction/*` + `references/_scaffolding/version-floor-registry.md`.
 - Inline the production-SwiftUI rules (system fonts/semantic colors/44pt/RM double-gate/#available gating/no phantom APIs).
-- The `apple-ui-architect` / `accessibility-engineer` stay on the session model -- design + a11y verdicts are never executor work.
+- The `apple-ui-architect` / `accessibility-engineer` are pinned to Opus 5 at dispatch -- design + a11y verdicts are never grunt-executor work.

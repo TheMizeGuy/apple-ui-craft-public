@@ -1,0 +1,178 @@
+[
+  {
+    "id": "adaptive-fixed-title-frame",
+    "dimension": "Adaptive layout and Dynamic Type",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/fixed-frame-row.swift",
+    "line": 19,
+    "title": "Fixed 120pt title frame truncates at accessibility sizes",
+    "ruleRef": "adaptive/fixed-frame",
+    "evidence": "Derived: 120pt title + 24pt icon + 32pt padding + 12pt spacing leaves 132pt of a 320pt window for a value measuring 214pt at AX5."
+  },
+  {
+    "id": "density-value-leftover",
+    "dimension": "Density and economy",
+    "severity": "MEDIUM",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/fixed-frame-row.swift",
+    "line": 21,
+    "title": "Value column sized by leftover space at regular width",
+    "ruleRef": "density/leftover-sizing",
+    "evidence": "Measurement: on a 1024pt window the Spacer commits ~830pt to render a 5-character number."
+  },
+  {
+    "id": "flow-compose-draft-lost",
+    "dimension": "Task flow and journey",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/draft-in-sheet.swift",
+    "line": 14,
+    "title": "Compose draft in @State lost on swipe-dismiss and termination",
+    "ruleRef": "flow/draft-in-sheet",
+    "evidence": "subject and body_ are @State inside ComposeSheet; the .sheet carries no interactiveDismissDisabled and nothing persists on scenePhase change."
+  },
+  {
+    "id": "flow-pop-gesture-killed",
+    "dimension": "Task flow and journey",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/broken-back-gesture.swift",
+    "line": 23,
+    "title": "Custom back button breaks the interactive pop gesture",
+    "ruleRef": "flow/broken-pop-gesture",
+    "evidence": "navigationBarBackButtonHidden(true) with a hand-rolled toolbar replacement; the edge swipe is gone."
+  },
+  {
+    "id": "state-no-empty-view",
+    "dimension": "Error recovery and state integrity",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/missing-empty-state.swift",
+    "line": 22,
+    "title": "No empty state; an empty list renders a bar over nothing",
+    "ruleRef": "state/missing-empty",
+    "evidence": "List(visible) with no branch on visible.isEmpty and no ContentUnavailableView anywhere in the file."
+  },
+  {
+    "id": "state-search-empty-conflated",
+    "dimension": "Error recovery and state integrity",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/missing-empty-state.swift",
+    "line": 22,
+    "title": "Empty and zero-results conflated despite different recoveries",
+    "ruleRef": "state/empty-vs-zero-results-conflated",
+    "evidence": "The searchText filter and the no-data case reach the same blank List; one needs a create action, the other needs the filter cleared."
+  },
+  {
+    "id": "forms-keyboard-covers-submit",
+    "dimension": "Error recovery and state integrity",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/numberpad-trap.swift",
+    "line": 20,
+    "title": "Number pad with no dismissal traps keyboard over the Pay button",
+    "ruleRef": "forms/keyboard-trap",
+    "evidence": "keyboardType(.numberPad) and (.decimalPad) with no ToolbarItemGroup(placement: .keyboard), no scrollDismissesKeyboard and no tap-to-dismiss."
+  },
+  {
+    "id": "forms-autofill-dead",
+    "dimension": "Error recovery and state integrity",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/numberpad-trap.swift",
+    "line": 18,
+    "title": "Missing textContentType on payment fields kills AutoFill",
+    "ruleRef": "forms/missing-content-type",
+    "evidence": "Neither the name nor the card field declares textContentType, so .name and .creditCardNumber AutoFill never offers."
+  },
+  {
+    "id": "density-ipad-stretched-phone",
+    "dimension": "Density and economy",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/stretched-phone-ipad.swift",
+    "line": 18,
+    "title": "List-plus-detail single column wastes the regular-width window",
+    "ruleRef": "density/stretched-phone",
+    "evidence": "Measurement: NavigationStack only; no NavigationSplitView and no adaptive grid in the file, so a 1024pt window renders one column of label-and-value rows."
+  },
+  {
+    "id": "adaptive-viewthatfits-all-overflow",
+    "dimension": "Adaptive layout and Dynamic Type",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/viewthatfits-no-fit.swift",
+    "line": 19,
+    "title": "ViewThatFits has no candidate that fits at accessibility sizes",
+    "ruleRef": "adaptive/viewthatfits-no-fitting-candidate",
+    "evidence": "Both candidates are horizontal with the same fixed 32pt icon; the system renders the last one clipped when neither fits."
+  },
+  {
+    "id": "adaptive-icon-not-scaled",
+    "dimension": "Adaptive layout and Dynamic Type",
+    "severity": "MEDIUM",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/viewthatfits-no-fit.swift",
+    "line": 21,
+    "title": "Fixed 32pt icon beside scaling text collapses proportions",
+    "ruleRef": "adaptive/no-scaled-metric",
+    "evidence": "frame(width: 32, height: 32) with no @ScaledMetric while the adjacent Text scales to AX5."
+  },
+  {
+    "id": "adaptive-overlay-bar-clips-last-row",
+    "dimension": "Adaptive layout and Dynamic Type",
+    "severity": "CRITICAL",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/overlay-bottom-bar.swift",
+    "line": 21,
+    "title": "Overlay bar leaves the last list row permanently unreachable",
+    "ruleRef": "adaptive/overlay-instead-of-safe-area-inset",
+    "evidence": "overlay(alignment: .bottom) does not inset scroll content; safeAreaInset(edge: .bottom) would."
+  },
+  {
+    "id": "forms-delete-unguarded",
+    "dimension": "Error recovery and state integrity",
+    "severity": "CRITICAL",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/destructive-no-confirm.swift",
+    "line": 20,
+    "title": "Irreversible swipe delete with neither confirmation nor undo",
+    "ruleRef": "forms/destructive-unguarded",
+    "evidence": "onDelete calls store.deletePermanently with no confirmationDialog and no undo affordance."
+  },
+  {
+    "id": "forms-delete-all-no-count",
+    "dimension": "Error recovery and state integrity",
+    "severity": "MEDIUM",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/destructive-no-confirm.swift",
+    "line": 27,
+    "title": "Delete All never states how many records it destroys",
+    "ruleRef": "forms/bulk-without-count",
+    "evidence": "The toolbar button destroys the whole collection with no count in any label or message."
+  },
+  {
+    "id": "ia-six-tabs-overflow",
+    "dimension": "Information architecture and navigation structure",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/six-tabs.swift",
+    "line": 14,
+    "title": "Six top-level tabs; the platform hides the sixth in More",
+    "ruleRef": "ia/tab-overflow",
+    "evidence": "TabView declares six tabItem children; iOS collapses items past five into a More list."
+  },
+  {
+    "id": "ia-trends-untitled",
+    "dimension": "Information architecture and navigation structure",
+    "severity": "MEDIUM",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/six-tabs.swift",
+    "line": 26,
+    "title": "Trends sets no navigationTitle so children show a bare Back button",
+    "ruleRef": "ia/missing-navigation-title",
+    "evidence": "TrendsView's NavigationStack has no navigationTitle; every other tab root sets one."
+  }
+]

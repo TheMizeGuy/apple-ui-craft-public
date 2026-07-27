@@ -293,7 +293,6 @@ ColorTarget()
     }
 ```
 
-For complex Transferable conformance, see `references/patterns/10-drag-drop.md#transferable-conformance-the-contract`.
 
 ## Pull to refresh
 

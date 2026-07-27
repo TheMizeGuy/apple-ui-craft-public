@@ -107,7 +107,6 @@ CRITICAL: an iOS-27-beta-only symbol shipped ungated as the primary example -- w
 
 ## Source sessions and durable citations
 
-Cite these by name rather than an internal file path so a citation never 404s for an agent that can't open the author's private notes:
 
 - WWDC25 "Get to know the new design system" (session #356) -- the Liquid Glass design-system introduction behind the iOS 26.0 entry above.
 - WWDC25 "Meet Liquid Glass," "Build a SwiftUI app with Liquid Glass," "Applying Liquid Glass to custom views" -- the API sessions `design/02-liquid-glass.md` and this log's 26.0 entry draw from.

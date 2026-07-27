@@ -1,0 +1,241 @@
+{
+  "meta": {
+    "purpose": "Ground truth for the apple-ui-craft regression corpus. Each fixture lists the findings a by-the-book review SHOULD produce, in the canonical finding shape from references/review/01-finding-format.md, plus a ruleRef naming the reference section the finding maps to. The scorer (tests/harness/score-review.mjs) matches emitted findings to these labels by ruleRef first, then by (fixture, dimension) with fuzzy title overlap.",
+    "findingShape": "id, dimension (a verbatim entry from the dimension registry in references/review/01-finding-format.md), severity (CRITICAL|HIGH|MEDIUM|LOW|NIT), confidence (Hard defect|Quality defect|Pattern smell|Taste note), file, line, title, ruleRef, evidence.",
+    "ruleRefConvention": "<area>/<defect-slug>, where area is one of adaptive, density, flow, forms, ia, state. Each ruleRef's definition, threshold and severity live in the reference named in that label's `owner` field. Adding a ruleRef here without adding it there is a corpus that tests nothing.",
+    "cleanControlRule": "A clean control has expected == [] and maxIncidentalFindings == 1: the review may surface at most one incidental note before the control is treated as failed.",
+    "severityIsInformational": "severity on a label records the reference's by-the-book class; the scorer matches on ruleRef/title, not severity, so a reviewer calling a defect one class higher or lower still counts as a hit.",
+    "dimensionCoverage": "16 labels across 10 defective fixtures, concentrated on the dimensions added in 0.3.0 (task flow, information architecture, error recovery and state integrity, adaptive layout and Dynamic Type, density and economy) because those are the ones with no prior regression protection. The visual dimensions (Liquid Glass, typography, color, SF Symbols, micro-interactions), animation, haptics, VoiceOver, performance and platform integration have NO labels here. Read any pooled recall number as recall over the labeled dimensions, never as coverage of the plugin's twenty-four.",
+    "swiftFixturesAreReadNotCompiled": "Fixtures are read by a reviewing agent, never built. There is no Xcode target, so an editor resolving them against the host macOS SDK will flag iOS-only API (navigationBarTitleDisplayMode, topBarLeading, keyboardType, ContentUnavailableView.search). Those diagnostics are an artifact of having no iOS target and are NOT defects to fix -- several of them ARE the planted defect, and 'fixing' them destroys the fixture.",
+    "cleanControlContract": "adaptive-clean-control.swift is the guard against the failure mode where a reviewer flags constructs rather than defects -- the mirror image of every other fixture. It uses what the references prescribe: AnyLayout reflow at accessibility sizes, @ScaledMetric on an icon beside text, a reading measure on the detail column, NavigationSplitView at regular width, safeAreaInset for a custom bar, a Codable route, a draft owned above its presentation, interactiveDismissDisabled paired with a real Cancel, a confirmed destructive action, a double-submit guard, a keyboard toolbar, and all five reachable states each with a recovery. A run that flags any of those has learned the wrong lesson and fails the gate here.",
+    "authored": "Every fixture is new for apple-ui-craft 0.3.0. No fixture is copied from another corpus."
+  },
+  "fixtures": [
+    {
+      "file": "fixed-frame-row.swift",
+      "note": "A fixed 120pt title frame beside a Spacer-sized value. One line causes both a truncation failure at accessibility sizes and a leftover-sizing waste at regular width.",
+      "expected": [
+        {
+          "id": "adaptive-fixed-frame-title",
+          "ruleRef": "adaptive/fixed-frame",
+          "dimension": "Adaptive layout and Dynamic Type",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 19,
+          "title": "Fixed 120pt frame on the title truncates at accessibility sizes",
+          "owner": "references/usability/05-adaptive-review-method.md#1-classify-the-sizing-strategy-first"
+        },
+        {
+          "id": "density-leftover-value",
+          "ruleRef": "density/leftover-sizing",
+          "dimension": "Density and economy",
+          "severity": "MEDIUM",
+          "confidence": "Hard defect",
+          "line": 21,
+          "title": "Value column sized by the leftover at regular width",
+          "owner": "references/review/03-density-and-economy.md#the-leftover-sizing-rule"
+        }
+      ]
+    },
+    {
+      "file": "draft-in-sheet.swift",
+      "note": "The compose draft lives in @State inside the presented view, with no dismiss guard and no persistence, so it dies on swipe-down and on termination.",
+      "expected": [
+        {
+          "id": "flow-draft-in-sheet",
+          "ruleRef": "flow/draft-in-sheet",
+          "dimension": "Task flow and journey",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 14,
+          "title": "Sheet draft in @State is lost on swipe-dismiss and termination",
+          "owner": "references/usability/01-task-flows-and-journeys.md#4-state-that-carries-forward"
+        }
+      ]
+    },
+    {
+      "file": "broken-back-gesture.swift",
+      "note": "navigationBarBackButtonHidden with a hand-rolled replacement kills the interactive pop gesture.",
+      "expected": [
+        {
+          "id": "flow-broken-pop-gesture",
+          "ruleRef": "flow/broken-pop-gesture",
+          "dimension": "Task flow and journey",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 23,
+          "title": "Custom back button breaks the interactive pop gesture",
+          "owner": "references/usability/03-navigation-and-information-architecture.md#4-back-behaviour"
+        }
+      ]
+    },
+    {
+      "file": "missing-empty-state.swift",
+      "note": "No empty state at all, and the filtered-to-nothing case shares that non-existent treatment, so two audiences needing different recoveries both get none.",
+      "expected": [
+        {
+          "id": "state-missing-empty",
+          "ruleRef": "state/missing-empty",
+          "dimension": "Error recovery and state integrity",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 22,
+          "title": "No empty state; an empty list renders a bar over nothing",
+          "owner": "references/usability/04-states-feedback-and-affordances.md#1-the-complete-state-set"
+        },
+        {
+          "id": "state-zero-results-conflated",
+          "ruleRef": "state/empty-vs-zero-results-conflated",
+          "dimension": "Error recovery and state integrity",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 22,
+          "title": "Empty and zero-results share one treatment with different recoveries",
+          "owner": "references/usability/04-states-feedback-and-affordances.md#1-the-complete-state-set"
+        }
+      ]
+    },
+    {
+      "file": "numberpad-trap.swift",
+      "note": "Number pads have no return key; with no dismissal path the keyboard covers the submit button permanently. The name field has no textContentType, so AutoFill is dead.",
+      "expected": [
+        {
+          "id": "forms-keyboard-trap",
+          "ruleRef": "forms/keyboard-trap",
+          "dimension": "Error recovery and state integrity",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 20,
+          "title": "Number pad with no dismissal traps the keyboard over the submit button",
+          "owner": "references/usability/02-forms-and-error-recovery.md#5-input-types-keyboards-and-autofill"
+        },
+        {
+          "id": "forms-missing-content-type",
+          "ruleRef": "forms/missing-content-type",
+          "dimension": "Error recovery and state integrity",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 18,
+          "title": "No textContentType on payment fields kills AutoFill",
+          "owner": "references/usability/02-forms-and-error-recovery.md#5-input-types-keyboards-and-autofill"
+        }
+      ]
+    },
+    {
+      "file": "stretched-phone-ipad.swift",
+      "note": "List-plus-detail content in a single NavigationStack. Nothing clips and every screenshot is clean; on a 13-inch iPad the app is a phone with air around it.",
+      "expected": [
+        {
+          "id": "density-stretched-phone",
+          "ruleRef": "density/stretched-phone",
+          "dimension": "Density and economy",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 18,
+          "title": "List-plus-detail in a single column wastes the regular-width window",
+          "owner": "references/review/03-density-and-economy.md#the-ipad-question"
+        }
+      ]
+    },
+    {
+      "file": "viewthatfits-no-fit.swift",
+      "note": "Every ViewThatFits candidate is the same horizontal arrangement, so the system renders the last one clipped -- the exact failure the modifier was added to prevent.",
+      "expected": [
+        {
+          "id": "adaptive-viewthatfits-no-fit",
+          "ruleRef": "adaptive/viewthatfits-no-fitting-candidate",
+          "dimension": "Adaptive layout and Dynamic Type",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 19,
+          "title": "ViewThatFits has no candidate that fits at accessibility sizes",
+          "owner": "references/usability/05-adaptive-review-method.md#1-classify-the-sizing-strategy-first"
+        },
+        {
+          "id": "adaptive-no-scaled-metric",
+          "ruleRef": "adaptive/no-scaled-metric",
+          "dimension": "Adaptive layout and Dynamic Type",
+          "severity": "MEDIUM",
+          "confidence": "Hard defect",
+          "line": 21,
+          "title": "Fixed 32pt icon beside scaling text collapses proportions at AX5",
+          "owner": "references/usability/05-adaptive-review-method.md#4-dynamic-type-is-the-platforms-zoom"
+        }
+      ]
+    },
+    {
+      "file": "overlay-bottom-bar.swift",
+      "note": "An overlay bar does not inset scroll content, so the last row of every list is permanently unreachable. Invisible in screenshots, which do not scroll to the end.",
+      "expected": [
+        {
+          "id": "adaptive-overlay-not-safe-area-inset",
+          "ruleRef": "adaptive/overlay-instead-of-safe-area-inset",
+          "dimension": "Adaptive layout and Dynamic Type",
+          "severity": "CRITICAL",
+          "confidence": "Hard defect",
+          "line": 21,
+          "title": "Overlay bar leaves the last list row permanently unreachable",
+          "owner": "references/usability/05-adaptive-review-method.md#5-safe-areas-are-two-rules-not-one"
+        }
+      ]
+    },
+    {
+      "file": "destructive-no-confirm.swift",
+      "note": "Two irreversible paths with neither confirmation nor undo, one of them on a reflex swipe gesture, the other destroying every record without stating how many.",
+      "expected": [
+        {
+          "id": "forms-destructive-unguarded",
+          "ruleRef": "forms/destructive-unguarded",
+          "dimension": "Error recovery and state integrity",
+          "severity": "CRITICAL",
+          "confidence": "Hard defect",
+          "line": 20,
+          "title": "Irreversible delete with neither confirmation nor undo",
+          "owner": "references/usability/02-forms-and-error-recovery.md#7-destructive-actions-confirm-or-undo-or-both"
+        },
+        {
+          "id": "forms-bulk-without-count",
+          "ruleRef": "forms/bulk-without-count",
+          "dimension": "Error recovery and state integrity",
+          "severity": "MEDIUM",
+          "confidence": "Hard defect",
+          "line": 27,
+          "title": "Delete All does not state how many records it destroys",
+          "owner": "references/usability/02-forms-and-error-recovery.md#7-destructive-actions-confirm-or-undo-or-both"
+        }
+      ]
+    },
+    {
+      "file": "six-tabs.swift",
+      "note": "A sixth tab is collapsed into More by the platform, so Settings becomes a row nobody visits. Trends also sets no navigationTitle, so its children get a back button reading Back.",
+      "expected": [
+        {
+          "id": "ia-tab-overflow",
+          "ruleRef": "ia/tab-overflow",
+          "dimension": "Information architecture and navigation structure",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 14,
+          "title": "Six top-level tabs; the platform hides the sixth in More",
+          "owner": "references/usability/03-navigation-and-information-architecture.md#1-navigation-models"
+        },
+        {
+          "id": "ia-missing-navigation-title",
+          "ruleRef": "ia/missing-navigation-title",
+          "dimension": "Information architecture and navigation structure",
+          "severity": "MEDIUM",
+          "confidence": "Hard defect",
+          "line": 26,
+          "title": "Trends sets no navigationTitle, so its children's back button says Back",
+          "owner": "references/usability/03-navigation-and-information-architecture.md#3-wayfinding-knowing-where-you-are"
+        }
+      ]
+    },
+    {
+      "file": "adaptive-clean-control.swift",
+      "note": "CLEAN CONTROL. Must produce zero findings. Every construct here is one the references prescribe; flagging any of them means the reviewer is matching constructs rather than defects.",
+      "expected": [],
+      "maxIncidentalFindings": 1
+    }
+  ]
+}

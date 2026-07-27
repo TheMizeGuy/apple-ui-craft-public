@@ -9,29 +9,34 @@ of sync with the fan-out doctrine once already.
 ## Mode
 
 The session model CONDUCTS -- always the strongest available Claude, whichever model
-that is -- and conductor-selected executor teams (Sonnet 5 @ `xhigh`, or Opus 4.8 for leg-work needing
-deeper judgment) run the scoped grunt stages.
+that is -- and teams of conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5 --
+rubric in your conductor policy § Executor model selection) run the scoped grunt
+stages.
 Judgment work never moves down: severity grades, rankings, apply/no-apply decisions,
-design origination, and final synthesis are conductor-class or specialist-class (running
-on the session model), always.
+design origination, and final synthesis are conductor-class (the session model) or
+specialist-class (the reviewer agents, pinned to Opus 5 at dispatch), always.
 
 ## Dispatch mechanics
 
 - Agent tool: `Agent({subagent_type: "general-purpose", model: "sonnet", prompt: <scoped
-  briefing>})` -- a session at xhigh means executors inherit xhigh. In Workflow scripts
-  pass `{model: 'sonnet', effort: 'xhigh'}` (or `{model: 'opus'}`) explicitly.
-- Plugin specialist agents (`apple-ui-craft:*`) stay on the session model (`model`
-  omitted from their frontmatter -- it inherits) -- judgment reviewers, never executors.
+  briefing>})` -- a session at xhigh means Sonnet executors inherit xhigh. The conductor
+  may instead pick `model: "opus"` per the rubric in your conductor policy §
+  Executor model selection when the task warrants it. In Workflow scripts pass
+  `{model: 'sonnet', effort: 'xhigh'}` (or `{model: 'opus'}`) explicitly.
+- Plugin specialist agents (`apple-ui-craft:*`) carry no `model` pin in their frontmatter
+  but are pinned to `model: "opus"` (Opus 5) at dispatch -- judgment reviewers, never
+  grunt executors.
   Executors are always plain `general-purpose` with the scoped briefing inlined.
-- The executor gate is task TYPE, not agent count -- a single executor-class dispatch is
-  fine.
+- The executor-model gate is task TYPE, not agent count -- a single executor-class
+  dispatch is fine.
 
 ## Fan-out
 
 - Scale executor teams to the scope's natural breadth (one executor per screen group,
   surface, component family, or file set) -- never a round-number quota.
-- Conductor-managed executor teams (Sonnet or Opus) are exempt from the session-model agent
-  caps (>20 Opus executors in one turn still needs explicit sign-off); the <=10/wave, <=20/turn caps apply to session-model agents only.
+- Conductor-managed executors (Sonnet or Opus) are exempt from the session-model agent
+  caps; the <=10/wave, <=20/turn caps apply to session-model agents only. More than 20
+  Opus executors in one turn still needs user sign-off.
 - Every dispatch loop needs a hard iteration cap; Workflow loops also guard on
   `budget.remaining()`.
 - Executors writing files in parallel use `isolation: "worktree"`; read-only sweeps do
@@ -62,7 +67,7 @@ work over directly. Never a third executor attempt.
 ## Hard invariants
 
 Never Haiku. Never Sonnet below `xhigh`. Never an executor verdict. Nothing in this protocol
-may block on, or call out to, a model that isn't the session model -- if the session model
+may block on, or wait for, a specific unavailable model -- if the session model
 is already the strongest available tier and a stage is small enough, the conductor may run
 it inline in the main context instead of dispatching, without weakening any read-only or
 isolation guarantee a specialist agent carries.

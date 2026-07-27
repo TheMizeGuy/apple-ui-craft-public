@@ -31,6 +31,8 @@ apple-ui-craft:platform-engineer
 ## Output
 
 - Integration verdict: DEEPLY INTEGRATED / SURFACE-LEVEL / UNTAPPED / NOT APPLICABLE
+- Findings in the canonical format (`references/review/01-finding-format.md`), each carrying its `Platform:` and `Availability:` lines. A MISSING integration is a recommendation, never a defect -- an app without a widget is not broken. HIGH is reserved for integration that exists and is wrong
+- Where an integration is an ENTRY POINT, its correctness is a flow question: does the widget, Siri phrase, or Spotlight result land somewhere coherent when signed out or when the entity was deleted? (`references/usability/01-task-flows-and-journeys.md#1-name-the-task-before-reviewing-anything`)
 - Existing-surface audit (what ships today, with correctness findings, severity-tagged)
 - Opportunity map (surface -> what it does for this app -> APIs + floor -> effort)
 - Cross-platform reach assessment (which platforms this app should exist on, and why)
@@ -40,7 +42,7 @@ All findings are advisory. The user chooses what to build.
 
 ## Execution mode
 
-The specialist this skill dispatches inherits the session model -- always the strongest available Claude. When the session model is already the strongest tier and the integration scope is small, the orchestrator may run the audit inline in the main context (foreground) instead of dispatching a separate agent, without weakening the platform-engineer's read-only guarantee. Never block on, or call out to, a model that isn't the session model.
+The specialist this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the integration scope is small, the orchestrator may run the audit inline in the main context (foreground) instead of dispatching a separate agent, without weakening the platform-engineer's read-only guarantee.
 
 ## Ultracode conductor mode
 
@@ -48,11 +50,11 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Executor teams (conductor-selected: Sonnet 5 ALWAYS `effort: xhigh`, or Opus 4.8) |
+| Conductor (session model -- never delegated) | Conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) |
 |---|---|
 | Opportunity ranking, value-vs-cost judgment, integration plan synthesis, anything entitlement- or privacy-adjacent | Surface census (existing intents, widgets, activities, extensions, plist declarations); per-surface API-shape research from the conductor-approved opportunity list (framework, floor, required entitlements, minimal adoption checklist) |
 
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set: absolute paths of `references/platform/` + `references/cross-platform/` + `references/_scaffolding/version-floor-registry.md`.
 - Executors report evidence and research, never rankings -- the conductor ranks. This skill stays advisory end to end: no executor writes project files. Scaffolding is a separate task the user must ask for after the report.
-- The `platform-engineer` specialist stays on the session model -- judgment reviewer, never an executor.
+- The `platform-engineer` specialist is pinned to Opus 5 at dispatch -- judgment reviewer, never a grunt executor.
