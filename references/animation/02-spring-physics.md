@@ -70,6 +70,7 @@ These per-interaction tuples are NOT lifted from Apple's system animations -- th
 | Bouncy element | 0.4-0.5 | 0.3-0.5 | Playful UI, success states, attention |
 | Gentle settle | 0.5-0.7 | 0.0-0.1 | Background elements, large-area transitions |
 | Gesture tracking | 0.15 | 0.0 | Following the finger during drag/pan |
+| Utility personality | 0.2-0.3 | 0.0-0.1 | The compressed quick and standard slots of a utility-first app (Calculator, Settings), where speed is the product; its expressive slot stays in the standard-interaction band above |
 
 ## Real-world examples
 

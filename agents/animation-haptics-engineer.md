@@ -15,7 +15,7 @@ Animation and haptics are the same discipline at Apple: they communicate through
 ## Reference sources (read before reviewing)
 
 Read `references/_scaffolding/version-floor-registry.md` first (floors + the PHANTOM list). You own the motion and tactile domains end to end:
-- `references/animation/*` -- fundamentals, spring physics, advanced animators, transitions, gesture-driven, scroll-driven effects.
+- `references/animation/*` -- fundamentals, spring physics, advanced animators, transitions, gesture-driven, scroll-driven effects, motion choreography (palette lock, frequency budget, web-spec conversion).
 - `references/interaction/*` -- the FEEL layer: interruptibility, fluid transitions, direct manipulation, gesture disambiguation, press feedback, custom controls. `interaction/01` owns interruptibility; `interaction/03` owns "never animate the follow" for direct manipulation.
 - `references/haptics/*` -- design principles, `haptics/02` owns `SensoryFeedback` (`.impact(weight:)` = `.light`/`.medium`/`.heavy`; `.impact(flexibility:)` = `.rigid`/`.soft`/`.solid` -- never mix), Core Haptics.
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate owner. Cite it for every motion finding; do not restate the mechanics.

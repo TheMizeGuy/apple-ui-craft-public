@@ -2,6 +2,62 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.4.1 -- 2026-08-24
+
+Adversarial cohesion review of the 0.4.0 motion-choreography integration. No new
+capability ships here; what shipped in 0.4.0 is made to agree with the files it
+cites.
+
+### Stagger numbers go back to their owner
+
+`references/animation/07-motion-choreography.md` published 80-120ms stagger
+increments and an ~800ms wave while naming
+`references/interaction/02-fluid-transitions.md` -- which owns hero-then-secondary
+tier timing at 40-60ms per tier, wave under ~150ms -- as the owner in the same
+sentence. `animation-haptics-engineer` reads both files in one scope, so both
+numbers were citable and mutually exclusive. The section now defers tier timing
+to the owner and scopes its own rules to the case that file does not cover: N
+peer elements arriving with no hero to trail (40-60ms increments, 6-8 staggered
+then batch, entry inside ~800ms, once per arrival, above ~150ms per item reads
+as buffering). The cinematic reveal keeps the slower ~80-120ms increment as a
+named lane, capped at 4-6 items so it still lands inside the same budget. The
+exemplar moves to `min(index, 5) * 0.06` -- 0.70s to last settle, where the old
+`min(index, 7) * 0.08` breached the file's own 800ms rule at 0.96s.
+
+### The three-spring cap is scoped to discrete-state motion
+
+"A fourth spring means one of the first three was chosen wrong" condemned four
+springs this library's own owner files mandate: the gesture-tracking interactive
+spring (`animation/05`), the asymmetric press-in/press-out pair
+(`interaction/05`), and the background depth variant demonstrated in
+`animation/02#composing-springs` -- the section 07 cited as proof of containment.
+Applied literally it would raise a MEDIUM finding against code that follows this
+library correctly. The cap now governs discrete-state springs only, with those
+exemptions enumerated in the same bullet and `#composing-springs` cited as their
+precedent. Related: the frequency budget no longer hands press states a symmetric
+`Motion.quick`, and the utility personality's compressed tuples now live in
+`references/animation/02-spring-physics.md`'s house table -- the tuple owner --
+as a utility row (0.2-0.3 duration, 0.0-0.1 bounce) that 07 cites instead of
+restating.
+
+### Wiring correction
+
+`agents/apple-ui-architect.md` enumerated `animation/03`..`animation/06`, a closed
+range that never reached the new file. The 0.4.0 note that "the agent reference
+matrices already reach the file through `animation/*`" was therefore true for the
+reviewer's glob and false for the architect -- the one agent that writes greenfield
+screens, and so the one that most needs the personality lock before any spring
+exists. The range now ends at `animation/07`, and
+`agents/animation-haptics-engineer.md`'s directory enumeration names motion
+choreography.
+
+Also corrected: `ARCHITECTURE.md`'s tree line carries the `OWNER:` marker its
+concept-owning siblings use; the reference line count reads ~23,500 (actual
+23,510) in `ARCHITECTURE.md` and `README.md`; the bounce-ceiling citation reads
+"guides production UI under bounce 0.5", matching the anti-pattern cell it cites;
+the 400/30 overshoot figure is ~3% (2.84%, was ~2%); and the hold-to-delete
+snap-back is ~250ms, matching `Motion.quick`'s 0.25s duration.
+
 ## 0.4.0 -- 2026-08-24
 
 ### Motion choreography reference (new)
