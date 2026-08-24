@@ -2,6 +2,30 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.4.0 -- 2026-08-24
+
+### Motion choreography reference (new)
+
+`references/animation/07-motion-choreography.md` -- system-level motion doctrine
+adapted from [VibeCurb](https://github.com/Yu-369/VibeCurb) (MIT, Copyright (c)
+2026 Yu-369) and merged with this library's conventions: the locked motion
+palette (three-spring maximum, personality lock, palette-as-tokens), the
+frequency-gated motion budget (100+/day surfaces and hardware-keyboard paths
+never animate; the delight budget is reserved for rare moments), the
+asymmetric-timing principle (deliberate action slow, system response fast),
+numeric stagger rules (80-120ms increments, hierarchy order, 6-8 cap, entry
+under 800ms), and a verified web-spec conversion bridge: designer/Framer
+mass-stiffness-damping triads to SwiftUI via `Spring(mass:stiffness:damping:)`,
+checksummed against Apple's documented `(100, 10) -> (0.63, 0.5)` example. The
+one imported triad that lands above this library's bounce-0.5 production
+ceiling is flagged rather than silently adopted.
+
+Wiring: `Spring` type registered in the iOS 17.0 floor section of the
+version-floor registry; ARCHITECTURE tree, inventory (92 -> 93 files,
+animation 6 -> 7), and README tables updated; the agent reference matrices
+already reach the file through `animation/*`. Manifest descriptions corrected
+from a stale "90 files" to 93.
+
 ## 0.3.1 -- 2026-07-27
 
 Completes 0.3.0. Three items were deferred there on a judgement call about

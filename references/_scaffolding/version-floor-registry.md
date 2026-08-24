@@ -30,7 +30,7 @@ The single source of truth for availability floors cited by every reference file
 
 ## iOS 17.0
 
-`.sensoryFeedback` / `SensoryFeedback` (incl. `.start`/`.stop` -- REAL, watchOS-primary; `.pathComplete`), `.impact(weight:)` with `.light/.medium/.heavy` ONLY (default `.medium`) / `.impact(flexibility:)` with `.rigid/.soft/.solid` (no default), `ContentUnavailableView` + `.search` (NOT 18), `toolbarTitleDisplayMode(.inlineLarge)` (NOT "26 adds"), `@Observable`, TipKit, StandBy widgets, `.scrollTransition` / `.visualEffect`, `value.velocity` on DragGesture, `.interactiveSpring(duration:extraBounce:blendDuration:)`, `subscriptionStatusTask(for:priority:action:)` (StoreKit -- `\.subscriptionStatuses` env + `Status.all` do NOT exist), `Text.Layout.DrawingOptions.disablesSubpixelQuantization`, `Section(_:isExpanded:content:)`
+`.sensoryFeedback` / `SensoryFeedback` (incl. `.start`/`.stop` -- REAL, watchOS-primary; `.pathComplete`), `.impact(weight:)` with `.light/.medium/.heavy` ONLY (default `.medium`) / `.impact(flexibility:)` with `.rigid/.soft/.solid` (no default), `ContentUnavailableView` + `.search` (NOT 18), `toolbarTitleDisplayMode(.inlineLarge)` (NOT "26 adds"), `@Observable`, TipKit, StandBy widgets, `.scrollTransition` / `.visualEffect`, `value.velocity` on DragGesture, `.interactiveSpring(duration:extraBounce:blendDuration:)`, `Spring` type (`init(mass:stiffness:damping:allowOverDamping:)`, `init(response:dampingRatio:)`, derived `duration`/`bounce` -- the web-spec conversion bridge), `subscriptionStatusTask(for:priority:action:)` (StoreKit -- `\.subscriptionStatuses` env + `Status.all` do NOT exist), `Text.Layout.DrawingOptions.disablesSubpixelQuantization`, `Section(_:isExpanded:content:)`
 
 ## iOS 16.0
 

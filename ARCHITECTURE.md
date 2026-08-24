@@ -54,7 +54,8 @@ apple-ui-craft/
     │   ├── 03-advanced-animators.md         PhaseAnimator, KeyframeAnimator, CustomAnimation
     │   ├── 04-transitions-geometry.md       matchedGeometryEffect, transitions, ContentTransition
     │   ├── 05-gesture-driven.md             DragGesture, rotation, magnify, interactive springs
-    │   └── 06-scroll-driven-effects.md      scrollTransition, visualEffect, parallax
+    │   ├── 06-scroll-driven-effects.md      scrollTransition, visualEffect, parallax
+    │   └── 07-motion-choreography.md        motion palette, frequency budget, stagger, web-spec conversion
     ├── interaction/                         (the FEEL layer -- the craft thesis)
     │   ├── 01-fluid-smoothness-interruptible.md   OWNER: interruptibility, velocity handoff, 120fps
     │   ├── 02-fluid-transitions.md          shared-element continuity, hero transitions
@@ -159,7 +160,7 @@ ci/                               (0.3.1 -- the verdict gate a reviewed repo run
 
 Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship the core; P2 files add depth. Exemplars are labeled "signature-drafted, build-pending" (no Xcode build in this repo). Some P2 files (design/12-13, methodology, carplay, cognitive/hearing) are depth-pass additions.
 
-**Reference inventory (92 files, ~23,000 lines):** design 13, patterns 11, platform 9, performance 8, accessibility 8, animation 6, interaction 6, cross-platform 6, usability 5, exemplars 5, haptics 4, methodology 4, review 4, `_scaffolding` 3. That is 13 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
+**Reference inventory (93 files, ~23,200 lines):** design 13, patterns 11, platform 9, performance 8, accessibility 8, animation 7, interaction 6, cross-platform 6, usability 5, exemplars 5, haptics 4, methodology 4, review 4, `_scaffolding` 3. That is 13 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
 
 ## Agent <-> skill mapping
 

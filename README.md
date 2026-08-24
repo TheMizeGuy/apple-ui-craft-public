@@ -60,14 +60,14 @@ Manual alternative: `git clone https://github.com/TheMizeGuy/apple-ui-craft-publ
 
 ## Reference library
 
-**92 reference files** (~23,000 lines) in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 13 content domains plus `_scaffolding` (14 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
+**93 reference files** (~23,200 lines) in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 13 content domains plus `_scaffolding` (14 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
 
 ```
 references/
 ├── design/          philosophy, Liquid Glass, typography, color, SF Symbols, layout,
 │                    navigation, adaptive-iPad, Swift Charts, media, text/canvas
 ├── animation/       fundamentals, spring physics, advanced animators, transitions,
-│                    gesture-driven, scroll-driven effects
+│                    gesture-driven, scroll-driven effects, motion choreography
 ├── interaction/     the FEEL layer: interruptibility, fluid transitions, direct
 │                    manipulation, gesture disambiguation, press feedback, custom controls
 ├── haptics/         design principles, SensoryFeedback, Core Haptics, sound/audio UX
@@ -101,11 +101,11 @@ Per-domain file counts:
 | platform | 9 | usability | 5 |
 | performance | 8 | exemplars | 5 |
 | accessibility | 8 | haptics | 4 |
-| animation | 6 | methodology | 4 |
+| animation | 7 | methodology | 4 |
 | | | review | 4 |
 | | | `_scaffolding` | 3 |
 
-**Total: 92 files** across 13 content domains plus `_scaffolding`.
+**Total: 93 files** across 13 content domains plus `_scaffolding`.
 
 The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the single source of truth for availability floors, deprecated APIs, and the PHANTOM list -- APIs that do not exist and must never be emitted. Every reference file cites it rather than restating floors.
 
