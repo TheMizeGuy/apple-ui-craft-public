@@ -104,6 +104,12 @@ extension AppError {
 
 ## 3. Inline errors, summaries, and where focus goes
 
+Focus and input never move the user by themselves: focusing a field does not navigate,
+submit, or present, and changing a `Picker` or `Toggle` does not push a screen or fire a
+network mutation without a visible control that says so (WCAG 3.2.1 On Focus, 3.2.2 On
+Input, both Level A). A "smart" form that submits when the last field validates, or a
+segmented control that navigates on selection, fails both.
+
 | Requirement | Rule |
 |---|---|
 | Inline | Every failed field shows its own error, adjacent to it |

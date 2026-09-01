@@ -88,7 +88,7 @@ Chart(samples) { s in
 
 `chartXSelection`/`chartYSelection`/`chartAngleSelection` (iOS 17.0+) bind a value or a `ClosedRange` for a span selection. When you render a scrub tooltip via `.annotation`, set `overflowResolution: .init(x: .fit(to: .chart), y: .disabled)` -- chart annotations are NOT clipped to the plot frame by default, and a tall tooltip near an edge bleeds onto the next row (a real shipped bug, not theory). `.clipped()` on the chart is defense-in-depth, not the primary fix.
 
-Scrollable window: `.chartScrollableAxes(.horizontal)` + `.chartXVisibleDomain(length:)` + `.chartScrollTargetBehavior(.paging)`. Guard the visible-domain length against datasets shorter than the window -- clamp to the real data range or you get empty scroll space.
+Scrollable window: `.chartScrollableAxes(.horizontal)` + `.chartXVisibleDomain(length:)` + `.chartScrollTargetBehavior(.valueAligned(unit: 1))` (Charts exposes `valueAligned`; `.paging` belongs to `ScrollView`'s `scrollTargetBehavior`, a different protocol). Guard the visible-domain length against datasets shorter than the window -- clamp to the real data range or you get empty scroll space.
 
 ### Chart3D (iOS 26)
 

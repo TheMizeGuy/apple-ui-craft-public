@@ -126,7 +126,7 @@ Every "why does this feel janky when I flip it fast" bug traces to one of these 
 | Wrong | Why it fails | Right |
 |---|---|---|
 | Timing curve on a property the user can interrupt | Carries position but resets velocity to zero on retarget -- decelerates to a stop, then re-accelerates | Switch to the spring family |
-| `withAnimation` called inside `.onChanged` | A fresh animation starts every frame -- it never settles into one retargetable spring | `.animation(.interactiveSpring, value:)` on a `@GestureState`-backed value; settle with `withAnimation(.spring)` only in `.onEnded` |
+| `withAnimation` called inside `.onChanged` | A fresh animation starts every frame -- it never settles into one retargetable spring | No animation on the tracked value at all; `.interactiveSpring` only on a property that trails the gesture (a lift, a blur -- owner: `references/interaction/03-direct-manipulation-drag.md#the-law-never-animate-the-follow`); settle with `withAnimation(.spring)` only in `.onEnded` |
 | A `@GestureState` that resets to zero racing a still-in-flight settle on a separate `@State` | Grabbing a card mid-settle jumps it to the finger instead of catching it | One source of truth -- reconcile the gesture against the committed base offset so a re-grab retargets the SAME spring |
 | Raw points/sec fed into `interpolatingSpring(initialVelocity:)` | The parameter is relative to remaining travel, not points/sec -- fast flicks overshoot wildly, slow ones barely move | Normalize (`physicalVelocity / (target - start)`), or use `Transaction.tracksVelocity` instead |
 | A type whose `animatableData` isn't `VectorArithmetic`, or a discrete value | Nothing to interpolate -- the value jumps and interruption is meaningless | Conform to `Animatable` (`AnimatablePair` for multiple channels) |
@@ -149,7 +149,7 @@ Reduce Motion governs decorative motion, not feedback or intent -- gating the wr
 
 ## Severity guide
 
-- **CRITICAL** -- a decorative spring left ungated under Reduce Motion drives continuous parallax/zoom (WCAG 2.3.3); OR live drag tracking is wrapped in `withAnimation`, making the control feel broken for every user.
+- **CRITICAL** -- a decorative spring left ungated under Reduce Motion drives continuous parallax/zoom (WCAG 2.2.2 Pause, Stop, Hide, A; 2.3.3 is the AAA enhancement). Live drag tracking wrapped in `withAnimation` is graded by its owner, `references/interaction/03-direct-manipulation-drag.md#severity-guide` (HIGH).
 - **HIGH** -- `withAnimation` used where the mutating state has multiple call sites, so some paths skip animation entirely and jump; OR a fling settle seeded with raw points/sec into `interpolatingSpring(initialVelocity:)`.
 - **MEDIUM** -- a timing curve on a property the user can interrupt (visible kink on rapid reversal, not a functional break).
 - **LOW** -- an un-stopped `TimelineView`/`CADisplayLink` loop left running after the animated value settles (battery, not feel).

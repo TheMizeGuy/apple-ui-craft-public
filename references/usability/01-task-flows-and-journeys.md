@@ -83,7 +83,7 @@ literally, because each of these arrives at a different depth:
 | App Clip | A single task, no app installed | Can that one task complete with no account? |
 | Share sheet / `Transferable` | An import or compose screen | Malformed payload path |
 
-A flow whose review only walked the app-icon path has reviewed one of eleven
+A flow whose review only walked the app-icon path has reviewed one of ten
 entrances.
 
 ## 2. Write the flow map
@@ -226,7 +226,7 @@ struct ComposeView: View {
 // RIGHT: draft is owned above the presentation and persisted on the way down.
 @Observable final class ComposeDraft {
     var text = "" { didSet { persist() } }
-    private func persist() { UserDefaults.standard.set(text, forKey: "draft.compose") }
+    func persist() { UserDefaults.standard.set(text, forKey: "draft.compose") }
 }
 
 struct ComposeView: View {
@@ -236,7 +236,7 @@ struct ComposeView: View {
     var body: some View {
         TextEditor(text: $draft.text)
             .onChange(of: scenePhase) { _, phase in
-                if phase != .active { draft.flush() }   // background may be the last callback
+                if phase != .active { draft.persist() }   // background may be the last callback
             }
     }
 }
@@ -432,7 +432,7 @@ visual:
 | `Button { Task { await save() } }` with no in-flight flag | Double-tap creates two records | Disable while in flight, or guard with a task handle |
 | Wizard with no save-and-exit past 3 steps | The OS terminates the app and destroys the work | Persist per step; restore to the step |
 | Success screen with no onward action | Dead end at the moment of highest intent | Offer the next task or a route back |
-| Reviewing only the app-icon entry | Ten other entrances land mid-flow, unreviewed | Enumerate entries from section 1's table |
+| Reviewing only the app-icon entry | Nine other entrances land mid-flow, unreviewed | Enumerate entries from section 1's table |
 
 ## Severity guide
 

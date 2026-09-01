@@ -216,7 +216,6 @@ struct AlertRow: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @ScaledMetric(relativeTo: .body) private var iconSize: CGFloat = 28
     @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 10
-    @State private var pulse = false
     private var reduceMotion: Bool { reduceMotionOverride ?? envReduceMotion }
 
     var body: some View {
@@ -254,9 +253,8 @@ struct AlertRow: View {
                 Button(item.isUnread ? "Read" : "Unread",
                        systemImage: item.isUnread ? "envelope.open" : "envelope", action: onToggleRead)
             }
-            .sensoryFeedback(.selection, trigger: item.priority)
-            .sensoryFeedback(.impact(weight: .light), trigger: item.isFlagged)
-            .onAppear { if !reduceMotion { pulse = true } }
+            // Haptics for flag/priority changes fire in the parent on the user's ACTION (an explicit
+            // counter, exemplars/02's haptic(_:trigger:)), never on model state a background sync can flip.
     }
 
     @ViewBuilder private var rowContent: some View {
@@ -270,10 +268,10 @@ struct AlertRow: View {
             Image(systemName: item.category.symbol).font(.system(size: iconSize)).foregroundStyle(item.category.tint)
                 .frame(width: iconSize + 8, height: iconSize + 8).accessibilityHidden(true)
             if item.isUnread {
+                // A static dot: a pulsing live indicator is user-banned by default (patterns/01) and
+                // would need the Reduce Motion + Auto-Play Animated Images double gate.
                 Circle().fill(Color.accentColor).frame(width: dotSize, height: dotSize)
                     .overlay { if diffWithoutColor { Circle().strokeBorder(.primary, lineWidth: 1) } }
-                    .scaleEffect(pulse && !reduceMotion ? 1.0 : 0.82)
-                    .animation(reduceMotion ? nil : .easeInOut(duration: 1).repeatForever(autoreverses: true), value: pulse)
                     .accessibilityHidden(true)
             }
         }
@@ -341,8 +339,9 @@ extension AlertItem {
 #Preview("Reduce Motion (row seam)") {
     // accessibilityReduceMotion is get-only -- this override is the injectable seam, not
     // .environment(\.accessibilityReduceMotion, true), which does not compile.
-    List { AlertRow(item: .samples[0], reduceMotionOverride: true,
-                     onOpen: {}, onToggleFlag: {}, onToggleRead: {}, onArchive: {}, onAdjustPriority: { _ in }) }
+    List { AlertRow(item: .samples[0],
+                     onOpen: {}, onToggleFlag: {}, onToggleRead: {}, onArchive: {}, onAdjustPriority: { _ in },
+                     reduceMotionOverride: true) }   // memberwise order: the override is the last stored property
         .listStyle(.plain)
 }
 ```

@@ -215,7 +215,8 @@ var body: some View {
 
 var body: some View {
     List(filteredTrips) { trip in TripRow(trip: trip) }
-        .onChange(of: trips) { _, newTrips in
+        // initial: true -- without it a view whose trips are already loaded shows an empty list
+        .onChange(of: trips, initial: true) { _, newTrips in
             filteredTrips = newTrips.filter { $0.price < 500 }.sorted { $0.name < $1.name }
         }
 }
@@ -249,18 +250,23 @@ Remove before shipping (or wrap in `#if DEBUG`).
 
 ## Animation cost: layout vs render
 
-| Cheap (render-only) | Expensive (layout-triggering) |
+This table is the OWNER; `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` carries the same rows as the animation-side summary and must match it.
+
+| Cheap (render-only) | Expensive (layout-triggering or per-frame off-screen render) |
 |---|---|
 | `.opacity` | `.frame(width:height:)` |
 | `.scaleEffect` | `.padding` |
-| `.rotationEffect` | Content changes |
+| `.rotationEffect` | Content changes (`Text`, `Image`) |
 | `.offset` (transform) | `.font` size changes |
 | `.brightness` | `HStack`/`VStack` spacing |
 | `.saturation` | Adding/removing views |
+| | `.fixedSize` changes |
+| | `.blur(radius:)` animated -- off-screen render pass every frame |
+| | `.shadow(radius:/offset:)` animated -- same off-screen-pass cost; a static shadow is free |
 
 Animate transforms (scale, opacity, rotation, offset) for smooth 60-120fps animation. Animating layout properties triggers a full layout pass per frame -- expensive.
 
-`.shadow` and `.blur` are neither column: both are cheap to render once, static. Animating their `radius`/`offset` forces an off-screen render pass EVERY frame -- one of the top sources of scroll hitches (see `references/performance/02-scroll-list-performance.md#off-screen-rendering`). Animate `.opacity` of a pre-rendered shadow/blur layer instead of animating the radius directly; keep the static shadow/blur as-is.
+`.shadow` and `.blur` are cheap only while their parameters are static. Animating either one's `radius` (or a shadow's `offset`) forces an off-screen render pass EVERY frame -- one of the top sources of scroll hitches (see `references/performance/02-scroll-list-performance.md#off-screen-rendering`). Animate `.opacity` of a pre-rendered shadow/blur layer instead of animating the radius directly; keep the static shadow/blur as-is.
 
 ## drawingGroup
 
@@ -292,13 +298,14 @@ DON'T use when:
 Loading full-resolution images blows memory:
 
 ```swift
-// BAD: 12MP photo decoded as 48MB
+// BAD: 12MP photo decoded at source resolution -- ~48 MB sRGB, ~97 MB Display P3
 Image("large-photo")
     .resizable()
     .frame(width: 200, height: 200)
-// Memory still 48MB even though displayed at 200x200
+// Memory unchanged even though displayed at 200x200: .frame scales the decoded bitmap
 
-// GOOD: AsyncImage with explicit size
+// STILL BAD for memory: AsyncImage also decodes at source resolution. It fixes the
+// synchronous load on the main thread, not the decode size.
 AsyncImage(url: url) { image in
     image.resizable().scaledToFill()
 } placeholder: {
@@ -306,9 +313,11 @@ AsyncImage(url: url) { image in
 }
 .frame(width: 200, height: 200)
 
-// BETTER: Custom image cache with pre-decoded thumbnails
+// GOOD: a thumbnail pre-decoded at display size (byPreparingThumbnail(ofSize:) or ImageIO)
 ThumbnailImage(url: url, targetSize: CGSize(width: 200, height: 200))
 ```
+
+Decode cost and the downsampling recipe are owned by `references/performance/03-launch-memory-instruments.md` and `references/performance/02-scroll-list-performance.md#downsampling`.
 
 For images shown in lists, decode at target size on a background thread before display.
 
@@ -330,4 +339,4 @@ For images shown in lists, decode at target size on a background thread before d
 ## See also
 
 - `references/performance/02-scroll-list-performance.md#off-screen-rendering` -- list-specific optimization, off-screen render cost
-- `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` -- animation cost baseline
+- `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` -- the animation-side summary of this file's cost table

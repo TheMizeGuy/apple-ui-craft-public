@@ -34,11 +34,11 @@ The single source of truth for availability floors cited by every reference file
 
 ## iOS 16.0
 
-`NavigationStack` / `NavigationSplitView`, `navigationSplitViewColumnWidth(min:ideal:max:)` (NOT 17), `presentationDetents`, `lineLimit(_:reservesSpace:)`, `onGeometryChange(for:of:action:)` (NOT 18), `AddPassToWalletButton` (`init(_ passes:onCompletion:)` / `init(action:)`; the `add:`/`pass:` inits are fabrications) + `.addPassToWalletButtonStyle(_:)`, `String.LocalizationOptions.replacements` (property, not `.replacing(arguments:)`; NOT 17), `Duration.UnitsFormatStyle(allowedUnits:width:)` (`allowed:` label only on `.units(allowed:width:)` factory), ScenePadding parent type (`.navigationBar` behavior = watchOS 9 / macOS scoped -- iOS header alignment no-op)
+`NavigationStack` / `NavigationSplitView`, `navigationSplitViewColumnWidth(min:ideal:max:)` (NOT 17), `accessibilityZoomAction(_:)` + `AccessibilityZoomGestureAction` (NOT 13), `accessibilityDragPoint(_:description:)` / `accessibilityDropPoint(_:description:)`, `presentationDetents`, `lineLimit(_:reservesSpace:)`, `onGeometryChange(for:of:action:)` (NOT 18), `AddPassToWalletButton` (`init(_ passes:onCompletion:)` / `init(action:)`; the `add:`/`pass:` inits are fabrications) + `.addPassToWalletButtonStyle(_:)`, `String.LocalizationOptions.replacements` (property, not `.replacing(arguments:)`; NOT 17), `Duration.UnitsFormatStyle(allowedUnits:width:)` (`allowed:` label only on `.units(allowed:width:)` factory), ScenePadding parent type (`.navigationBar` behavior = watchOS 9 / macOS scoped -- iOS header alignment no-op)
 
 ## iOS 15.0 and earlier
 
-`redacted(reason:)` = 14.0 (`.privacy` 15, `.placeholder` 14) · `#bundle` macro runtime floor 15.0 (COMPILES only with Xcode 26 / Swift 6.2) · Core Data `SectionedFetchRequest` = 15.0 · `predictedEndTranslation` = 13.0 (projected POSITION delta in points -- not velocity) · `@Entry`-less `EnvironmentKey` hand-roll only for Xcode 15-or-older toolchains (@Entry back-deploys to iOS 13)
+`redacted(reason:)` = 14.0 (`.privacy` 15, `.placeholder` 14) · `#bundle` macro runtime floor 15.0 (COMPILES only with Xcode 26 / Swift 6.2) · Core Data `SectionedFetchRequest` = 15.0 · `predictedEndTranslation` = 13.0 (projected POSITION delta in points -- not velocity) · `accessibilityScrollAction(_:)` = 13.0 (NOT 16) · `@Entry`-less `EnvironmentKey` hand-roll only for Xcode 15-or-older toolchains (@Entry back-deploys to iOS 13)
 
 ## Not-iOS (the #1 mis-gate class)
 

@@ -1,6 +1,6 @@
 # Exemplar: Widget + Live Activity + Control Center Integration
 
-> Status: signature-drafted, build-pending (requires Xcode build at iOS 18 + iOS 26 targets).
+> Status: signature-drafted, build-pending (requires Xcode build at iOS 18 + iOS 26 targets). Parts B and C compile at iOS 26.0+ as written -- three iOS-26 call sites, listed under Availability + fallbacks; at an iOS 18 floor gate or drop them.
 > Composes: `references/platform/01-widgets-live-activities.md` (widget/Live Activity fundamentals), `references/platform/02-app-intents-system.md` (`AppIntent` design), `references/platform/03-controls-standby.md` (`ControlWidget` fundamentals).
 > Floors: `WidgetConfigurationIntent`/interactive `Button`/`Toggle` iOS 17.0+; `ControlWidget` iOS 18.0+; `SetValueIntent`, `LiveActivityIntent` iOS 17.2+; `supplementalActivityFamilies`/`widgetAccentedRenderingMode` iOS 26.0+.
 
@@ -124,7 +124,7 @@ struct FocusStatusWidget: Widget {
         .configurationDisplayName("Focus")
         .description("Toggle focus and see time remaining.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular, .accessoryInline])
-        .widgetAccentedRenderingMode(.accented)   // iOS 26: how the accent group tints under Liquid Glass
+        .widgetAccentedRenderingMode(.accented)   // iOS 26.0+ ONLY: gate or drop at a lower floor (see Availability + fallbacks)
     }
 }
 
@@ -199,7 +199,7 @@ struct FocusLiveActivity: Widget {
             .keylineTint(.indigo)
             .widgetURL(URL(string: "focusapp://session"))
         }
-        // iOS 26: extra layouts for Apple Watch Smart Stack / CarPlay.
+        // iOS 26.0+ ONLY: extra layouts for Apple Watch Smart Stack / CarPlay; gate or drop at a lower floor.
         .supplementalActivityFamilies([.small, .medium])
     }
 }
@@ -377,7 +377,7 @@ Every widget/control/Live Activity surface renders through system chrome that is
 
 ## Severity guide
 
-CRITICAL: `openAppWhenRun` shipped on iOS 26 (deprecated path, may silently regress). HIGH: duplicated per-surface toggle logic that has already drifted between widget and control. MEDIUM: missing `.containerBackground` (blank widget) or a Live Activity `LiveActivityIntent` swapped for a plain `AppIntent`. LOW: reading `pushToken` once instead of observing `pushTokenUpdates`. NIT: an un-gated `supplementalActivityFamilies` call at a sub-26 floor.
+CRITICAL: `openAppWhenRun` shipped on iOS 26 (deprecated path, may silently regress). HIGH: duplicated per-surface toggle logic that has already drifted between widget and control. MEDIUM: missing `.containerBackground` (blank widget) or a Live Activity `LiveActivityIntent` swapped for a plain `AppIntent`. LOW: reading `pushToken` once instead of observing `pushTokenUpdates`. HIGH: an ungated iOS-26 API (`supplementalActivityFamilies`, `activityFamily`, `widgetAccentedRenderingMode`) shipped at a stated sub-26 floor -- a compile failure on the real deployment target, graded as exemplar 01 grades it.
 
 ## See also
 

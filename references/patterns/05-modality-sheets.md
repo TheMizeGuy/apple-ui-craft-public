@@ -53,19 +53,19 @@ ItemRow(item: item)
 ```swift
 .sheet(isPresented: $showSheet) {
     SheetContent()
-        .presentationDetents([.bar, .medium, .large])
+        .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
 }
 ```
 
 | Detent | Height |
 |---|---|
-| `.bar` | Grabber-height, quick-glance content (mini player) |
-| `.small` | Compact, above `.bar` |
 | `.medium` | ~50% screen |
 | `.large` | Near full screen (default) |
 | `.fraction(0.3)` | Custom percentage |
 | `.height(200)` | Fixed point height |
+
+`.bar` and `.small` in Apple's sample are developer-defined, not built-ins: `extension PresentationDetent { static let bar = Self.custom(BarDetent.self); static let small = Self.height(100) }` with a `CustomPresentationDetent` whose `height(in:)` returns `max(44, context.maxDetentValue * 0.1)`.
 
 For programmatic control, bind a selection:
 
@@ -191,7 +191,7 @@ Button("Delete", role: .destructive) { showDeleteConfirm = true }
 Use the `presenting:` form when the dialog needs the item it's acting on, instead of capturing it in outer state:
 
 ```swift
-.confirmationDialog("Delete \(item.name)?", isPresented: $showDeleteConfirm, presenting: itemToDelete) { item in
+.confirmationDialog("Delete \(itemToDelete?.name ?? "")?", isPresented: $showDeleteConfirm, presenting: itemToDelete) { item in
     Button("Delete", role: .destructive) { delete(item) }
 }
 ```
@@ -227,7 +227,7 @@ Popovers are iPad's non-modal answer to a sheet -- they point at the control tha
 
 ## Accessibility contract
 
-`.sheet`/`.popover`/`.alert`/`.confirmationDialog` presentation and dismissal transitions are system default and Reduce-Motion-safe with zero code -- one of the few motion surfaces the system fully owns. What you still own: a custom drag-to-dismiss gesture (like the haptic example above) carries no Reduce Motion obligation itself, since it's driven by direct manipulation, but any *programmatic* detent change you animate (`withAnimation { detent = .large }`) routes through the standard double-gate in `references/accessibility/05-motion-accessibility.md`.
+`.sheet`/`.popover`/`.alert`/`.confirmationDialog` presentation and dismissal transitions are system-owned: the system applies its own Motion settings to them, and your code neither can nor needs to gate them. Do not describe them as crossfading under bare Reduce Motion -- `references/accessibility/05-motion-accessibility.md` owns that fact, and the crossfade preference is `accessibilityPrefersCrossFadeTransitions` (iOS 26.4+). What you still own: a custom drag-to-dismiss gesture (like the haptic example above) carries no Reduce Motion obligation itself, since it's driven by direct manipulation, but any *programmatic* detent change you animate (`withAnimation { detent = .large }`) routes through the standard double-gate in `references/accessibility/05-motion-accessibility.md`.
 
 ## Anti-patterns
 

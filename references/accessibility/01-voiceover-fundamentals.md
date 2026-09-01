@@ -303,7 +303,7 @@ Or use Accessibility Inspector on Mac (Xcode > Open Developer Tool > Accessibili
 
 ### Accessibility Audit
 
-In Xcode 16+:
+In Xcode 15+ (`performAccessibilityAudit` is iOS 17.0+; `references/methodology/02-previews-design-qa.md` owns the audit mechanics):
 ```swift
 func test_screenAccessibility() throws {
     let app = XCUIApplication()

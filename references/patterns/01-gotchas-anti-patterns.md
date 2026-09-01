@@ -110,7 +110,7 @@ Any HAND-ROLLED translucent control (a custom blurred shape, a disc at `.opacity
 ```swift
 @Environment(\.accessibilityReduceTransparency) var reduceTransparency
 
-Circle().fill(reduceTransparency ? Color(.systemBackground) : .clear.opacity(0.9))
+Circle().fill(reduceTransparency ? Color(.systemBackground) : Color(.systemBackground).opacity(0.9))   // a real base colour; .clear.opacity() is still clear
 ```
 
 ## Animate shadow opacity, never radius or offset
@@ -125,9 +125,9 @@ Circle().fill(reduceTransparency ? Color(.systemBackground) : .clear.opacity(0.9
 // WRONG -- off-screen render pass every frame of the animation
 .shadow(radius: isPressed ? 12 : 4)
 
-// RIGHT -- animate opacity of a shadow layer with a FIXED radius
-.shadow(radius: 8)
-.opacity(isPressed ? 1 : 0)
+// RIGHT -- fixed radius; animate the shadow's COLOR alpha, never the view's opacity
+// (an .opacity after .shadow fades the content along with it)
+.shadow(color: .black.opacity(isPressed ? 0.30 : 0.12), radius: 8)
 ```
 
 The full animation-cost table and off-screen-render mechanics are owned by `references/performance/01-swiftui-rendering.md#animation-cost-layout-vs-render` and `references/performance/02-scroll-list-performance.md#off-screen-rendering`.

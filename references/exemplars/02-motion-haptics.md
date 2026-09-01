@@ -183,6 +183,7 @@ struct ReorderableList<Item: Identifiable & Equatable, Row: View>: View {
     var spacing: CGFloat = 8
     @ViewBuilder var row: (Item) -> Row
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draggingID: Item.ID?
     @State private var startIndex: Int?
     @State private var liftCount = 0, slotCount = 0, dropCount = 0
@@ -213,7 +214,7 @@ struct ReorderableList<Item: Identifiable & Equatable, Row: View>: View {
         guard let start = startIndex, let from = items.firstIndex(where: { $0.id == item.id }) else { return }
         let target = max(0, min(items.count - 1, start + Int((t / slot).rounded())))
         guard target != from else { return }
-        withAnimation(AppMotion.reorder) {          // beat 3: neighbors make way (dragged row opts out)
+        withAnimation(reduceMotion ? nil : AppMotion.reorder) {   // beat 3: neighbors make way (dragged row opts out); nil under RM
             let moved = items.remove(at: from); items.insert(moved, at: target)
         }
         slotCount += 1
@@ -231,6 +232,7 @@ struct GalleryItem: Identifiable, Hashable { let id = UUID(); let title: String;
 // Modern hero (iOS 18+): navigation zoom transition -- prefer for list→detail.
 struct HeroZoomGallery: View {
     @Namespace private var namespace
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let items: [GalleryItem]
     var body: some View {
         NavigationStack {
@@ -246,11 +248,15 @@ struct HeroZoomGallery: View {
             }
             .navigationTitle("Gallery")
             .navigationDestination(for: GalleryItem.self) { item in
-                GalleryDetail(item: item)
-                    // System honors Reduce Motion (degrades to cross-fade) automatically -- no
-                    // explicit gate here. No haptic either: navigation feel is system-owned; a
-                    // tap tick on a nav transition is noise, not craft.
-                    .navigationTransition(.zoom(sourceID: item.id, in: namespace))
+                // The zoom hero is developer-owned under Reduce Motion (accessibility/05 owns the rule):
+                // the modifier's spring is not swappable, so gate the presentation path itself.
+                // No haptic: navigation feel is system-owned; a tap tick on a nav transition is noise.
+                if reduceMotion {
+                    GalleryDetail(item: item)
+                } else {
+                    GalleryDetail(item: item)
+                        .navigationTransition(.zoom(sourceID: item.id, in: namespace))
+                }
             }
         }
     }
@@ -284,7 +290,7 @@ struct ExpandableHero: View {
     }
 
     private func toggle() {
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : AppMotion.settle) { expanded.toggle() }
+        withAnimation(reduceMotion ? nil : AppMotion.settle) { expanded.toggle() }   // nil under RM: the geometry must not fly
         if expanded { openCount += 1 }
     }
 }

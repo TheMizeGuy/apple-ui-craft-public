@@ -76,7 +76,7 @@ struct ExhibitDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     hero
-                    Text(exhibit.title).font(.largeTitle.bold())
+                    Text(exhibit.title).font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
                     Text(exhibit.body).font(.body).foregroundStyle(.secondary)
                         // CONTENT layer: material, NOT glass -- readable, opaque enough for body copy.
                         .padding()
@@ -272,11 +272,12 @@ struct ActionClusterBar: View {
 struct MiniPlayerAccessory: View {
     @State private var isPlaying = false
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "waveform.circle.fill").font(.title2)
-                .symbolEffect(.variableColor, isActive: isPlaying)
+                .symbolEffect(.variableColor, isActive: isPlaying && !reduceMotion)   // indefinite effect: never auto-gated
                 .foregroundStyle(.tint)
 
             if placement != .inline {

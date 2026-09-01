@@ -83,7 +83,7 @@ Each of these is a distinct transfer-function problem with one load-bearing insi
 | Control | The one thing that makes it feel right | Haptic |
 |---|---|---|
 | Detented slider (rating, EQ band) | Quantize to notch INDEX and trigger `.sensoryFeedback` on that, never on the continuous value -- otherwise it buzzes every frame | `.selection` per notch |
-| Rotary knob/dial | `atan2` gives -pi...pi; naive assignment jumps 2*pi at the seam -- accumulate the UNWRAPPED delta between samples, never assign the raw angle | `.selection` per notch, or `.impact(.rigid)` at end stops only |
+| Rotary knob/dial | `atan2` gives -pi...pi; naive assignment jumps 2*pi at the seam -- accumulate the UNWRAPPED delta between samples, never assign the raw angle | `.selection` per notch, or `.impact(flexibility: .rigid)` at end stops only |
 | Segmented pill (drag-across) | `matchedGeometryEffect` alone can't live-track a finger; for drag-across selection, measure segment width and drive a `@GestureState` offset, ticking `.selection` per segment crossed | `.selection` per segment crossed |
 | Media timeline scrubber | Accumulate scaled INCREMENTAL deltas (`dx * tier`) by vertical-distance speed tier -- re-deriving from absolute x teleports the playhead when the tier changes | `.selection` per speed-tier crossing |
 | Press-and-hold stepper | Geometric interval decay (`interval *= 0.82` per tick, floor ~50ms) replicates `UIStepper`'s acceleration; a fixed interval reads as robotic | `.increase`/`.decrease` |
@@ -94,10 +94,12 @@ A segmented pill on iOS 26 can use real Liquid Glass for the moving selection in
 GlassEffectContainer(spacing: 4) {
     HStack(spacing: 4) {
         ForEach(items.indices, id: \.self) { i in
-            Text(items[i]).padding(.vertical, 8).frame(maxWidth: .infinity)
-                .glassEffect(.regular.interactive(), in: .capsule)
-                .glassEffectID(selection == i ? "sel" : "seg\(i)", in: ns)
-                .onTapGesture { withAnimation(.snappy(duration: 0.3)) { selection = i } }
+            Button { withAnimation(.snappy(duration: 0.3)) { selection = i } } label: {
+                Text(items[i]).padding(.vertical, 8).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)   // a real Button: press state, cancel, the button trait -- never .onTapGesture
+            .glassEffect(.regular.interactive(), in: .capsule)
+            .glassEffectID(selection == i ? "sel" : "seg\(i)", in: ns)
         }
     }
 }

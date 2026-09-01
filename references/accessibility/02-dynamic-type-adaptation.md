@@ -14,7 +14,7 @@ Users can adjust text size system-wide. Your layouts must survive everything fro
 | Extra Extra Large | `.xxLarge` | ~1.23x | |
 | Extra Extra Extra Large | `.xxxLarge` | ~1.35x | Largest standard |
 | AX 1 | `.accessibility1` | ~1.64x | Accessibility tier begins |
-| AX 2 | `.accessibility2` | ~1.95x | |
+| AX 2 | `.accessibility2` | ~1.94x | |
 | AX 3 | `.accessibility3` | ~2.35x | |
 | AX 4 | `.accessibility4` | ~2.76x | |
 | AX 5 | `.accessibility5` | ~3.12x | Largest -- body 17pt -> 53pt |
@@ -153,7 +153,7 @@ ScrollView {
 | Hardcoded font sizes | Don't scale | Use `.font(.body)` etc. |
 | Custom font without `relativeTo:` | Doesn't scale | Add `relativeTo: .body` |
 | HStack at AX5 | Items overflow horizontally | Switch to VStack at AX |
-| Inline navigation title at AX5 | Becomes "..." | Use `.toolbarTitleDisplayMode(.large)` |
+| Inline navigation title at AX5 | Becomes "..." | Shorten the title, or carry the long form as a heading in the content; never `.large` past the root -- it breaks the depth cue (`references/usability/03-navigation-and-information-architecture.md`) |
 
 ## Limiting Dynamic Type (use sparingly)
 
@@ -193,7 +193,7 @@ Image(systemName: "house")
     }
 ```
 
-When user long-presses with VoiceOver enabled (or via Accessibility Settings), a large preview pops up. Essential for tab bars, toolbar buttons, and other fixed-size UI.
+When a user running an accessibility text size touches and holds the control, a large preview pops up -- VoiceOver is not the trigger, and the population served is large-text users who do not run it (`references/accessibility/07-cognitive-hearing-assistive.md` owns the assistive-technology contract). Essential for tab bars, toolbar buttons, and other fixed-size UI.
 
 ## Testing
 
@@ -229,7 +229,7 @@ In simulator: Settings > Developer > Dynamic Type Sizes > select AX5, then test 
 | Text grows up to ~310% | System handles -- use system styles |
 | HStack items overflow | Switch to VStack (size class branch) |
 | Touch targets feel cramped | Use `@ScaledMetric` for padding |
-| Inline navigation title truncates | Use `.large` display mode |
+| Inline navigation title truncates | Shorter title, or the long form as an in-content heading; `.large` only on a root |
 | Sticky headers cover focus | Test with Switch Control / Voice Control |
 | Tab bar labels truncate | Use Large Content Viewer |
 
@@ -243,7 +243,7 @@ In simulator: Settings > Developer > Dynamic Type Sizes > select AX5, then test 
 | Custom font without `relativeTo:` | Doesn't scale | Add `relativeTo:` |
 | Fixed icon sizes | Look tiny at AX5 | `@ScaledMetric` |
 | HStack everywhere | Overflows at AX5 | Branch to VStack at AX |
-| Truncating nav title | "..." at AX5 | `.toolbarTitleDisplayMode(.large)` |
+| Truncating nav title | "..." at AX5 | Shorter title or an in-content heading; `.large` only on a root |
 | Hardcoded VStack spacing | Cramped at AX5 | System spacing or `@ScaledMetric` |
 | Not testing AX sizes | Layout breaks discovered in production | Add AX previews |
 | Clamping Dynamic Type to avoid layout work | Defeats accessibility | Fix the layout |

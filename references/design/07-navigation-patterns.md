@@ -314,12 +314,13 @@ Universal Links -- real `https://` URLs backed by an `apple-app-site-association
 @Observable
 final class Router {
     var path = NavigationPath()
+    var authChecker: () -> Bool = { false }   // injected; fail-closed default
     private var pendingRoute: Route?
 
     func handle(_ url: URL) { Self.routes(for: url).forEach(route(to:)) }
 
     func route(to r: Route) {
-        if r.requiresAuth && !isAuthed() {
+        if r.requiresAuth && !authChecker() {
             pendingRoute = r                 // remember intent
             path.append(Route.signIn)
         } else {

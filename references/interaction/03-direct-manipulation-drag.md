@@ -7,7 +7,7 @@ A drag either feels welded to the fingertip or it doesn't, and when it doesn't, 
 
 ## The Apple way
 
-- The live drag value is raw, held in `@GestureState`, rendered via `.offset` in a coordinate space that matches where you position the view. Springs live in `.onEnded` (the settle) or a reset transaction (the return), never in `.onChanged`/`.updating` and never on the tracked value itself.
+- The live drag value is raw, held in `@GestureState`, rendered via `.offset` in a coordinate space that matches where you position the view. Springs live in `.onEnded` (the settle) or a reset transaction (the return), never in `.onChanged`/`.updating` and never on the tracked value itself. A property that TRAILS the gesture (a lift scale, a blur, a paging offset that snaps) may carry `.interactiveSpring`; the tracked value never does.
 - Momentum is a *projection* of release velocity, not the release position -- and that projected velocity must be normalized before it seeds a settle spring. Raw points-per-second into `interpolatingSpring(initialVelocity:)` is the single most common drag bug in shipping SwiftUI.
 - Snapping obeys one order: project the throw to where momentum would land it, THEN snap that landing to the nearest anchor, THEN run exactly one velocity-preserving spring. Snapping the raw release point makes a fast flick feel like it hit a wall.
 - Every custom `Gesture` is invisible to VoiceOver, Switch Control, and Voice Control. Mirror the OUTCOME with `accessibilityDragPoint`/`accessibilityDropPoint` and a matching `.accessibilityAction`, not a "+/-" button bolted on as an afterthought.
@@ -120,8 +120,9 @@ normalizedInitialVelocity = physicalVelocity(points/sec) / (target - start)(poin
     let dist = hypot(target.x - start.x, target.y - start.y)
     let speed = hypot(value.velocity.width, value.velocity.height)
     let vNorm = dist > 0 ? speed / dist : 0
-    position = target
-    withAnimation(reduceMotion ? nil : .interpolatingSpring(duration: 0.55, bounce: 0.22, initialVelocity: vNorm)) {}
+    withAnimation(reduceMotion ? nil : .interpolatingSpring(duration: 0.55, bounce: 0.22, initialVelocity: vNorm)) {
+        position = target   // the mutation lives INSIDE the closure, or nothing animates
+    }
 }
 ```
 

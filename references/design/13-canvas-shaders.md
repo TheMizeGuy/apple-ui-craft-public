@@ -21,7 +21,8 @@ init(
     rendersAsynchronously: Bool = false,
     renderer: @escaping (inout GraphicsContext, CGSize) -> Void
 )
-// + a symbols: variant taking @ContentBuilder symbols: () -> Symbols for resolving real SwiftUI views
+// + a symbols: variant taking a `@ViewBuilder symbols: () -> Symbols` closure for resolving real SwiftUI
+// views (the iOS 27 SDK re-declares that builder as `@ContentBuilder`; the call site is unchanged)
 ```
 
 `opaque: true` can improve performance, but drawing non-opaque content into an opaque canvas is undefined -- only set it if you fully cover the surface. `rendersAsynchronously: true` presents off the main thread; the renderer closure must not touch main-actor state when it's set. Both the `init` and the `renderer` closure are `nonisolated`/`@escaping`: under Swift 6 strict concurrency, everything the closure captures must be `Sendable`. Capturing a mutable `@Observable`/class model or `@State` and mutating it inside the renderer is a data-race error -- compute in `body`, capture the value snapshot.

@@ -127,7 +127,7 @@ Dedup and per-dimension verdicts key on these strings. Use them verbatim.
 
 ### The dimensions that cannot be judged from one frame
 
-Nine of the twenty-four are decidable only from a SEQUENCE, a CONFIGURATION
+Ten of the twenty-four are decidable only from a SEQUENCE, a CONFIGURATION
 CHANGE, or a MEASUREMENT: two consecutive screens, a back gesture, a relaunch, a
 type-size change, a window resize, an Instruments trace.
 

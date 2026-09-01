@@ -13,6 +13,8 @@ A "hitch" is a frame that misses its display deadline. iOS measures hitches in I
 | Moderate | 16-33ms | Noticeable stutter |
 | Severe | > 33ms | Clearly janky |
 
+**Bands are for 60 Hz.** On ProMotion a frame is 8.33 ms, so halve them: sustained >8 ms of commit work is already a moderate hitch there (`references/performance/05-display-promotion-color.md`), and every hitch number is reported with its refresh regime (`references/performance/03-launch-memory-instruments.md`).
+
 **Target:** hitch ratio < 5ms per second of scrolling.
 
 ## Common scroll bottlenecks
@@ -165,7 +167,7 @@ class ImageCache {
 
 ### Downsampling
 
-Decoded images consume `width * height * 4` bytes. A 12MP photo = 48MB. Downsample at load time:
+Decoded images consume `width * height * bytes_per_pixel`: 4 for sRGB (a 12MP photo = ~48 MB), 8 for the Display P3 default on modern iPhone cameras (~97 MB) -- `references/performance/03-launch-memory-instruments.md` owns the memory model. Downsample at load time:
 
 ```swift
 func downsample(url: URL, to targetSize: CGSize, scale: CGFloat = 2.0) async -> UIImage? {
@@ -192,10 +194,12 @@ func downsample(url: URL, to targetSize: CGSize, scale: CGFloat = 2.0) async -> 
 For lists where users scroll fast, prefetch upcoming images:
 
 ```swift
-List(items) { item in
+List(Array(items.enumerated()), id: \.element.id) { index, item in
     ItemRow(item: item)
         .task {
-            await ImageCache.shared.prefetch(item.imageURL)
+            // Prefetch the NEXT window, not this row: this row's image is already needed.
+            let upcoming = items.dropFirst(index + 1).prefix(6).compactMap(\.imageURL)
+            await ImageCache.shared.prefetch(upcoming)
         }
 }
 ```
@@ -224,6 +228,7 @@ For uniform lists, set absolute heights:
 ```swift
 List(items) { item in
     ItemRow(item: item)
+        .frame(height: 60)   // the absolute height -- without it the row self-sizes
         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
 }
 ```
@@ -269,7 +274,8 @@ cell.layer.cornerRadius = 12
 cell.layer.masksToBounds = true
 cell.layer.shadowOpacity = 0.3
 
-// GOOD: shadow on container, content on inner view
+// UIKit fix: shadow on the container layer, mask on the inner layer. The same split in
+// SwiftUI is only worth it when the clipped content is itself expensive.
 ZStack {
     RoundedRectangle(cornerRadius: 12)
         .fill(.background)
@@ -280,7 +286,7 @@ ZStack {
 }
 ```
 
-In SwiftUI, prefer `.shadow()` modifier directly on the view (SwiftUI handles separation automatically in most cases).
+In SwiftUI the rule is one line: `.clipShape(...)` first, then `.shadow()` on the same view. The compositor shadows the clipped shape without the CALayer `masksToBounds` off-screen pass, so the container/inner split above is the UIKit fix, and in SwiftUI it earns its place only when the clipped content is expensive enough to want its own layer.
 
 ## Color blended layers
 
@@ -318,7 +324,7 @@ The system spinner is well-optimized. Don't build custom pull-to-refresh -- it's
 | Full-resolution images | Memory pressure, slow decode | Downsample |
 | Synchronous image load | Hitches when cells appear | Async with background queue |
 | Self-sizing every cell | Layout pass per cell | Absolute or estimated heights |
-| Heavy shadow + cornerRadius | Off-screen rendering | Separate shadow container |
+| Heavy shadow + cornerRadius | Off-screen rendering (UIKit `masksToBounds` + shadow on one layer) | UIKit: separate shadow layer; SwiftUI: `.clipShape` then `.shadow()` |
 | Many transparent layers | Compositing cost | Use opaque where possible |
 | Date formatting in body | Allocates every render | Pre-format, cache |
 | Reading global state in cell | All cells re-evaluate on global change | Pass needed values from parent |

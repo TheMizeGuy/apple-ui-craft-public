@@ -7,7 +7,7 @@ Scroll offset is a continuous, per-frame signal -- the only way a scroll-linked 
 
 ## The Apple way
 
-- Compositor-safe, render-only transforms only: `.visualEffect`/`.scrollTransition` read geometry and return `opacity`/`scale`/`rotation`/`offset` without a layout pass. A `GeometryReader`-driven header re-runs layout every scroll frame and drops to ~40fps on long lists -- never use it for scroll-linked motion. Cost table (`.blur`/`.shadow` radius per frame is the same expensive-off-screen-pass trap as elsewhere): `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` (OWNER).
+- Compositor-safe, render-only transforms only: `.visualEffect`/`.scrollTransition` read geometry and return `opacity`/`scale`/`rotation`/`offset` without a layout pass. A `GeometryReader`-driven header re-runs layout every scroll frame and drops to ~40fps on long lists -- never use it for scroll-linked motion. Cost table (`.blur`/`.shadow` radius per frame is the same expensive-off-screen-pass trap as elsewhere): `references/performance/01-swiftui-rendering.md#animation-cost-layout-vs-render` (OWNER).
 - Observe scroll state at the coarsest grain that expresses your intent: `onScrollGeometryChange` with a derived `Equatable` type fires only when THAT value changes, not on every offset tick.
 - **Never attach `.animation(_:value:)` to the `ScrollView`/`List` container itself.** It animates the entire subtree -- every row's geometry AND the live scroll offset -- against a value a real finger is simultaneously driving via the scroll gesture. Scope any animation to the specific leaf/overlay that should animate.
 - Snapping and paging (`scrollTargetBehavior`) is a POSITION change, not decoration -- it stays on under Reduce Motion. Only the decorative scale/opacity riding on top of the snap (a `.scrollTransition` dim on off-center cards) is gated.
@@ -137,7 +137,7 @@ SectionHeader(section).visualEffect { content, proxy in
 .sensoryFeedback(.impact(flexibility: .rigid, intensity: 0.7), trigger: armed) { _, now in now }
 ```
 
-Three beats make it read as Apple-native: (1) the head height tracks the raw pull distance 1:1 below threshold -- true elastic reveal, not a delayed spinner; (2) exactly ONE rigid haptic fires on the `armed` edge (false to true), never continuously while past threshold; (3) the indicator interpolates from `progress = pull / threshold` (rotate/fill), only switching to an indeterminate spin once the refresh actually commits. `SensoryFeedback` API depth: `references/haptics/02-swiftui-sensory-feedback.md#pull-to-refresh`.
+Three beats make it read as Apple-native: (1) the head height tracks the raw pull distance 1:1 below threshold -- true elastic reveal, not a delayed spinner; (2) exactly ONE rigid haptic fires on the `armed` edge (false to true), never continuously while past threshold; (3) the indicator interpolates from `progress = pull / threshold` (rotate/fill), only switching to an indeterminate spin once the refresh actually commits. `SensoryFeedback` API depth (the `condition:` overload the armed edge uses): `references/haptics/02-swiftui-sensory-feedback.md#conditional-feedback`.
 
 ## Reduce Motion
 
@@ -178,6 +178,6 @@ Content is never hidden under Reduce Motion -- the card/row/header still appears
 - `references/animation/04-transitions-geometry.md#scrolltransition-ios-17` -- `.scrollTransition` base API, `ScrollTransitionConfiguration` (OWNER)
 - `references/animation/04-transitions-geometry.md#visual-effects-ios-17` -- `.visualEffect` base API (OWNER)
 - `references/animation/05-gesture-driven.md#scroll-driven-chrome-minimize-ios-26` -- `TabBarMinimizeBehavior`/`ToolbarMinimizeBehavior` system chrome (OWNER)
-- `references/animation/01-animation-fundamentals.md#animation-cost-layout-vs-render` -- compositor-safe vs expensive property cost table (OWNER)
+- `references/performance/01-swiftui-rendering.md#animation-cost-layout-vs-render` -- compositor-safe vs expensive property cost table (OWNER)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate contract (OWNER)
-- `references/haptics/02-swiftui-sensory-feedback.md#pull-to-refresh` -- `SensoryFeedback` threshold-haptic API
+- `references/haptics/02-swiftui-sensory-feedback.md#conditional-feedback` -- the `condition:` overload the armed-edge haptic uses

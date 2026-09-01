@@ -213,7 +213,7 @@ HIG (Playing haptics): match the intensity and sharpness of haptics with accompa
 - **Match the physical metaphor** across animation, haptic, and sound character: a `.snappy` spring pairs with `.impact(flexibility: .rigid)` and a short bright tick, never a soft warm sound.
 - **Don't double up** where a system control already has its own haptic/sound (picker detents, toggles) -- a second custom sound on top produces clutter.
 
-On devices without a Taptic Engine (iPad, Apple TV, Vision Pro) the haptic silently no-ops while the sound still plays -- a paired design degrades gracefully to sound-only, but never make the haptic the *only* channel.
+On devices without a Taptic Engine (iPad, Apple TV, and Vision Pro, where `.impact` is a visionOS 26.0+ API surface with no engine behind it) the haptic silently no-ops while the sound still plays -- a paired design degrades gracefully to sound-only, but never make the haptic the *only* channel.
 
 ## Accessibility contract
 

@@ -145,9 +145,11 @@ EntityEditor(entity: entity).id(entity.id)   // new entity.id -> fresh editor, c
 `.task(id:)` ties async work to BOTH the view's lifetime and a value:
 
 ```swift
-// iOS 17+. Verified signature.
+// iOS 17+ for `id:`. `name:`, `file:`, and `line:` are iOS 26.4+ and no-ops before it
+// (`references/performance/06-concurrency-ui.md` owns the .task floors).
 nonisolated func task<T: Equatable>(
     id: T, name: String? = nil, priority: TaskPriority = .userInitiated,
+    file: String = #fileID, line: Int = #line,
     _ action: sending @escaping @isolated(any) () async -> Void
 ) -> some View
 

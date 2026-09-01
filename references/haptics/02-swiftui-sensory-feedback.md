@@ -95,8 +95,8 @@ Button("Save") {
 @State private var selectedTab = 0
 
 TabView(selection: $selectedTab) {
-    Tab("Home", systemImage: "house").tag(0) { HomeView() }
-    Tab("Search", systemImage: "magnifyingglass").tag(1) { SearchView() }
+    Tab("Home", systemImage: "house", value: 0) { HomeView() }               // iOS 18+ value-typed Tab
+    Tab("Search", systemImage: "magnifyingglass", value: 1) { SearchView() }
 }
 .sensoryFeedback(.selection, trigger: selectedTab)
 ```

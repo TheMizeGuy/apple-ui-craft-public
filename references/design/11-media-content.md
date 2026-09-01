@@ -92,7 +92,7 @@ Hard requirements or PiP silently no-ops: (1) Background Modes → "Audio, AirPl
 ```swift
 struct LivePhotoView: UIViewRepresentable {
     let livePhoto: PHLivePhoto
-    var playback: PHLivePhotoViewPlaybackStyle = .full   // .hint (brief shimmer) | .full (motion+audio)
+    var playback: PHLivePhotoView.PlaybackStyle = .full   // .hint (brief shimmer) | .full (motion+audio)
     func makeUIView(context: Context) -> PHLivePhotoView { PHLivePhotoView() }
     func updateUIView(_ v: PHLivePhotoView, context: Context) {
         v.livePhoto = livePhoto
@@ -136,8 +136,10 @@ Multiple selection + filtering:
 
 ```swift
 PhotosPicker(selection: $items, maxSelectionCount: 5, selectionBehavior: .ordered,
-             matching: .any(of: [.images, .not(.videos)]),
-             preferredItemEncoding: .compatible)   // transcode HEIC → JPEG for portability
+             matching: .all(of: [.images, .not(.screenshots)]),   // an intersection narrows; .any(of:) with .not admits nearly everything
+             preferredItemEncoding: .compatible) {                // transcode HEIC -> JPEG for portability
+    Label("Choose Photos", systemImage: "photo.on.rectangle")     // every initializer needs a label
+}
 ```
 
 `PHPickerFilter` composes `.images`, `.videos`, `.livePhotos`, `.screenshots`, `.panoramas`, `.bursts`, `.cinematicVideos`, `.slomoVideos`, `.depthEffectPhotos`, `.timelapseVideos` via `.any(of:)`/`.all(of:)`/`.not(_:)`. `loadTransferable(type: Image.self)` is convenient for display; for anything you upload, resize, or persist, load `Data`/a custom `Transferable` -- `Image.self` can't be resized/inspected and drops silently on failure.

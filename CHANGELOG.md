@@ -2,6 +2,108 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.5.1 -- 2026-09-01
+
+Reference-library corrections from the adversarial pass that 0.5.0 announced: five
+Opus 5 executors read every file in five of the six domain clusters (motion,
+accessibility + usability + review, design + methodology, patterns + exemplars,
+performance) against the version-floor registry and Context7, and returned 72
+evidence-backed findings; 140 edits across 55 files land here. The platform +
+cross-platform cluster was not audited in this pass (its executor was cut off by the
+account usage limit) and is the next pass.
+
+### Examples that could not compile or did not do what their prose said
+
+- `accessibility/05` -- the matchedGeometryEffect crossfade fallback was a ternary between
+  two View types; the 26.4 availability block declared an `@Environment` property inside
+  `if #available`. Both rewritten (if/else per branch; an `@available` wrapper view plus the
+  UIKit static).
+- `accessibility/03` -- the Reduce Transparency fallback put a bare `Material` in a
+  ViewBuilder branch. Now one `.background(_:)` with an `AnyShapeStyle` ternary.
+- `interaction/03` -- the momentum-throw example committed `position` outside an empty
+  `withAnimation {}`, so the flick teleported. `interaction/02` -- `withAnimation` called
+  with a `value:` label. `haptics/02` -- `Tab(...).tag(0) { }` (value-typed `Tab` takes
+  `value:`). `interaction/05` and `/06` -- four unlabeled `.impact(...)` factory calls, the
+  exact shape `haptics/01` says does not compile. `interaction/06` -- the segmented-pill
+  example drove selection with `.onTapGesture`; it is a `Button` now.
+- `performance/01` -- the "precompute" remedy rendered an empty list until `trips` next
+  changed (`initial: true`); `performance/02` -- the "absolute heights" snippet set no
+  height and the "prefetch" snippet loaded the appearing row; `performance/05` -- the
+  `UIUpdateLink` example never enabled the link; `performance/08` -- the "off-main" pager
+  fetched synchronously on `@MainActor` (now a `@ModelActor` returning `Sendable`
+  snapshots).
+- `design/06` -- `HStack(alignment: .leading)` in the RTL table; `design/11` -- a
+  `PhotosPicker` with no label and a filter that admitted everything but videos, and the
+  Objective-C spelling `PHLivePhotoViewPlaybackStyle`; `design/12` -- a `.middle`
+  truncation comment showing head-truncated output; `methodology/01` -- a generic slot
+  named `Body`; `methodology/03` -- an iOS 17 label on a recipe using the iOS 18
+  `matchedTransitionSource`, with its `@Namespace` undeclared.
+- `patterns/01` -- both "RIGHT" snippets: the shadow fix faded the whole card, the
+  translucent fix filled with `.clear.opacity(0.9)`; `patterns/05` -- `.bar` and `.small`
+  presented as built-in detents, and a dialog title interpolating an out-of-scope `item`;
+  `patterns/07` -- `@State var body` beside `var body: some View`; `patterns/08` --
+  `subscriptionStatusTask` documented with a product-id label and a `.userInitiated`
+  default (it is a group id and `.medium`); `patterns/09` -- `.whiteOutlined`.
+- Exemplars -- `01`: the indefinite `.variableColor` symbol effect ran ungated under
+  Reduce Motion and the promised `.isHeader` trait was absent; `02`: the reorder
+  "make-way" spring was the one ungated `withAnimation` in the file, the zoom hero claimed
+  the system gates it, and the matchedGeometry toggle eased under Reduce Motion where the
+  contract says `nil`; `03`: a memberwise call out of declaration order, two haptics bound
+  to model state, and a pulse-ring indicator `patterns/01` bans by default; `04`: the
+  fling gate called a method that did not exist and its environment key had no reader;
+  `05`: three iOS-26 call sites at a stated iOS-18 floor, graded NIT where exemplar 01
+  grades the same defect HIGH.
+
+### Contradictions between files, resolved toward the owner
+
+- Reduce Motion severity: `accessibility/05` grounded its CRITICAL on 2.3.3 (AAA, which
+  `accessibility/08` forbids citing as required) and graded ungated parallax, zoom, and
+  rotation MEDIUM while its own vestibular table calls them HIGH-risk and the scale owner
+  calls them CRITICAL. The guide now grounds on 2.2.2 (A), keeps the HIGH-risk classes out
+  of MEDIUM, and `interaction/01` defers the animated-drag grade to `interaction/03` (HIGH).
+- "Never animate the follow": `animation/05` and `interaction/01` prescribed
+  `.interactiveSpring` on the tracked drag value that `interaction/03` calls the number-one
+  drag bug. The owner now states the carve-out once (a property that trails the gesture may
+  carry it; the tracked value never does) and both files cite it.
+- Animation cost table: two files each claimed OWNER with different rows. `performance/01`
+  owns it (as `ARCHITECTURE.md` says), carries the animated-blur/shadow and `.fixedSize`
+  rows it was missing, and `animation/01` and `/06` point there.
+- Image memory: `AsyncImage` + `.frame()` was labelled the GOOD memory fix in
+  `performance/01` while `performance/03` lists it as an anti-pattern; the 48 MB figure in
+  two files ignored the Display P3 default `performance/03` puts at ~97 MB. Hitch bands in
+  `performance/02` now carry their 60 Hz regime. The SwiftUI shadow rule is one sentence
+  (`.clipShape` then `.shadow()`; the layer split is the UIKit fix).
+- `accessibility/02` prescribed `.large` titles for AX5 truncation, the change
+  `usability/03` files as a depth-cue defect; `patterns/05` and `/07` said sheets are
+  "Reduce-Motion-safe with zero code", the claim the motion owner calls false; `patterns/06`
+  rendered Sign Out destructive-red against `patterns/09`; `haptics/01` forbade a
+  pull-to-refresh threshold haptic that `animation/06` requires for a custom pull, and
+  called Vision Pro "None" where the registry lists visionOS 26 `.impact`;
+  `methodology/02` called `legibilityWeight` get-only (it is writable, so the Bold Text
+  preview the library recommends compiles).
+- Floors and counts: `accessibilityScrollAction` is iOS 13 (was 16 in its owner),
+  `accessibilityZoomAction` is iOS 16 (was 13 in `animation/05`) -- both registered;
+  `.task(id:name:)`'s `name:` is 26.4 in `performance/04` as in `/06`; the custom hover
+  effect closure family is visionOS 2 only, not iPadOS; `review/04` said four
+  NOT_ASSESSED keys where the schema has five; `review/01` counted nine sequence
+  dimensions where its registry marks ten; `usability/04` "other seven" states and
+  `usability/01` "one of eleven" entrances recounted from their tables; the
+  SwiftData-versus-Core-Data gap is twelve versions, not eleven; WCAG 2.2 added nine
+  criteria, not seven.
+
+### Pointers that led nowhere
+
+`accessibility/08` sent 2.2.1 Timing Adjustable, 3.2.1 On Focus, 3.2.2 On Input, Bold Text,
+and the Large Content Viewer to files that did not contain them (the focus/input rule now
+lives in `usability/02`); `interaction/04` claimed `interaction/03` owns the
+alternative-action catalog it forwards elsewhere; `animation/06` cited a pull-to-refresh
+section for a `condition:` overload that lives under conditional feedback;
+`methodology/04` named owners for iOS 27 symbols that carry none of them; `design/07`'s
+pitfall named an `authChecker` its router never declared. Two self-containment leaks are
+closed: `performance/08` delegated persistence internals to "the vault SwiftData note", and
+`animation/05` offered only a vault path for `Transferable` conformance where
+`patterns/10` owns it.
+
 ## 0.5.0 -- 2026-09-01
 
 A review of the plugin's operative layer -- agents, skills, dispatch policy, docs --

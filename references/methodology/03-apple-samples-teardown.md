@@ -19,8 +19,9 @@ An agent asked to "make this feel like a real Apple app" needs more than a list 
 ### The adaptive collection: grid and peeking carousel
 
 ```swift
-// iOS 17.0+
+// iOS 18.0+ -- matchedTransitionSource / navigationTransition(.zoom) floor
 struct LandmarkGrid: View {
+    @Namespace private var ns
     private let columns = [GridItem(.adaptive(minimum: 160, maximum: 220), spacing: 16)]
     var body: some View {
         ScrollView {

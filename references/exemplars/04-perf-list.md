@@ -51,6 +51,7 @@ struct PhotoRow: View, Equatable {
     let imageURL: URL
     let isFavorite: Bool
     let pixelSize: CGSize        // target DECODE size in pixels (points × displayScale)
+    @Environment(\.isScrollActive) private var isScrollActive   // the fling gate
 
     @State private var thumbnail: UIImage?
 
@@ -79,7 +80,10 @@ struct PhotoRow: View, Equatable {
         .accessibilityValue(subtitle)
         // .task(id:) auto-cancels the previous decode when a recycled row rebinds to a new URL --
         // essential on a fast fling so you never paint a stale thumbnail.
-        .task(id: imageURL) { thumbnail = await ThumbnailLoader.shared.thumbnail(for: imageURL, pixelSize: pixelSize) }
+        .task(id: imageURL) {
+            thumbnail = await ThumbnailLoader.shared.thumbnail(for: imageURL, pixelSize: pixelSize,
+                                                               priority: isScrollActive ? .utility : .userInitiated)
+        }
     }
 
     @ViewBuilder private var thumbnailView: some View {
@@ -139,15 +143,15 @@ actor ThumbnailLoader {
         var nsKey: NSString { "\(url.absoluteString)|\(w)x\(h)" as NSString }
     }
 
-    private let cache: NSCache<NSString, UIImage> = { let c = NSCache(); c.totalCostLimit = 64 * 1024 * 1024; return c }()
+    private let cache: NSCache<NSString, UIImage> = { let c = NSCache<NSString, UIImage>(); c.totalCostLimit = 64 * 1024 * 1024; return c }()
     private var inFlight: [Key: Task<UIImage?, Never>] = [:]
 
-    func thumbnail(for url: URL, pixelSize: CGSize) async -> UIImage? {
+    func thumbnail(for url: URL, pixelSize: CGSize, priority: TaskPriority = .userInitiated) async -> UIImage? {
         let key = Key(url, pixelSize)
         if let cached = cache.object(forKey: key.nsKey) { return cached }
         if let running = inFlight[key] { return await running.value }   // coalesce concurrent requests
 
-        let task = Task<UIImage?, Never> { await Self.fetchAndDownsample(url: url, pixelSize: pixelSize) }
+        let task = Task<UIImage?, Never>(priority: priority) { await Self.fetchAndDownsample(url: url, pixelSize: pixelSize) }
         inFlight[key] = task
         let image = await task.value
         inFlight[key] = nil   // actor-serialized: safe
@@ -212,8 +216,7 @@ struct PhotoFeedLazyView: View {
     }
 }
 
-private struct IsScrollActiveKey: EnvironmentKey { static let defaultValue = false }
-extension EnvironmentValues { var isScrollActive: Bool { get { self[IsScrollActiveKey.self] } set { self[IsScrollActiveKey.self] = newValue } } }
+extension EnvironmentValues { @Entry var isScrollActive: Bool = false }   // @Entry: iOS 18 / Xcode 16 -- no hand-rolled key
 ```
 
 `LazyVStack` NEVER recycles -- it's correct only for bounded/windowed data; for an unbounded feed either window the data source or use the `List` variant above (memory grows monotonically otherwise). Wire the fling gate into the loader by passing `priority: isScrollActive ? .utility : .userInitiated` to `ThumbnailLoader.thumbnail(for:pixelSize:priority:)` -- decodes yield to the scroll while it's in motion, and run at full priority once it settles. `onScrollPhaseChange` fires only on the FIRST `ScrollView` in the hierarchy; a second one logs a runtime issue.

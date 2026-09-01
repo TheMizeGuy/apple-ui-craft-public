@@ -16,7 +16,7 @@ A paywall and a payment button are UI screens Apple reviews as strictly as any o
 
 ### SubscriptionStoreView -- the Apple-native paywall
 
-`SubscriptionStoreView` (StoreKitSwiftUI, iOS 17.0+) sources products three ways:
+`SubscriptionStoreView` (StoreKit, iOS 17.0+) sources products three ways:
 
 ```swift
 // Whole subscription group (most common)
@@ -50,7 +50,7 @@ SubscriptionStoreView(groupID: "21469355") {
 
 ### StoreView / ProductView -- non-subscription IAP
 
-For consumables, non-consumables, and mixed catalogs (StoreKitSwiftUI, iOS 17.0+):
+For consumables, non-consumables, and mixed catalogs (StoreKit, iOS 17.0+):
 
 ```swift
 StoreView(ids: ["com.app.gems.100", "com.app.gems.500"])
@@ -73,7 +73,7 @@ if #available(iOS 26, *) {
 }
 ```
 
-`SubscriptionOfferView` (StoreKitSwiftUI, **iOS 26.0+** -- `version-floor-registry.md#ios-26x`) is a compact merchandising card for one auto-renewable subscription, meant to drop inline in normal UI (a settings row, a "Go Pro" banner) rather than as a full paywall. Before iOS 26 the only Apple-native subscription surface was the full paywall; a hand-rolled inline upgrade card on an iOS-26-target app is now a LOW/MEDIUM finding -- prefer `SubscriptionOfferView`.
+`SubscriptionOfferView` (StoreKit, **iOS 26.0+** -- `version-floor-registry.md#ios-26x`) is a compact merchandising card for one auto-renewable subscription, meant to drop inline in normal UI (a settings row, a "Go Pro" banner) rather than as a full paywall. Before iOS 26 the only Apple-native subscription surface was the full paywall; a hand-rolled inline upgrade card on an iOS-26-target app is now a LOW/MEDIUM finding -- prefer `SubscriptionOfferView`.
 
 ### Entitlement-gated UI
 
@@ -93,7 +93,7 @@ TabView { /* ... */ }
     }
 ```
 
-Signature: `subscriptionStatusTask(for productID: String, priority: TaskPriority = .userInitiated, action: (EntitlementTaskState<[Product.SubscriptionInfo.Status]>) async -> Void)` -- iOS 17.0+. Treat `.inGracePeriod` and `.inBillingRetryPeriod` as entitled: revoking premium the instant a card fails is a classic churn mistake, since Apple keeps retrying billing for roughly 60 days. For a single non-consumable/lifetime product, use `currentEntitlementTask(for:priority:action:)` and check `revocationDate == nil` plus `case .verified` (reject `.unverified` -- that is a tamper signal).
+Signature: `subscriptionStatusTask(for groupID: String, priority: TaskPriority = .medium, action: (EntitlementTaskState<[Product.SubscriptionInfo.Status]>) async -> Void)` -- iOS 17.0+. Treat `.inGracePeriod` and `.inBillingRetryPeriod` as entitled: revoking premium the instant a card fails is a classic churn mistake, since Apple keeps retrying billing for roughly 60 days. For a single non-consumable/lifetime product, use `currentEntitlementTask(for:priority:action:)` and check `revocationDate == nil` plus `case .verified` (reject `.unverified` -- that is a tamper signal).
 
 There is no `@Environment(\.subscriptionStatuses)` key and no `Status.all` -- both are fabricated. `subscriptionStatusTask`/`currentEntitlementTask` are the only entitlement-gating surface (`version-floor-registry.md#ios-170`).
 

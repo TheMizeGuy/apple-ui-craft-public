@@ -26,7 +26,7 @@ SignInWithAppleButton(.continue) { request in
 
 **Label** -- `.signIn` ("Sign in with Apple") for a dedicated returning-user screen, `.signUp` ("Sign up with Apple", iOS 14+) for an account-creation screen, `.continue` ("Continue with Apple") for a single unified auth screen where you don't yet know if the account exists. Pick `.continue` unless the surrounding copy already commits to one path. The button localizes its own title -- never hard-code or overlay your own text on it.
 
-**Style** -- `.signInWithAppleButtonStyle(_:)` takes exactly three values: `.black` for light backgrounds, `.white` for dark/photographic backgrounds, `.whiteOutlined` (white fill + hairline border) for white/very-light backgrounds where a solid white button would vanish. Drive it off `@Environment(\.colorScheme)` so it flips with the system. Do NOT tint it to your brand color -- Apple's HIG forbids recoloring the button.
+**Style** -- `.signInWithAppleButtonStyle(_:)` takes exactly three values: `.black` for light backgrounds, `.white` for dark/photographic backgrounds, `.whiteOutline` (white fill + hairline border) for white/very-light backgrounds where a solid white button would vanish. Drive it off `@Environment(\.colorScheme)` so it flips with the system. Do NOT tint it to your brand color -- Apple's HIG forbids recoloring the button.
 
 **Placement** -- HIG puts Sign in with Apple ABOVE email/password and other providers, because for a returning Apple-ID user it's the one-tap path. Order the stack: SIWA → passkey/other providers → an "or" divider → the email field. If you offer ANY third-party login (Google, Facebook), Guideline 4.8 requires Sign in with Apple to be present and given EQUAL prominence -- same width, comparable position, not visually demoted.
 

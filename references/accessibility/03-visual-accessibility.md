@@ -168,13 +168,11 @@ Users can disable translucent backgrounds. iOS has a system setting for Reduce T
 
 Text("Floating")
     .padding()
-    .background {
-        if reduceTransparency {
-            Color(.systemBackground)
-        } else {
-            .ultraThinMaterial
-        }
-    }
+    // Switch the ShapeStyle, not the view: `Material` is a ShapeStyle, not a View, so a
+    // bare `.ultraThinMaterial` inside a ViewBuilder branch does not compile.
+    .background(reduceTransparency
+        ? AnyShapeStyle(Color(.systemBackground))
+        : AnyShapeStyle(.ultraThinMaterial))
 ```
 
 ### What auto-respects Reduce Transparency

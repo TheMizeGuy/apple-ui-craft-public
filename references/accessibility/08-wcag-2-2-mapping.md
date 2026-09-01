@@ -1,7 +1,7 @@
 # WCAG 2.2 Mapping for iOS
 
 > Owner: `references/accessibility/08-wcag-2-2-mapping.md` owns the CRITERION-TO-MECHANISM map: every WCAG 2.2 Level A and AA success criterion, what satisfies it on iOS, and which reference owns the detail. It does not restate those references. `accessibility/01`..`07` own the mechanisms; this file owns the completeness check.
-> Floors: `.accessibilityRespondsToUserInteraction` iOS 17.0+, `AccessibilityFocusState` iOS 15.0+, `.accessibilityAddTraits(.isHeader)` iOS 13.0+, `.textContentType` iOS 10.0+, Full Keyboard Access iOS 13.0+ (`references/_scaffolding/version-floor-registry.md`).
+> Floors: `AccessibilityFocusState` iOS 15.0+, `.accessibilityAddTraits(.isHeader)` iOS 13.0+, `.textContentType` iOS 10.0+. The assistive-technology floors (Full Keyboard Access, `accessibilityRespondsToUserInteraction`, `accessibilityInputLabels`) are owned by `accessibility/07-cognitive-hearing-assistive.md`; everything version-gated defers to `references/_scaffolding/version-floor-registry.md`.
 
 Before this file the plugin cited 29 distinct success criteria scattered across
 seven references with no index, so `accessibility-engineer`'s standing
@@ -69,7 +69,7 @@ already answers.
 | 2.1.1 Keyboard | A | Every control reachable and operable via Full Keyboard Access and a hardware keyboard on iPad; custom gestures carry an accessibility action | `accessibility/04-motor-interaction.md` |
 | 2.1.2 No Keyboard Trap | A | Focus can always leave. **The number-pad trap is the common iOS instance**: `.numberPad` with no keyboard toolbar and no interactive dismissal | `usability/02-forms-and-error-recovery.md` |
 | 2.1.4 Character Key Shortcuts | A | Single-character `keyboardShortcut` needs a modifier, or must be remappable or focus-scoped | `platform/02-app-intents-system.md` |
-| 2.2.1 Timing Adjustable | A | Any timeout is extendable or disableable; sessions warn before expiry | `usability/04-states-feedback-and-affordances.md` |
+| 2.2.1 Timing Adjustable | A | Any timeout is extendable or disableable; sessions warn before expiry | `accessibility/07-cognitive-hearing-assistive.md` |
 | 2.2.2 Pause, Stop, Hide | A | Auto-advancing carousels, marquees and looping animation have a control; looping symbol effects gate on Reduce Motion | `accessibility/05-motion-accessibility.md` |
 | 2.3.1 Three Flashes | A | Nothing flashes more than 3x/second; respect `accessibilityDimFlashingLights` | `accessibility/05-motion-accessibility.md` |
 | 2.4.1 Bypass Blocks | A | The VoiceOver rotor and heading traits are the iOS equivalent of skip links; a screen with no headings has no bypass | `accessibility/01-voiceover-fundamentals.md` |
@@ -92,9 +92,9 @@ already answers.
 | SC | Level | iOS mechanism | Owner |
 |---|---|---|---|
 | 3.1.1 Language of Page | A | Correct localisation and `Locale`; VoiceOver pronounces in the right language | `accessibility/06-localization-rtl.md` |
-| 3.1.2 Language of Parts | AA | `.accessibilitySpeechLanguage` (or an attributed-string language attribute) on foreign-language spans | `accessibility/06-localization-rtl.md` |
-| 3.2.1 On Focus | A | Focusing a control does not navigate, submit, or present | `usability/04-states-feedback-and-affordances.md` |
-| 3.2.2 On Input | A | Changing a `Picker` or `Toggle` does not navigate without warning | `usability/04-states-feedback-and-affordances.md` |
+| 3.1.2 Language of Parts | AA | `.accessibilitySpeechLanguage` (or an attributed-string language attribute) on foreign-language spans | this row states the mechanism; `accessibility/06-localization-rtl.md` for the locale context |
+| 3.2.1 On Focus | A | Focusing a control does not navigate, submit, or present | `usability/02-forms-and-error-recovery.md` |
+| 3.2.2 On Input | A | Changing a `Picker` or `Toggle` does not navigate without warning | `usability/02-forms-and-error-recovery.md` |
 | 3.2.3 Consistent Navigation | AA | Tab bar, toolbar placements and back semantics stay put across screens | `usability/03-navigation-and-information-architecture.md` |
 | 3.2.4 Consistent Identification | AA | The same function carries the same label and symbol everywhere; no label drift between tab, title and heading | `usability/03-navigation-and-information-architecture.md` |
 | 3.2.6 Consistent Help | A | Help, contact, or support sits in the same place on every screen that offers it | `patterns/06-settings.md` |
@@ -114,10 +114,12 @@ already answers.
 
 4.1.1 Parsing was **removed** in WCAG 2.2 and has no iOS analogue. Do not cite it.
 
-## The seven new in WCAG 2.2
+## The new criteria in WCAG 2.2
 
-Worth a dedicated pass, because they postdate most accessibility habits and four
-of them land squarely on patterns iOS apps get wrong:
+WCAG 2.2 added nine success criteria. Eight are A or AA and tabled below; the ninth,
+3.3.9 Accessible Authentication (Enhanced), is AAA and out of this map's scope. Worth a
+dedicated pass, because they postdate most accessibility habits and four of them land
+squarely on patterns iOS apps get wrong:
 
 | SC | Why it bites on iOS |
 |---|---|
@@ -140,10 +142,10 @@ them regardless. They are graded on the same severity scale.
 | Reduce Motion double-gate on all non-essential motion | `accessibility/05-motion-accessibility.md` |
 | Reduce Transparency fallback for `glassEffect` and `Material` | `design/02-liquid-glass.md` |
 | Increase Contrast behaviour | `accessibility/03-visual-accessibility.md` |
-| Bold Text and its metric shifts | `accessibility/02-dynamic-type-adaptation.md` |
+| Bold Text and its metric shifts | `accessibility/03-visual-accessibility.md` |
 | Switch Control and Voice Control operability | `accessibility/04-motor-interaction.md` |
 | Assistive Access | `accessibility/07-cognitive-hearing-assistive.md` |
-| Large Content Viewer for small toolbar controls | `accessibility/02-dynamic-type-adaptation.md` |
+| Large Content Viewer for small toolbar controls | `accessibility/07-cognitive-hearing-assistive.md` |
 | VoiceOver rotor, custom actions, and custom rotors | `accessibility/01-voiceover-fundamentals.md` |
 | Haptics never the sole feedback channel | `haptics/01-haptic-design-principles.md` |
 

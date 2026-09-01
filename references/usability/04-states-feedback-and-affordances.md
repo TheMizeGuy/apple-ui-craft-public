@@ -3,7 +3,7 @@
 > Owner: `references/usability/04-states-feedback-and-affordances.md` owns the completeness question (does every state exist), the latency contract (does every action get a response in time), and the affordance question (can a person tell what is interactive without being told). `references/patterns/04-loading-empty-error.md` owns the load-state MODEL and `ContentUnavailableView` mechanics; this file owns whether the set is complete and whether the feedback lands. Cite, don't restate.
 > Floors: `ContentUnavailableView` incl. `.search` iOS 17.0+, `.redacted(reason:)` iOS 14.0+, `.sensoryFeedback` iOS 17.0+, `.refreshable` iOS 15.0+, `.contentTransition` iOS 16.0+, `.symbolEffect` iOS 17.0+ (`references/_scaffolding/version-floor-registry.md`).
 
-Most SwiftUI screens ship one state. The happy one. The other seven exist as
+Most SwiftUI screens ship one state. The happy one. The other nine exist as
 whatever the layout does when the array is empty and the error is `nil`, which is
 usually a blank screen with a navigation bar floating above nothing.
 

@@ -47,7 +47,7 @@ The two-column rule: haptics either CONFIRM or NOTIFY. Anything else is misuse.
 | Decorative animation | Haptics confirm actions, not visuals |
 | Loading spinner | Continuous; no event to confirm |
 | Initial app launch | Not a user action |
-| Pull-to-refresh starting | Confirms RESULT, not start |
+| Pull-to-refresh starting | Confirms RESULT, not start. The system `.refreshable` control owns its own feel; a CUSTOM pull fires exactly one haptic on the armed edge and none while pulling (`references/animation/06-scroll-driven-effects.md#composite-pattern-pull-to-refresh`) |
 | Hover (Mac/iPad pointer) | System provides hover feel |
 
 ## Match haptic to weight of action
@@ -163,7 +163,7 @@ For `.start`/`.stop` (real, watchOS-primary) and the complete `SensoryFeedback` 
 | Mac (Force Touch trackpad) | Limited |
 | Apple Watch | Limited (WKInterfaceDevice.play) |
 | Apple TV | None |
-| Vision Pro | None |
+| Vision Pro | No Taptic Engine. `.impact` sensory feedback is a real visionOS 26.0+ API (`references/haptics/02-swiftui-sensory-feedback.md` owns the matrix), never the sole channel |
 
 **Critical implication:** Never rely on haptics as the sole feedback. iPad users and accessibility users with haptics disabled will miss it entirely.
 

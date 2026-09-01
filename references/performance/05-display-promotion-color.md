@@ -66,6 +66,8 @@ let updateLink = UIUpdateLink(view: myView) { link, info in
 }
 updateLink.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
 updateLink.requiresContinuousUpdates = false   // request updates on demand; let the display idle between events
+updateLink.isEnabled = true                    // created disabled: nothing fires until this
+// Tear down: updateLink.isEnabled = false (or drop the reference) when the view goes away.
 ```
 
 | Situation | Tool |

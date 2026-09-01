@@ -135,8 +135,8 @@ second to **YELLOW**, third and fourth to **RED**:
 `motion` summarises two specialist verdicts, Animation and Haptics: map each through its own
 family and the lower colour wins. NOT ASSESSED on either makes the key `NOT_ASSESSED`.
 
-**`NOT_ASSESSED` is a first-class value on the four evidence-bounded keys and it
-FAILS the gate.** That is deliberate. The alternative -- treating it as a pass --
+**`NOT_ASSESSED` is a first-class value on the five evidence-bounded keys (`usability`,
+`adaptive`, `accessibility`, `motion`, `performance`) and it FAILS the gate.** That is deliberate. The alternative -- treating it as a pass --
 would make a screenshots-only review a way to get a green build, which inverts
 the entire evidence rule in `references/review/02-evidence-pipeline.md`. A gate
 that cannot see a dimension has not cleared it.

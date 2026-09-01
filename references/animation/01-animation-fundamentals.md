@@ -129,7 +129,7 @@ withAnimation(nil) {
 
 ## Animation cost: layout vs render
 
-Animating render-only properties is cheap. Animating layout-triggering properties is expensive.
+Animating render-only properties is cheap. Animating layout-triggering properties is expensive. Owner: `references/performance/01-swiftui-rendering.md#animation-cost-layout-vs-render`; this copy is the animation-side summary and carries the same rows.
 
 | Cheap (render-only) | Expensive (layout-triggering or per-frame off-screen render) |
 |---|---|

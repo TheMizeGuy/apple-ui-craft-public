@@ -8,7 +8,7 @@ Both surfaces in this file share one discipline: earn the ask. A review prompt f
 ## Review prompts: ask, don't beg
 
 ```swift
-@Environment(\.requestReview) private var requestReview   // iOS 16+, StoreKitSwiftUI
+@Environment(\.requestReview) private var requestReview   // iOS 16+, StoreKit
 
 Button("Enjoying the app? Rate it") {
     requestReview()
@@ -46,14 +46,14 @@ Section("Support") {
 
 ```swift
 struct FeedbackSheet: View {
-    @State private var body = ""
+    @State private var messageText = ""
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("What's on your mind?") {
-                    TextEditor(text: $body).frame(minHeight: 120)
+                    TextEditor(text: $messageText).frame(minHeight: 120)
                 }
                 Section {
                     LabeledContent("App Version", value: Bundle.main.appVersion)
@@ -66,7 +66,7 @@ struct FeedbackSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Send") { send(body); dismiss() }.disabled(body.isEmpty)
+                    Button("Send") { send(messageText); dismiss() }.disabled(messageText.isEmpty)
                 }
             }
         }
@@ -159,7 +159,7 @@ UNUserNotificationCenter.current().setNotificationCategories([category])
 
 ## Accessibility contract
 
-None of the surfaces in this file introduce a motion obligation -- the review sheet, the system permission dialog, and a `.confirmationDialog`/`.sheet`-based feedback form are all system-presented and Reduce-Motion-safe with zero code, per the shared modal contract in `references/patterns/05-modality-sheets.md#accessibility-contract`. A hand-rolled priming screen still needs the same discipline as any other screen: every button (including "Not Now") meets the 44×44pt minimum from `references/accessibility/04-motor-interaction.md#touch-targets`, and VoiceOver reads the priming copy as ordinary static text with no special handling required.
+None of the surfaces in this file introduce a motion obligation -- the review sheet, the system permission dialog, and a `.confirmationDialog`/`.sheet`-based feedback form are all system-presented; the system applies its own Motion settings to them and your code neither can nor needs to gate them, per the shared modal contract in `references/patterns/05-modality-sheets.md#accessibility-contract`. A hand-rolled priming screen still needs the same discipline as any other screen: every button (including "Not Now") meets the 44×44pt minimum from `references/accessibility/04-motor-interaction.md#touch-targets`, and VoiceOver reads the priming copy as ordinary static text with no special handling required.
 
 ## Anti-patterns
 

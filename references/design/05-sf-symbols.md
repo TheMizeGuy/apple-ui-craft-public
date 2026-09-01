@@ -46,6 +46,7 @@ Button {
 } label: {
     Image(systemName: "checkmark")
 }
+.accessibilityLabel("Save")   // icon-only: the symbol name is not a label
 ```
 
 ## Weight
@@ -266,7 +267,7 @@ Image("CustomSymbol")  // Custom SF Symbol from asset catalog
 
 ## Accessibility
 
-Symbols generally need accessibility labels when they're standalone (not in a `Button` or `Label`):
+Symbols need accessibility labels whenever no text accompanies them -- standalone, or as the sole label of a `Button` (a `Label` supplies its own text):
 
 ```swift
 // Button automatically uses its title

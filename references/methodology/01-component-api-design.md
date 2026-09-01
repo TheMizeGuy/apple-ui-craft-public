@@ -30,7 +30,7 @@ struct Card<Content: View>: View {
     private let content: Content
     init(@ViewBuilder content: () -> Content) { self.content = content() }   // built once
     var body: some View {
-        content.padding(16).background(.background.secondary, in: .rect(cornerRadius: 16))
+        content.padding(16).background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 16))
     }
 }
 Card { Text("Hi"); Button("Go") { } }   // reads like a native container
@@ -39,14 +39,14 @@ Card { Text("Hi"); Button("Go") { } }   // reads like a native container
 Multiple named slots follow `Section`'s convention: the MAIN content is the trailing (unlabeled) closure; secondary regions are labeled parameters that precede it, each defaulted to `{ EmptyView() }` so simple call sites stay short:
 
 ```swift
-struct Panel<Header: View, Body: View, Footer: View>: View {
-    private let header: Header; private let footer: Footer; private let body_: Body
+struct Panel<Header: View, Main: View, Footer: View>: View {   // never name a slot `Body`: it collides with View.Body
+    private let header: Header; private let footer: Footer; private let main: Main
     init(@ViewBuilder header: () -> Header,
          @ViewBuilder footer: () -> Footer = { EmptyView() },
-         @ViewBuilder content: () -> Body) {
-        self.header = header(); self.footer = footer(); self.body_ = content()
+         @ViewBuilder content: () -> Main) {
+        self.header = header(); self.footer = footer(); self.main = content()
     }
-    var body: some View { VStack(alignment: .leading) { header.font(.headline); body_; footer } }
+    var body: some View { VStack(alignment: .leading) { header.font(.headline); main; footer } }
 }
 ```
 

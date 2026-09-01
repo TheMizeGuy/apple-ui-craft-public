@@ -141,7 +141,7 @@ CustomImageView()
         }
     }
 
-// iOS 16.0+. VoiceOver's three-finger scroll invokes this on a custom scrollable view
+// iOS 13.0+. VoiceOver's three-finger scroll invokes this on a custom scrollable view
 // (List/ScrollView already expose scroll to VoiceOver automatically -- this is for
 // canvases, custom maps, and other non-standard scrollable content).
 CustomScrollableView()

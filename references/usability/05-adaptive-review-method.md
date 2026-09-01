@@ -246,7 +246,7 @@ alongside it.
 |---|---|
 | CRITICAL | Content unreachable in a supported configuration: a control off-screen at AX5 with no scroll, a form field permanently under the keyboard, the last list row permanently under an overlay bar |
 | HIGH | Clipping or overlapping at AX5 on the narrowest supported width; a fixed-width layout on an adaptive surface; `ViewThatFits` with no fitting candidate; Dynamic Type capped on body content; a stretched phone layout on iPad; `UIScreen.main.bounds` driving layout |
-| MEDIUM | `minimumScaleFactor` masking a reflow failure; `lineLimit(1)` truncating a meaningful label; fixed padding beside scaled text; compact-height layout untested; missing `@ScaledMetric` on an icon beside text |
+| MEDIUM | `minimumScaleFactor` masking a reflow failure; `lineLimit(1)` truncating a label whose meaning survives (a meaningful label truncated at AX5 on the narrowest width is the HIGH row in section 4); fixed padding beside scaled text; compact-height layout untested; missing `@ScaledMetric` on an icon beside text |
 | LOW | Slightly loose proportions at one width; a magic number that happens not to clip |
 | NIT | Preference about where a breakpoint sits |
 

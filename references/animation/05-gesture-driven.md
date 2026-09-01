@@ -229,11 +229,12 @@ The spring in `.onEnded` commits state to a new resting offset -- it does not au
 
 For a real velocity handoff -- where the release genuinely carries momentum into the settle -- read `value.velocity` (`CGSize`, points/sec, iOS 17+) and feed it to `interpolatingSpring(initialVelocity:)`. `initialVelocity` wants velocity RELATIVE TO THE REMAINING TRAVEL DISTANCE, not raw points/sec; passing raw `value.velocity` straight in produces wild overshoot on a fast flick. Full interruptible-animation and velocity-normalization treatment: `references/interaction/01-fluid-smoothness-interruptible.md` (OWNER).
 
-For ultra-low-latency tracking (e.g., a slider or scrubber), lead with the modern form (iOS 17+); the legacy signature still compiles and shows up in code targeting earlier deployments:
+`.interactiveSpring` is for a property that TRAILS the gesture -- a lift scale, a blur, a paging offset that snaps -- so it retargets every frame without lag. It is never applied to the tracked value itself: the raw offset stays un-animated (`references/interaction/03-direct-manipulation-drag.md#the-law-never-animate-the-follow`, the OWNER). Lead with the modern form (iOS 17+); the legacy signature still compiles and shows up in code targeting earlier deployments:
 
 ```swift
-.animation(.interactiveSpring(duration: 0.15, extraBounce: 0.0, blendDuration: 0.25), value: dragOffset)   // iOS 17+
-.animation(.interactiveSpring(response: 0.15, dampingFraction: 0.86, blendDuration: 0.25), value: dragOffset)   // legacy, still compiles
+.scaleEffect(isDragging ? 1.04 : 1)   // the trailing property, not the offset
+.animation(.interactiveSpring(duration: 0.15, extraBounce: 0.0, blendDuration: 0.25), value: isDragging)   // iOS 17+
+.animation(.interactiveSpring(response: 0.15, dampingFraction: 0.86, blendDuration: 0.25), value: isDragging)   // legacy, still compiles
 ```
 
 ## Reduce Motion
@@ -293,6 +294,7 @@ ColorTarget()
     }
 ```
 
+For complex `Transferable` conformance, see `references/patterns/10-drag-drop.md#transferable-conformance-the-contract` (OWNER).
 
 ## Pull to refresh
 
@@ -312,7 +314,7 @@ Every custom `Gesture` above is invisible to VoiceOver, Switch Control, and Voic
 | Gesture in this file | Accessibility alternative |
 |---|---|
 | Custom paged/carousel scroll (`DragGesture` driving `pageIndex`) | `accessibilityScrollAction((Edge) -> Void)` (iOS 13+) -- VoiceOver's 3-finger scroll routes here |
-| `MagnifyGesture` pinch-zoom | `accessibilityZoomAction((AccessibilityZoomGestureAction) -> Void)` (iOS 13+) + visible +/- buttons |
+| `MagnifyGesture` pinch-zoom | `accessibilityZoomAction((AccessibilityZoomGestureAction) -> Void)` (iOS 16+) + visible +/- buttons |
 | Custom slider/stepper driven by drag | `accessibilityAdjustableAction((AccessibilityAdjustmentDirection) -> Void)` -- VoiceOver swipe up/down maps to `.increment`/`.decrement` |
 | Drag-to-reorder | `accessibilityDragPoint(_:description:)` / `accessibilityDropPoint(_:description:)` (base modifiers iOS 16+) + `.accessibilityAction(named: "Move up"/"Move down")` |
 | Any custom control with a system analogue | `.accessibilityRepresentation { Slider(...) }` -- swaps in the real control for the accessibility tree while your custom gesture stays for sighted users |
@@ -360,7 +362,7 @@ if #available(iOS 27, *) {
 |---|---|---|
 | `@State` instead of `@GestureState` for live drag | Manual reset code, error-prone | Use `@GestureState` |
 | Heavy work in `.onChanged` | Dropped frames, laggy | Throttle, use `@GestureState` for tracking, do work in `.onEnded` |
-| `withAnimation` in `.onChanged` | Animation starts/cancels every frame | No animation in `.onChanged`; use `.interactiveSpring` |
+| `withAnimation` in `.onChanged` | Animation starts/cancels every frame | No animation in `.onChanged`; `.interactiveSpring` only on a property that trails the gesture, never the tracked value |
 | Spring with too-high bounce after gesture | Chaotic settle | `.spring(duration: 0.4, bounce: 0.2)` to commit to the new resting offset |
 | Swipe actions as only path | Inaccessible | Always provide button/menu alternative, or a twin `.accessibilityAction(named:)` |
 | Custom row-drag gesture conflicting with `ScrollView` | `.simultaneousGesture` makes BOTH fire -- doesn't resolve the conflict, just hides it | Direction-gated `UIGestureRecognizerRepresentable` (iOS 18); `.simultaneousGesture` is fine only for swipe-back |

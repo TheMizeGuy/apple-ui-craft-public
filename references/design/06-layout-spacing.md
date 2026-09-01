@@ -157,7 +157,7 @@ HStack {
 |---|---|
 | `.padding(.left, ...)` | `.padding(.leading, ...)` |
 | `.padding(.right, ...)` | `.padding(.trailing, ...)` |
-| `HStack(alignment: .left)` | `HStack(alignment: .leading)` |
+| `VStack(alignment: .left)` | `VStack(alignment: .leading)` (an `HStack` aligns vertically -- `.top`/`.center`/`.bottom` -- and has no horizontal alignment to get wrong) |
 | `.frame(alignment: .left)` | `.frame(alignment: .leading)` |
 
 ## Touch targets
@@ -291,7 +291,7 @@ VStack(alignment: .leading, spacing: 12) {
     }
 }
 .padding(20)
-.background(.background.secondary, in: .rect(cornerRadius: 16))
+.background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 16))   // the grouped elevation step, not a dim of the window (design/04)
 ```
 
 ### Form section

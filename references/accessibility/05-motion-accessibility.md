@@ -128,11 +128,14 @@ Every gate below reads `@Environment(\.accessibilityReduceMotion) private var re
 | Particle / confetti / decorative loop | Don't render it at all -- simplest correct answer |
 
 ```swift
-// matchedGeometryEffect crossfade fallback
+// matchedGeometryEffect crossfade fallback -- the same if/else in both branches. A
+// ternary between two different View types does not compile.
 if reduceMotion {
     Group { if isExpanded { DetailCard() } else { Thumbnail() } }.transition(.opacity)
+} else if isExpanded {
+    DetailCard().matchedGeometryEffect(id: "hero", in: ns)
 } else {
-    (isExpanded ? DetailCard() : Thumbnail()).matchedGeometryEffect(id: "hero", in: ns)
+    Thumbnail().matchedGeometryEffect(id: "hero", in: ns)
 }
 ```
 
@@ -168,12 +171,18 @@ A separate, stricter sub-toggle under Settings > Accessibility > Motion > Reduce
 ## Availability + fallbacks
 
 ```swift
-if #available(iOS 26.4, *) {
+// An @Environment property cannot be declared inside `if #available`. Gate the VIEW
+// that reads the 26.4 key, and fall back to the UIKit static below it.
+@available(iOS 26.4, *)
+struct CrossFadeAware<Content: View>: View {
     @Environment(\.accessibilityPrefersCrossFadeTransitions) private var prefersCrossFade
-} else {
-    // UIAccessibility.prefersCrossFadeTransitions (iOS 14+) -- observe
-    // .prefersCrossFadeTransitionsStatusDidChangeNotification for live updates.
+    @ViewBuilder let content: (Bool) -> Content
+    var body: some View { content(prefersCrossFade) }
 }
+
+// Below 26.4: UIAccessibility.prefersCrossFadeTransitions (iOS 14+), observing
+// UIAccessibility.prefersCrossFadeTransitionsStatusDidChangeNotification for live updates.
+var prefersCrossFadeFallback: Bool { UIAccessibility.prefersCrossFadeTransitions }
 ```
 
 `.task(name:file:line:)` (iOS 26.4+ metadata) is unrelated and a no-op before that floor -- do not confuse the two 26.4 boundaries.
@@ -238,9 +247,9 @@ Inside `body(content:phase:)`, apply modifiers to `content` -- never conditional
 
 ## Severity guide
 
-- **CRITICAL**: a looping effect (symbol, `PhaseAnimator`, `KeyframeAnimator`, decorative loop) has zero Reduce Motion branch anywhere in the file -- WCAG 2.3.3 violation, ships nausea-triggering content indefinitely.
-- **HIGH**: single-gate bug -- one call site gated, a sibling `.animation`/`.transition` on the same value is not; motion still fires from some code paths.
-- **MEDIUM**: a decorative flourish (parallax, hero scale, rotation accent) isn't gated, but the underlying interaction still functions.
+- **CRITICAL**: a looping effect (symbol, `PhaseAnimator`, `KeyframeAnimator`, decorative loop) has zero Reduce Motion branch anywhere in the file -- a WCAG 2.2.2 Pause, Stop, Hide (A) violation that ships nausea-triggering content indefinitely; or a HIGH-risk vestibular trigger from the table above (parallax, zoom-from-a-point, large-field slide, continuous rotation) runs with no gate -- the severity-scale owner's "motion that can trigger nausea with no Reduce Motion gate" (`references/review/01-finding-format.md#severity-scale`). 2.3.3 Animation from Interactions is AAA: note it as an enhancement, never as the required criterion.
+- **HIGH**: single-gate bug -- one call site gated, a sibling `.animation`/`.transition` on the same value is not; motion still fires from some code paths. Also an ungated non-looping transition with no vestibular trigger (a short slide inside a card, a settle) -- the scale's "no Reduce Motion support".
+- **MEDIUM**: a MEDIUM- or LOW-risk decorative flourish (a spring-overshoot accent, a particle burst that ends, a small settle) isn't gated, but the underlying interaction still functions. Parallax, zoom, and rotation are never in this row.
 - **LOW**: the Reduce Motion substitute's duration/curve diverges slightly from house convention.
 
 ## See also

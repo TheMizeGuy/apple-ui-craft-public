@@ -75,7 +75,7 @@ LabeledContent("Version", value: appVersion)
 
 // 6. Button -- an action row, full-width tappable and left-aligned by default
 Button("Clear Cache") { clearCache() }
-Button("Sign Out", role: .destructive) { signOut() }   // renders red
+Button("Delete Account", role: .destructive) { confirmDelete() }   // renders red; Sign Out stays a plain row (patterns/09)
 ```
 
 Tag types on a `Picker` must match the selection binding's type exactly, or the row renders blank with no error. `LabeledContent` beats a hand-built `HStack { Text; Spacer; Text }` -- it groups as one VoiceOver element and gets correct trailing alignment for free; `HStack` reads as two disjoint elements. `TextField`/`SecureField` cover editable text (`.textContentType`/`.keyboardType` set so AutoFill and the right keyboard appear); the full field-modifier contract lives in `references/patterns/09-auth-account.md#credential-field-stack`.

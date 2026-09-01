@@ -3,7 +3,7 @@
 > Owner: `references/accessibility/07-cognitive-hearing-assistive.md` owns cognitive accessibility (AssistiveAccess, plain language, timing), Braille, Voice Control custom vocabulary, Full Keyboard Access, and hearing/audio accessibility (captions, Sound Recognition, mono audio). `references/accessibility/04-motor-interaction.md#switch-control` and `#voice-control` own the motor/physical-input baseline (testing protocol, `accessibilityInputLabels` basics) -- this file adds depth those sections don't cover.
 > Floors: cite `references/_scaffolding/version-floor-registry.md` for anything version-gated. Headline floors stated inline below.
 
-Cognitive and hearing accessibility have no single API to flip on -- they are a design discipline plus a handful of SwiftUI/UIKit/C hooks that only work when wired correctly. This file makes an agent able to ship the `AssistiveAccess` scene without mis-gating it, make custom UI reachable by Voice Control/Switch Control/Full Keyboard Access with one interaction contract, keep Braille users from panning cell-by-cell through a wall of prose, and honor a user's caption style and hearing preferences in a custom video player. The single most common defect: conflating the `AssistiveAccess` **scene** (iOS 26) with the `accessibilityAssistiveAccessEnabled` **environment value** (iOS 18) -- they shipped four WWDCs apart.
+Cognitive and hearing accessibility have no single API to flip on -- they are a design discipline plus a handful of SwiftUI/UIKit/C hooks that only work when wired correctly. This file makes an agent able to ship the `AssistiveAccess` scene without mis-gating it, make custom UI reachable by Voice Control/Switch Control/Full Keyboard Access with one interaction contract, keep Braille users from panning cell-by-cell through a wall of prose, and honor a user's caption style and hearing preferences in a custom video player. The single most common defect: conflating the `AssistiveAccess` **scene** (iOS 26) with the `accessibilityAssistiveAccessEnabled` **environment value** (iOS 18) -- they shipped one WWDC apart, with version numbers that jumped because iOS moved to year-based naming.
 
 ## The Apple way
 
@@ -23,7 +23,7 @@ This file has no animation surface of its own -- Reduce Motion obligations for a
 | Assistive Access | System-wide simplified mode: large high-contrast targets, reduced choices, shallow navigation (Settings > Accessibility > Assistive Access) | `accessibilityAssistiveAccessEnabled` environment value, **iOS 18.0+** |
 | `AssistiveAccess` scene | A purpose-built root view the system swaps in automatically when Assistive Access is on | `struct AssistiveAccess<Content>: Scene`, **iOS 26.0+** |
 
-The environment value and the scene are four years apart -- do not collapse both into "iOS 18" or "iOS 26."
+The environment value and the scene are one release apart -- do not collapse both into "iOS 18" or "iOS 26."
 
 ```swift
 // iOS 18.0+. Detect-and-adapt: fewer buttons, larger targets, flatter navigation.
@@ -45,7 +45,7 @@ Apple's design rules for `AssistiveAccessRootView` (WWDC25 session 238): distill
 
 ### Timing Adjustable (WCAG 2.2.1) -- the concrete testable requirement
 
-Any auto-advancing, auto-logout, or countdown UI must let the user turn off, adjust, or extend the limit before it expires (warn ~20s ahead, allow extending ~10x), unless the limit is essential (a real auction close). Never silently log the user out or lose their form input on a timer -- preserve entered data across the timeout (WCAG 2.2.6).
+Any auto-advancing, auto-logout, or countdown UI must let the user turn off, adjust, or extend the limit before it expires (warn ~20s ahead, allow extending ~10x), unless the limit is essential (a real auction close). Never silently log the user out or lose their form input on a timer -- preserve entered data across the timeout (WCAG 2.2.6 Timeouts is AAA -- an enhancement, not a required criterion; the required one is 2.2.1).
 
 ```swift
 @available(iOS 18.0, *)
@@ -85,7 +85,7 @@ struct SessionTimeoutModifier: ViewModifier {
 - Reduced choice / progressive disclosure lowers cognitive load: prefer a guided sequence over one dense screen with every option visible at once.
 - Keep labels concrete and literal; avoid idiom and jargon in primary actions ("Send," not "Fire off").
 - `.speechSpellsOutCharacters` / `.speechAlwaysIncludesPunctuation` (iOS 15+) fix how codes and acronyms are read aloud.
-- Confirm destructive or costly actions; make them reversible where possible; keep validation messages specific and adjacent to the field (WCAG 3.3.4 / 3.3.6). A two-step confirm beats a hold-timer -- also a motor win.
+- Confirm destructive or costly actions; make them reversible where possible; keep validation messages specific and adjacent to the field (WCAG 3.3.4 Error Prevention, AA; 3.3.6 Error Prevention (All) is AAA and an enhancement). A two-step confirm beats a hold-timer -- also a motor win.
 - `accessibilityShowsLargeContentViewer()` (iOS 15+) lets a user press-and-hold a small tab/toolbar item to see a large HUD label -- helps users who struggle to read small controls:
 
 ```swift

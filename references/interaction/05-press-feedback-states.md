@@ -1,7 +1,7 @@
 # Press Feedback States
 
 > Owner: this file owns the press/touch-feedback lifecycle -- `ButtonStyle`/`configuration.isPressed`, asymmetric press-in/press-out timing, multi-property press (scale/dim/shadow), row and card press states, and `.hoverEffect` (pointer/gaze pre-touch feedback). It does NOT own: gesture arena disambiguation (`references/interaction/04-gesture-disambiguation.md`), the `SensoryFeedback` API surface (`references/haptics/02-swiftui-sensory-feedback.md`), or spring-curve vocabulary (`references/animation/02-spring-physics.md`) -- cite, don't restate.
-> Floors: `references/_scaffolding/version-floor-registry.md`. `hoverEffect(in:isEnabled:body:)` and `HoverEffectGroup` are iOS 17.0+/visionOS 2.0+ for the custom-effect forms; `hoverEffect(_:)` base is iPadOS/tvOS/visionOS 13.4+ (no-op on iPhone).
+> Floors: `references/_scaffolding/version-floor-registry.md`. the custom closure form `hoverEffect(in:isEnabled:body:)`, `HoverEffectGroup`, and `CustomHoverEffect` are visionOS 2.0+ ONLY (the registry's Not-iOS class); `hoverEffect(_:)` with `.automatic`/`.highlight`/`.lift` is the iPadOS/tvOS/visionOS 13.4+ path (no-op on iPhone).
 
 A press is not a tap. The visual press state tracks the finger from touch-down through lift; the tap ACTION is a separate touch-up-inside event that only fires if the finger lifts inside the target. Conflating the two is why some buttons buzz on an aborted press and others feel like they never registered the touch at all.
 
@@ -149,9 +149,10 @@ Fast-in (~0.08s), slow-out (~0.25s) `.easeOut` -- not a spring, because a backgr
 - **`.highlight`** -- a shaped fill/tint tracing `contentShape`. Flat, in-plane targets: rows, cells, toolbar glyphs.
 - **`.lift`** -- content rises with a shadow and specular sheen. Discrete raised objects: cards, posters, tiles. A `.lift` on a flat row looks wrong; use `.highlight`.
 
-For bespoke feedback, the custom closure form drives any property from the live hover state:
+For bespoke feedback on visionOS 2.0+ only -- the closure family does not exist on iPadOS, where the presets above are the whole surface -- the custom closure form drives any property from the live hover state:
 
 ```swift
+// visionOS 2.0+ only
 func hoverEffect(
     in group: HoverEffectGroup? = nil,
     isEnabled: Bool = true,
@@ -164,7 +165,7 @@ Text("Play")
     }
 ```
 
-This is preferred over `onHover { } + @State + withAnimation` for anything performance-sensitive: these effects are composited by the system OUT-OF-PROCESS on visionOS/iPadOS, so they stay glassy-smooth even under main-thread load. Use `onHover` only when hover must change OTHER state (reveal a secondary control elsewhere, load a preview) -- it runs on your actor, so keep that work trivial. `HoverEffectGroup` coordinates a parent and its decorative children so a whole cluster (a card art + its caption) activates together: `func hoverEffect(_ effect: some CustomHoverEffect, in group: HoverEffectGroup?, isEnabled: Bool) -> some View`.
+This is preferred over `onHover { } + @State + withAnimation` for anything performance-sensitive: these effects are composited by the system OUT-OF-PROCESS on visionOS, so they stay glassy-smooth even under main-thread load; on iPadOS the `hoverEffect(_:)` presets are the system-composited path. Use `onHover` only when hover must change OTHER state (reveal a secondary control elsewhere, load a preview) -- it runs on your actor, so keep that work trivial. `HoverEffectGroup` coordinates a parent and its decorative children so a whole cluster (a card art + its caption) activates together: `func hoverEffect(_ effect: some CustomHoverEffect, in group: HoverEffectGroup?, isEnabled: Bool) -> some View`.
 
 `hoverEffectDisabled(_:)` suppresses the system hover morph for a whole subtree (an ancestor's `true` overrides a descendant's `false`) -- use it to honor an in-app "reduce pointer effects" preference or calm a busy grid. Read `@Environment(\.isHoverEffectEnabled)` before adding your OWN manual hover chrome so it respects the same policy instead of fighting it.
 
@@ -214,10 +215,10 @@ struct PressableStyle: ButtonStyle {
 
 | Control | Scale | Extra property | Timing (in/out) | Haptic | Hover |
 |---|---|---|---|---|---|
-| Text/pill button | 0.96 | brightness -0.06 | 0.14 / 0.30 b0.26 | commit `.impact(.medium)` | `.highlight` |
-| Icon-only puck | 0.90 | brightness -0.06 | 0.14 / 0.30 b0.26 | commit `.impact(.light)` or down-`.selection` | `.highlight` |
-| Destructive button | 0.96 | brightness -0.06 | 0.14 / 0.28 b0 | commit `.impact(.heavy)` | `.highlight` |
-| Card/tile | 0.98 | shadow collapse | 0.16 / 0.32 b0.18 | commit `.impact(.soft)` | `.lift` |
+| Text/pill button | 0.96 | brightness -0.06 | 0.14 / 0.30 b0.26 | commit `.impact(weight: .medium)` | `.highlight` |
+| Icon-only puck | 0.90 | brightness -0.06 | 0.14 / 0.30 b0.26 | commit `.impact(weight: .light)` or down-`.selection` | `.highlight` |
+| Destructive button | 0.96 | brightness -0.06 | 0.14 / 0.28 b0 | commit `.impact(weight: .heavy)` | `.highlight` |
+| Card/tile | 0.98 | shadow collapse | 0.16 / 0.32 b0.18 | commit `.impact(flexibility: .soft)` | `.lift` |
 | List row | 1.0 | full-bleed fill | ease-out 0.08 / 0.25 | usually silent (nav rows) | `.highlight` |
 | Glass control (iOS 26) | 0.98 max, no brightness | `.glassEffect(.interactive())` owns luminance | system | commit per metaphor | system |
 

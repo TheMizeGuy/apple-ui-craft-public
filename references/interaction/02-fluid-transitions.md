@@ -116,8 +116,9 @@ Nothing in this file is system-auto-gated -- auto-gating covers only Glass specu
 
 ```swift
 @Environment(\.accessibilityReduceMotion) private var reduceMotion
-withAnimation(reduceMotion ? nil : .spring(duration: 0.4, bounce: 0.15).delay(delay), value: revealed)
+// The declarative site: the modifier form takes `value:`; `withAnimation` never does.
 .offset(y: (revealed || reduceMotion) ? 0 : 12)
+.animation(reduceMotion ? nil : .spring(duration: 0.4, bounce: 0.15).delay(delay), value: revealed)
 ```
 
 The interactive pop/scrub itself is direct manipulation and stays under Reduce Motion -- what changes is the underlying transition's flavor (cross-fade instead of slide/parallax) and the completion tail (shortened, not removed). Keep the `zIndex` pin regardless of Reduce Motion -- it prevents a visual flash and is correctness, not motion. For navigation push/pop specifically, `accessibilityPrefersCrossFadeTransitions` (iOS 26.4+) is a SEPARATE, stricter sub-toggle from base Reduce Motion -- full mechanics and the pre-26.4 UIKit fallback: `references/animation/04-transitions-geometry.md#accessibilitypreferscrossfadetransitions-ios-264----a-separate-stricter-preference`. Full substitution catalog: `references/accessibility/05-motion-accessibility.md` (OWNER).

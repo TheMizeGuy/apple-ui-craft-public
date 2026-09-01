@@ -100,7 +100,7 @@ A single haptic event in a pattern.
 | `hapticSharpness` | 0.0 - 1.0 | Sharp (high) vs soft (low) |
 | `attackTime` | `TimeInterval` seconds, can exceed 1.0 | Fade-in time (continuous only) |
 | `decayTime` | `TimeInterval` seconds, can exceed 1.0 | Fade-out time (continuous only) |
-| `releaseTime` | 0.0 - 1.0 | Release fade |
+| `releaseTime` | `TimeInterval` seconds, can exceed 1.0 | Release fade (continuous only) |
 | `sustained` | 0 or 1 | Whether to sustain at peak |
 
 Only `hapticIntensity` and `hapticSharpness` are normalized 0.0-1.0. `attackTime`/`decayTime`/`releaseTime` are time-based (`TimeInterval` seconds) -- a 2-second attack is legal, not clamped to 1.0.

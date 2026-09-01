@@ -1,6 +1,6 @@
 # SwiftData UI Binding and Performance
 
-> Owner: `references/performance/08-swiftdata-ui.md` owns the `@Query` -> SwiftUI binding contract (initializer families, the `animation:` lever, dynamic search/sort/filter, undo/redo, optimistic edits, migration and preview seeding) AND the performance hazards specific to that binding (main-actor fetch cost, predicate pushdown, N+1 relationship faulting, pagination, animated-diff cost at scale). `@Model`/`ModelContainer`/`ModelContext`/`#Predicate`/`@ModelActor` PERSISTENCE internals live in the vault SwiftData note -- this file is the UI-facing layer only.
+> Owner: `references/performance/08-swiftdata-ui.md` owns the `@Query` -> SwiftUI binding contract (initializer families, the `animation:` lever, dynamic search/sort/filter, undo/redo, optimistic edits, migration and preview seeding) AND the performance hazards specific to that binding (main-actor fetch cost, predicate pushdown, N+1 relationship faulting, pagination, animated-diff cost at scale). `@Model`/`ModelContainer`/`ModelContext`/`#Predicate`/`@ModelActor` PERSISTENCE internals are out of scope for this library -- this file is the UI-facing layer only and states inline each container or context call it depends on.
 > Floors: see `references/_scaffolding/version-floor-registry.md`. Baseline iOS 17.0+ for everything except sectioned queries. `#Index` iOS 18+. `@Query(sort:sectionBy:)` / `ResultsSectionCollection` is **iOS 27.0+ Beta, not iOS 26** -- gate `#available(iOS 27, *)` + `// SDK-verify`, and never emit it as a primary shipping example.
 
 `@Query` makes a SwiftUI view a live projection of the store: mutate a `@Model`, the bound view re-renders itself, no manual reload, no Combine plumbing. The craft question is getting the MOTION right (declare it once, at the query); the performance question is that `@Query` is `@MainActor @preconcurrency` and runs its fetch SYNCHRONOUSLY on the main actor -- an unbounded query over a large table is a launch/navigation hang hiding behind a one-line property wrapper.
@@ -76,7 +76,7 @@ if #available(iOS 27, *) {
 }
 ```
 
-`@Query(sort:sectionBy:)` and the paired `ResultsObserver(...sectionBy:...)` require iOS/iPadOS/macOS/tvOS/watchOS/visionOS **27.0+**. Targeting a lower deployment floor and it won't compile -- gate it. Never conflate this with Core Data's `SectionedFetchRequest`, which is a SEPARATE API on iOS 15+; an 11-major-version gap sits between the two, and stating SwiftData sectioning as "iOS 26 new" or as equivalent to `SectionedFetchRequest` is a shipped error, not a style choice.
+`@Query(sort:sectionBy:)` and the paired `ResultsObserver(...sectionBy:...)` require iOS/iPadOS/macOS/tvOS/watchOS/visionOS **27.0+**. Targeting a lower deployment floor and it won't compile -- gate it. Never conflate this with Core Data's `SectionedFetchRequest`, which is a SEPARATE API on iOS 15+; a 12-major-version gap sits between the two, and stating SwiftData sectioning as "iOS 26 new" or as equivalent to `SectionedFetchRequest` is a shipped error, not a style choice.
 
 The iOS-26-safe fallback groups an already-fetched, bounded result in an `@Observable` store -- grouping in `body` is O(n log n) PER FRAME:
 
@@ -113,21 +113,35 @@ Debounce the SEARCH BINDING, not the query -- re-running `init` on every keystro
 For tables too large to fetch whole, `FetchDescriptor.fetchLimit`+`fetchOffset` back an imperative pager -- fetch pages off-main, append snapshots to an `@Observable` store, load the next page from a bottom sentinel:
 
 ```swift
-@MainActor @Observable final class TripPager {
-    private(set) var rows: [Trip] = []
-    private var offset = 0, isLoading = false, reachedEnd = false
-    let context: ModelContext
-    func loadNextPage() {
-        guard !isLoading, !reachedEnd else { return }
-        isLoading = true
+// The fetch runs on a @ModelActor, off the main actor; the store receives Sendable snapshots.
+struct TripRowSnapshot: Sendable, Identifiable {
+    let id: PersistentIdentifier; let name: String; let startDate: Date
+}
+
+@ModelActor
+actor TripPagingActor {
+    func page(offset: Int, limit: Int) throws -> [TripRowSnapshot] {
         var d = FetchDescriptor<Trip>(sortBy: [SortDescriptor(\.startDate, order: .reverse)])
-        d.fetchLimit = 50; d.fetchOffset = offset
-        let page = (try? context.fetch(d)) ?? []
-        rows.append(contentsOf: page); offset += page.count; reachedEnd = page.count < 50
-        isLoading = false
+        d.fetchLimit = limit; d.fetchOffset = offset
+        return try modelContext.fetch(d).map {
+            TripRowSnapshot(id: $0.persistentModelID, name: $0.name, startDate: $0.startDate)
+        }
     }
 }
-// ForEach(pager.rows) { t in TripRow(trip: t).onAppear { if t.id == pager.rows.last?.id { pager.loadNextPage() } } }
+
+@MainActor @Observable final class TripPager {
+    private(set) var rows: [TripRowSnapshot] = []
+    private var offset = 0, isLoading = false, reachedEnd = false
+    let paging: TripPagingActor
+    init(container: ModelContainer) { paging = TripPagingActor(modelContainer: container) }
+    func loadNextPage() async {
+        guard !isLoading, !reachedEnd else { return }
+        isLoading = true; defer { isLoading = false }
+        let page = (try? await paging.page(offset: offset, limit: 50)) ?? []
+        rows.append(contentsOf: page); offset += page.count; reachedEnd = page.count < 50
+    }
+}
+// ForEach(pager.rows) { t in TripRow(snapshot: t).task { if t.id == pager.rows.last?.id { await pager.loadNextPage() } } }
 ```
 
 Bumping a `@Query` descriptor's `fetchLimit` re-fetches rows `0..<newLimit` every time (O(total), re-materializing prior rows) -- fine for a few hundred rows, wrong for thousands; the imperative append-pager fetches each page once.
@@ -257,7 +271,7 @@ struct SampleTripsModifier: PreviewModifier {
 |---|---|---|
 | `@Query private var rows: [Row]` with no predicate/limit over a large table | Synchronous main-actor fetch = launch/navigation hang | `fetchLimit` + pushed-down `#Predicate` |
 | `@Query(sort:sectionBy:)` at an iOS 26 deployment target | iOS 27.0+ API; won't compile | `#available(iOS 27, *)` + `Dictionary(grouping:)` fallback |
-| Conflating `@Query(sectionBy:)` with Core Data `SectionedFetchRequest` | 11-major-version-different, separate APIs | State each floor explicitly; never equate them |
+| Conflating `@Query(sectionBy:)` with Core Data `SectionedFetchRequest` | 12-major-version-different, separate APIs | State each floor explicitly; never equate them |
 | Row reads `trip.destination.name` with no prefetch | N+1 fault per row on scroll | `relationshipKeyPathsForPrefetching` |
 | `animation:` on the query AND `withAnimation` around the insert | Double-driven, stuttering animation | Declare animation once, at the query |
 | `animation:` on a multi-thousand-row table | O(n) animated diff per merge overruns the frame | Omit `animation:` on large tables |
