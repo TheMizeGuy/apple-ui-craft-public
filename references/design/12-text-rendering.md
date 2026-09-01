@@ -219,7 +219,7 @@ Text(body).lineLimit(1...3)                    // 1 to 3 lines, inclusive
 // truncationMode -- where the ellipsis lands
 Text("/Users/appleseed/Documents/Reports/Q3.pdf")
     .lineLimit(1)
-    .truncationMode(.middle)   // /Users/app.../Q3.pdf -- keeps start AND end; correct for paths/URLs/IDs
+    .truncationMode(.middle)   // /Users/appleseed/Doc.../Q3.pdf -- keeps start AND end; correct for paths/URLs/IDs
 
 Text("1,234,567 followers")
     .lineLimit(1)
