@@ -113,7 +113,9 @@ as fine.
 | Element frames, labels, traits | `snapshot_ui` (XcodeBuildMCP) -- this is the geometry source, not the screenshot |
 | Build and warning output | `build_sim` |
 | Test results | `test_sim` |
-| Dynamic Type, appearance, accessibility settings | Xcode environment overrides, or Accessibility Inspector |
+| Dynamic Type, appearance, Increase Contrast | `xcrun simctl ui booted content_size <category>` (`extra-small` through `accessibility-extra-extra-extra-large`), `xcrun simctl ui booted appearance dark`, `xcrun simctl ui booted increase_contrast enabled`; `set_sim_appearance` (XcodeBuildMCP) for appearance |
+| Reduce Motion, Reduce Transparency, Bold Text, VoiceOver, Switch Control | Xcode environment overrides, or Accessibility Inspector -- none of these has a `simctl` switch, so an unexercised one is reported `not exercised` |
+| Sequences: push, pop by edge swipe, dismiss, background, relaunch | `tap`, `swipe`, `gesture`, `button`, `stop_app_sim` + `launch_app_sim` (XcodeBuildMCP) |
 | Body re-evaluation counts | `Self._printChanges()` in the view body, plus the SwiftUI Instruments template |
 | Scroll hitches, frame timing | Instruments, Animation Hitches |
 | Launch time, memory | Instruments, App Launch and Allocations |

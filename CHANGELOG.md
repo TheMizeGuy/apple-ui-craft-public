@@ -2,6 +2,91 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.5.0 -- 2026-09-01
+
+A review of the plugin's operative layer -- agents, skills, dispatch policy, docs --
+for anything that degrades output quality, plus a bounded adversarial pass over the
+reference library (its corrections follow in 0.5.1). No new domain ships; what ships is
+made to function.
+
+### The specialists move to the Fable lane
+
+Owner directive 2026-09-01: UI/UX, frontend, and design work (build, modify, review,
+verify, apply) and coding of sufficient criticality or high-or-above difficulty dispatch a
+Fable 5.1 subagent (`model: "fable"` plus `FABLE-ESCALATION: ui-ux-frontend -- <reason>`
+as the first prompt line), never Opus 5, even under a Fable conductor. Every specialist
+reviewer, the architect, and `craft-team-lead` when dispatched now pin that lane; recon,
+evidence collection, and other non-UI grunt stay on Opus 5 @ xhigh (Sonnet 5 @ xhigh for
+non-coding collection). The lane table, the Fable fan-out budget (10 per wave, 20 per
+turn), and the no-`fable`-alias fallback (`opus`, never lower) live once, in
+`references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`; the six skills, the
+team lead, and the docs point there instead of restating a rubric. The clause that let an
+orchestrator run a specialist review inline "when the session model is strongest" is gone:
+UI/UX judgment is never run inline in a deep session.
+
+### Runtime evidence mode was unreachable by the reviewers
+
+`references/review/02-evidence-pipeline.md` defines Mode A (Runtime) on XcodeBuildMCP and
+calls `snapshot_ui` the single highest-value capture in an iOS review, but no reviewer
+agent declared a single XcodeBuildMCP tool. A specialist dispatched through the plugin
+namespace could therefore never enter the mode its own pipeline ranks first, and fell back
+to Source mode without saying why. The five reviewers now carry the simulator set (build,
+run, install, launch, stop, test, screenshot, `snapshot_ui`, tap / swipe / long-press /
+type / key / button / gesture, `wait_for_ui`, `set_sim_appearance`), each with a
+one-paragraph Runtime recipe. The architect carries the build set and a new step 5a that
+builds what it wrote and reports `Build:` on the output header. The capture table gains the
+`xcrun simctl ui` switches for Dynamic Type, appearance, and Increase Contrast, names the
+settings that have no switch, and lists the sequence-driving tools.
+
+### `references/` was unresolvable from a namespaced dispatch
+
+Every agent told to read `references/_scaffolding/version-floor-registry.md` first was
+handed a path relative to a plugin root it had no way to know: the reviewed repo is the
+working directory. Only `craft-ios-ui` passed an absolute path. Each skill now resolves the
+root from `${CLAUDE_PLUGIN_ROOT}` (substituted at skill load) and passes `PLUGIN ROOT:` and
+`REFERENCES:` lines in every dispatch; each agent carries the same three-step ladder (the
+prompt line, `${CLAUDE_PLUGIN_ROOT}`, the plugin-cache glob) and reports `References:
+unresolved` rather than degrading silently.
+
+### Dispatch blocks carry the pin the prose promised
+
+The `craft-ios-ui` dispatch block and the team lead's Phase 2 block named no `model`, so on
+a guarded machine the first dispatch was denied and elsewhere the pin depended on the
+orchestrator re-deriving it from a paragraph. Both blocks, and the dispatch lists of the
+other five skills, now carry the pin and the attestation line. The team lead's description
+says outright that namespaced dispatch strips its Agent tool.
+
+### Verdicts
+
+- The craft report collapsed two specialist verdicts into one "Animation + Haptics" row
+  carrying the animation vocabulary, which dropped the haptic verdict `review-ios-ui`
+  forbids collapsing. Two rows now; the acceptance gate counts ten; the CI `motion` key maps
+  each verdict through its own family and the lower colour wins.
+- `NOT ASSESSED` was a legal value in the team lead's table and absent from the enums of
+  the specialists that have to emit it. The animation, haptic, accessibility, and
+  performance verdicts carry it, with the condition, in the agents and the skill outputs.
+- Reduce Motion severity was "always CRITICAL" in two agents while the canonical scale
+  grades "no Reduce Motion support" HIGH and reserves CRITICAL for nausea-trigger motion,
+  and the owner's severity guide steps it CRITICAL / HIGH / MEDIUM. The merge keeps the
+  higher grade, so the inflation stuck. Both agents and the README now follow the owner.
+- The motion agent's spring table recommended a 0.15 s spring for "following the finger",
+  the exact thing `references/interaction/03-direct-manipulation-drag.md` forbids. The row
+  now names the gesture-coupled retarget case and points at the law.
+
+### Also
+
+- Context7 verification uses the verified library IDs directly in every agent
+  (`/websites/developer_apple_swiftui`, `/websites/developer_apple_accessibility`,
+  `/websites/developer_apple_updates`), scoped to APIs newer than iOS 17, absent from the
+  registry, or uncertain to compile; the architect no longer resolves the library on every
+  call.
+- `USAGE.md` still described 82 files in 11 domains; the library is 93 in 13 plus
+  `_scaffolding`. `.coderabbit.yaml` said ~95 across 14 domains. Both corrected.
+- The architect's description advertised the author's 88-file vault as a backing source in
+  the public mirror; it now names the vault as optional.
+- `USAGE.md` troubleshooting covers the two new failure signatures: `References:
+  unresolved`, and reviews that never reach Runtime mode.
+
 ## 0.4.1 -- 2026-08-24
 
 Adversarial cohesion review of the 0.4.0 motion-choreography integration. No new

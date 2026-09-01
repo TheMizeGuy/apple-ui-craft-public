@@ -28,9 +28,9 @@ reviews:
 
   instructions: |
     apple-ui-craft is a Claude Code plugin,
-    not an application: six user-invoked skills, seven agents, and a ~95-file
-    reference knowledge base across 14 domains, plus zero-dependency Node test
-    scripts. Content IS the product — a change to a reference file or an agent
+    not an application: six user-invoked skills, seven agents, and a 93-file
+    reference knowledge base across 13 content domains plus _scaffolding, and
+    zero-dependency Node test scripts. Content IS the product — a change to a reference file or an agent
     body changes runtime behaviour exactly as much as a code change does. This repo is a scrubbed public mirror; it is regenerated from a private
     source and must never be hand-edited to add content.
 
@@ -38,7 +38,8 @@ reviews:
 
     - Model policy: agent frontmatter must carry NO `model:` pin, and no dated
       model ID (e.g. a `-20250101` suffix) may appear anywhere. Models are
-      pinned at DISPATCH with undated aliases only. Flag any reintroduced
+      pinned at DISPATCH with undated aliases only (`fable` for the specialist
+      lane, `opus` / `sonnet` for executors). Flag any reintroduced
       frontmatter pin, any dated ID, and any change lowering effort below
       `xhigh`.
 

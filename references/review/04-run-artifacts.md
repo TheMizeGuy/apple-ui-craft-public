@@ -126,10 +126,14 @@ second to **YELLOW**, third and fourth to **RED**:
 | `usability` | Flow | COMPLETABLE | WORKABLE | OBSTRUCTED, BROKEN |
 | `adaptive` | Adaptation | ROBUST | ADEQUATE | FRAGILE, BROKEN |
 | `accessibility` | Inclusion | INCLUSIVE | ADEQUATE | GAPS, EXCLUDING |
-| `motion` | Feel | FLUID | ADEQUATE | STIFF, BROKEN |
+| `motion` | Feel (Animation verdict) | FLUID | ADEQUATE | STIFF, BROKEN |
+| `motion` | Intent (Haptics verdict) | INTENTIONAL | SPARSE | ABSENT, NOISY |
 | `performance` | Smoothness | SMOOTH | ADEQUATE | JANKY, BROKEN |
 | `density` | Economy | EARNED | ACCEPTABLE | WASTEFUL, STRETCHED-PHONE |
 | `platform` | Integration | DEEPLY INTEGRATED | SURFACE-LEVEL | UNTAPPED |
+
+`motion` summarises two specialist verdicts, Animation and Haptics: map each through its own
+family and the lower colour wins. NOT ASSESSED on either makes the key `NOT_ASSESSED`.
 
 **`NOT_ASSESSED` is a first-class value on the four evidence-bounded keys and it
 FAILS the gate.** That is deliberate. The alternative -- treating it as a pass --

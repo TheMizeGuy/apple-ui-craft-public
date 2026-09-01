@@ -146,16 +146,16 @@ Reviews are **read-only by default.** Findings are advisory. The orchestrator ap
 When your session is running under **ultracode**, every skill switches to conductor-executor mode automatically. You do not do anything differently; the split happens under the hood:
 
 - **The session model conducts -- always the strongest available Claude, whichever model that is.** It decides scope, grades severity, deduplicates findings, resolves conflicts, and synthesizes the final report. Every verdict is the conductor's, and the workflow runs identically regardless of which model is currently strongest.
-- **Conductor-selected executor teams (Sonnet 5 @ `xhigh` or Opus 5) do the grunt stages** -- reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application. Each executor is scoped through the skill: a non-overlapping file set, the dimension's reference paths plus the version-floor registry, the severity scale plus the skill's inlined check tables, and a blackboard + escalation contract. Executors report **evidence, never verdicts**. The shared dispatch mechanics, fan-out doctrine (executor teams scale to natural breadth), and validation gate live in `references/_scaffolding/conductor-dispatch-protocol.md`.
-- **The specialist reviewers run on Opus 5, pinned at dispatch.** Judging Apple-native quality is never delegated to a grunt executor.
+- **Conductor-selected executor teams do the grunt stages** -- reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application -- in three lanes: Fable 5.1 for the specialist reviews, design, and UI code changes, Opus 5 @ `xhigh` for recon, evidence collection, and other code, Sonnet 5 @ `xhigh` for non-coding collection (`references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`). Each executor is scoped through the skill: a non-overlapping file set, the dimension's reference paths plus the version-floor registry, the severity scale plus the skill's inlined check tables, and a blackboard + escalation contract. Executors report **evidence, never verdicts**. The shared dispatch mechanics, fan-out doctrine (executor teams scale to natural breadth), and validation gate live in `references/_scaffolding/conductor-dispatch-protocol.md`.
+- **The specialist reviewers, the architect, and the team lead run on Fable 5.1, pinned at dispatch in the Fable lane.** Judging Apple-native quality is never delegated to a grunt executor and never run inline in a deep session.
 - **Every executor result is gated** -- the conductor reads the durable blackboard (not the truncated final message), spot-checks claims against the actual files, and re-grades before anything reaches you.
 
-Without ultracode, the skills run their standard direct dispatch. The model invariants hold either way: never Haiku, never Sonnet below `xhigh`, never an executor verdict.
+Without ultracode, the skills run their standard direct dispatch. The model invariants hold either way: never Haiku, never Sonnet below `xhigh`, never an executor verdict, never a specialist outside the Fable lane.
 
 
 ## The reference library
 
-The plugin's knowledge lives in `references/` -- **82 files** across 11 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, exemplars, methodology) plus `_scaffolding/` (12 directories total). See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
+The plugin's knowledge lives in `references/` -- **93 files** across 13 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, usability, review, exemplars, methodology) plus `_scaffolding/` (14 directories total). See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
 
 Two files anchor the whole library:
 
@@ -184,6 +184,8 @@ Run both before shipping: one clears the gate, the other earns the delight.
 | A finding or design suggests an API that does not compile | Training data is stale for iOS-26-era APIs (Liquid Glass, `.sensoryFeedback`, App Intents) | Check `references/_scaffolding/version-floor-registry.md`'s PHANTOM list, and verify the API shape with Context7 before applying the suggestion |
 | Reviews run standard direct dispatch instead of conductor-executor mode | The harness has not announced ultracode for this session, or ultracode is off | Expected fallback -- every skill runs its standard dispatch (see [How ultracode changes behavior](#how-ultracode-changes-behavior)) without executor teams; no action needed |
 | `review-ios-ui` only runs 3 specialists, not all 5 | By design -- `review-ios-ui` scopes to visual + motion + accessibility only | Use `craft-ios-ui` for the full 5-specialist sweep that adds performance and platform-integration coverage |
+| A specialist reports `References: unresolved`, or its findings cite nothing | The dispatch prompt carried no `PLUGIN ROOT:` / `REFERENCES:` line and `${CLAUDE_PLUGIN_ROOT}` was not visible to the subagent | Re-dispatch with both lines; the skills resolve them from `${CLAUDE_PLUGIN_ROOT}` at load, and the agents glob the plugin cache as a last resort |
+| Every review reports Source or Screenshots mode even though a simulator is available | XcodeBuildMCP is not configured in the session, or its simulator workflow is disabled | Configure XcodeBuildMCP (simulator tools are on by default); the reviewer agents carry the build, run, `snapshot_ui`, and gesture tools and reach Runtime mode on their own when those exist |
 
 ## FAQ
 
@@ -199,4 +201,4 @@ Run both before shipping: one clears the gate, the other earns the delight.
 
 **How do I get the most out of a review?** Scope it. Point a skill at the screen or flow you care about rather than the whole project, and you get denser, more actionable findings.
 
-**Which model runs this?** Under ultracode, whichever model your session is on conducts -- always the strongest available Claude, and the workflow runs identically regardless of which model that is. The grunt stages run on conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5). Without ultracode, the session model runs the dispatch directly. The invariants never change: never Haiku, never Sonnet below `xhigh`, never an executor verdict.
+**Which model runs this?** Your session model conducts -- always the strongest available Claude. Every specialist, the architect, and the team lead are dispatched in the Fable lane (Fable 5.1, `model: "fable"`); if your harness has no `fable` alias the skills fall back to `opus`, never lower. Under ultracode the grunt stages run on conductor-selected executors in three lanes (Fable 5.1 for the specialist reviews and UI code, Opus 5 @ `xhigh` for recon, evidence collection, and other code, Sonnet 5 @ `xhigh` for non-coding collection). The invariants never change: never Haiku, never Sonnet below `xhigh`, never an executor verdict.

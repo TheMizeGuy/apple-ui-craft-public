@@ -4,7 +4,7 @@ Internal map of files, responsibilities, and cross-references. Not loaded by Cla
 
 ## Mission
 
-A team of seven specialist agents -- reviewers and architect pinned to Opus 5 at dispatch, the team lead conducting on the session model -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
+A team of seven specialist agents -- every one dispatched in the Fable 5.1 lane, the session model conducting -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
 
 ## Layout
 
@@ -21,7 +21,7 @@ apple-ui-craft/
 │   ├── craft-ios-ui/SKILL.md        "make this feel Apple-native" (full team)
 │   ├── audit-accessibility/SKILL.md "audit my app for accessibility" (a11y solo, deep)
 │   └── integrate-platform/SKILL.md  "make my app feel native beyond the UI" (platform solo)
-├── agents/                      (7 agents: reviewers + architect on Opus 5 at dispatch; team lead conducts on session model)
+├── agents/                      (7 agents, all dispatched in the Fable 5.1 lane; the session model conducts)
 │   ├── apple-ui-architect.md          greenfield design + production SwiftUI
 │   ├── apple-ui-reviewer.md           HIG + visual + Liquid Glass audit
 │   ├── animation-haptics-engineer.md  motion + interaction/feel + tactile feedback
@@ -173,7 +173,7 @@ Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship t
 | `audit-accessibility` | `accessibility-engineer` (solo, deep) | Single |
 | `integrate-platform` | `platform-engineer` (solo) | Single |
 
-`craft-team-lead` and the specialists it fans out are dispatched as `general-purpose` with the agent body inlined -- plugin-namespaced dispatch strips the Agent tool at runtime.
+`craft-team-lead` and the specialists it fans out are dispatched as `general-purpose` with the agent body inlined -- plugin-namespaced dispatch strips the Agent tool at runtime. Every dispatch carries `PLUGIN ROOT:` and `REFERENCES:` lines; the agents resolve `references/` from them, with `${CLAUDE_PLUGIN_ROOT}` and the plugin-cache glob as fallbacks.
 
 ## Reference <-> agent wiring (no orphan references)
 
@@ -236,7 +236,7 @@ and dedup key on.
 
 ## Ultracode conductor mode
 
-Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) run the scoped grunt stages, and verdicts are never delegated. Each skill carries only its split-of-labor table and dimension-specific executor scoping; the shared dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants (never Haiku; never Sonnet below xhigh) live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
+Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executors run the scoped grunt stages in three lanes (Fable 5.1 for the specialist reviews, design, and UI code changes, Opus 5 @ `xhigh` for recon, evidence collection, and other code, Sonnet 5 @ `xhigh` for non-coding collection), and verdicts are never delegated. Each skill carries only its split-of-labor table and dimension-specific executor scoping; the lanes, the shared dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants (never Haiku; never Sonnet below xhigh; never a specialist outside the Fable lane) live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
 
 ## Relationship to ios-code-review
 

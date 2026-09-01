@@ -103,7 +103,7 @@ Artifact keys follow CI naming; findings carry the reviewer's dimension names.
 | `usability` | Task flow and journey, Information architecture and navigation structure, Error recovery and state integrity |
 | `adaptive` | Adaptive layout and Dynamic Type |
 | `accessibility` | VoiceOver, Dynamic Type, Visual, Motor, Cognitive and hearing |
-| `motion` | Animation, Haptics |
+| `motion` | Animation, Haptics (each mapped through its own family; the lower colour wins) |
 | `performance` | Rendering, Scroll and list, Launch and memory |
 | `density` (optional) | Density and economy |
 | `platform` (optional) | Platform integration, Cross-platform reach |

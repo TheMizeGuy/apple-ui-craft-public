@@ -8,7 +8,7 @@ description: |-
 
 ## Dispatch
 
-This skill dispatches 3 specialist agents in parallel:
+This skill dispatches 3 specialist agents in parallel. Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/review-ios-ui/SKILL.md`). Every dispatch pins `model: "fable"`, opens its prompt with `FABLE-ESCALATION: ui-ux-frontend -- <specialist> review of <scope>`, and carries `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` so the specialist can resolve every `references/...` path it is told to read -- without those lines it reviews from memory and says so.
 
 ```
 1. apple-ui-craft:apple-ui-reviewer
@@ -57,7 +57,7 @@ cover.
 
 Unified report with:
 - The evidence mode and the coverage it produced (screens reached, states forced, configurations exercised) as the first line -- it bounds every verdict below it
-- Per-dimension verdicts: HIG (APPLE-NATIVE/CLOSE/NEEDS WORK/GENERIC), Density and economy (EARNED/ACCEPTABLE/WASTEFUL/STRETCHED-PHONE), Usability and flow (COMPLETABLE/WORKABLE/OBSTRUCTED/BROKEN/NOT ASSESSED), Adaptive layout (ROBUST/ADEQUATE/FRAGILE/BROKEN/NOT ASSESSED), Animation (FLUID/ADEQUATE/STIFF/BROKEN), Haptics (INTENTIONAL/SPARSE/ABSENT/NOISY), Accessibility (INCLUSIVE/ADEQUATE/GAPS/EXCLUDING) -- animation and haptics are two independent verdicts; report both, never collapse them into one label
+- Per-dimension verdicts: HIG (APPLE-NATIVE/CLOSE/NEEDS WORK/GENERIC), Density and economy (EARNED/ACCEPTABLE/WASTEFUL/STRETCHED-PHONE), Usability and flow (COMPLETABLE/WORKABLE/OBSTRUCTED/BROKEN/NOT ASSESSED), Adaptive layout (ROBUST/ADEQUATE/FRAGILE/BROKEN/NOT ASSESSED), Animation (FLUID/ADEQUATE/STIFF/BROKEN/NOT ASSESSED), Haptics (INTENTIONAL/SPARSE/ABSENT/NOISY/NOT ASSESSED), Accessibility (INCLUSIVE/ADEQUATE/GAPS/EXCLUDING/NOT ASSESSED) -- animation and haptics are two independent verdicts; report both, never collapse them into one label; NOT ASSESSED on any of the three when the evidence mode could not reach it
 - Findings organized by file/screen
 - Concrete SwiftUI rewrites for every finding
 - Top 3 priority actions
@@ -66,7 +66,7 @@ All findings are advisory. The user chooses what to apply.
 
 ## Execution mode
 
-Every agent this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the review scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry.
+Every agent this skill dispatches runs in the Fable lane: `model: "fable"` (Fable 5.1) at dispatch plus the prompt line `FABLE-ESCALATION: ui-ux-frontend -- <one-line reason>` (owner directive 2026-09-01; supersedes the Opus 5 pin of 2026-07-24); the session conductor stays orchestrator-only. UI/UX judgment is never run inline in a deep session and never downgraded to an executor-class model. If your harness has no `fable` alias, fall back to `model: "opus"`, never lower; nothing here blocks on a model. Lanes, the Fable fan-out budget, and the fallback rule: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
 
 
 ## Review ledger (write it, without asking)
@@ -86,7 +86,7 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) |
+| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Fable 5.1 for the specialist reviews, design, and UI code changes, Opus 5 @ `xhigh` for recon, evidence collection, and other code, Sonnet 5 @ `xhigh` for non-coding collection) |
 |---|---|
 | Per-dimension verdicts, severity grading, finding dedup across dimensions, final report synthesis | Per-screen evidence sweeps (one executor per screen group): HIG deviations, contrast pairs, touch-target measurements, Dynamic Type breakpoints -- raw evidence tables for the conductor and the 3 specialists to grade |
 
@@ -94,4 +94,4 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 - Each executor owns one screen group (non-overlapping) and gets the evidence-table format inline.
 - Reference set: absolute paths of the review dimension's reference files + `references/_scaffolding/version-floor-registry.md`.
 - Inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- The `apple-ui-reviewer` / `animation-haptics-engineer` / `accessibility-engineer` specialists are pinned to Opus 5 at dispatch -- judgment reviewers, never grunt executors.
+- The `apple-ui-reviewer` / `animation-haptics-engineer` / `accessibility-engineer` specialists are pinned to the Fable lane at dispatch -- judgment reviewers, never grunt executors.

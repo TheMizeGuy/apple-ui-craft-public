@@ -8,7 +8,7 @@ description: |-
 
 ## Dispatch
 
-This skill dispatches 2 specialist agents in parallel:
+This skill dispatches 2 specialist agents in parallel. Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/optimize-ios-ui/SKILL.md`). Every dispatch pins `model: "fable"`, opens its prompt with `FABLE-ESCALATION: ui-ux-frontend -- <specialist> review of <scope>`, and carries `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` so the specialist can resolve every `references/...` path it is told to read -- without those lines it reviews from memory and says so.
 
 ```
 1. apple-ui-craft:animation-haptics-engineer
@@ -47,9 +47,9 @@ After both complete, merge findings:
 ## Output
 
 Unified report with:
-- Animation verdict (FLUID / ADEQUATE / STIFF / BROKEN)
-- Haptic verdict (INTENTIONAL / SPARSE / ABSENT / NOISY)
-- Performance verdict (SMOOTH / ADEQUATE / JANKY / BROKEN)
+- Animation verdict (FLUID / ADEQUATE / STIFF / BROKEN / NOT ASSESSED)
+- Haptic verdict (INTENTIONAL / SPARSE / ABSENT / NOISY / NOT ASSESSED)
+- Performance verdict (SMOOTH / ADEQUATE / JANKY / BROKEN / NOT ASSESSED)
 - The evidence mode, and whether Instruments actually ran. Every performance finding carries an `Impact:` line with a metric and a delta, labelled measured or estimated -- an unmeasured performance claim sends someone optimising the wrong thing (`references/review/02-evidence-pipeline.md`)
 - Findings in the canonical format (`references/review/01-finding-format.md`); feel cannot be judged from a screenshot, so in Screenshots mode the animation and haptic verdicts are NOT ASSESSED
 - Haptic coverage map (every interaction surface mapped to recommended haptic)
@@ -59,7 +59,7 @@ Unified report with:
 
 ## Execution mode
 
-Every agent this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the optimization scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry.
+Every agent this skill dispatches runs in the Fable lane: `model: "fable"` (Fable 5.1) at dispatch plus the prompt line `FABLE-ESCALATION: ui-ux-frontend -- <one-line reason>` (owner directive 2026-09-01; supersedes the Opus 5 pin of 2026-07-24); the session conductor stays orchestrator-only. UI/UX judgment is never run inline in a deep session and never downgraded to an executor-class model. If your harness has no `fable` alias, fall back to `model: "opus"`, never lower; nothing here blocks on a model. Lanes, the Fable fan-out budget, and the fallback rule: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
 
 
 ## Review ledger (write it, without asking)
@@ -79,11 +79,11 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Conductor-selected executors (Sonnet 5 @ `xhigh` or Opus 5) |
+| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Fable 5.1 for the specialist reviews, design, and UI code changes, Opus 5 @ `xhigh` for recon, evidence collection, and other code, Sonnet 5 @ `xhigh` for non-coding collection) |
 |---|---|
 | Animation/haptic/performance verdicts, spring-parameter judgment, conflict resolution (heavier spring vs hitch), apply/no-apply judgment, final report synthesis | Instrumentation sweeps: body-reevaluation candidates, animation inventory (curve/spring params per site), haptic-trigger inventory, scroll-container census; post-approval mechanical application of approved parameter changes |
 
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set: absolute paths of `references/animation/*`, `references/interaction/*`, `references/haptics/*`, `references/performance/*` + `references/_scaffolding/version-floor-registry.md`.
 - Inline the severity scale and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (rows 1-3 Reduce-Motion gating, row 5 compositor cost, rows 9-10 transition/flash safety -- the motion-relevant rows; sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- The `animation-haptics-engineer` / `performance-engineer` specialists are pinned to Opus 5 at dispatch -- judgment reviewers, never grunt executors.
+- The `animation-haptics-engineer` / `performance-engineer` specialists are pinned to the Fable lane at dispatch -- judgment reviewers, never grunt executors.
