@@ -17,16 +17,15 @@ Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this 
 ```
 Agent({
   subagent_type: "general-purpose",
-  model: "fable",
-  prompt: "FABLE-ESCALATION: ui-ux-frontend -- Apple UI craft review orchestration
-           PLUGIN ROOT: <plugin root>
+  model: "opus",
+  prompt: "PLUGIN ROOT: <plugin root>
            REFERENCES: <plugin root>/references/
            <full contents of <plugin root>/agents/craft-team-lead.md>
            SCOPE: <the user's scope: files/screens or whole project>"
 })
 ```
 
-The team lead then dispatches all 5 review specialists, each in the Fable lane (`model: "fable"` + the attestation line). It inlines each specialist's body into a `general-purpose` dispatch because that is the only shape verified to preserve tools -- the same plugin-namespace limitation above makes namespaced sub-dispatch from inside a subagent unreliable (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md`). Inlining is required, not stylistic:
+The team lead then dispatches all 5 review specialists, each pinned to Opus 5 (`model: "opus"`) at dispatch. It inlines each specialist's body into a `general-purpose` dispatch because that is the only shape verified to preserve tools -- the same plugin-namespace limitation above makes namespaced sub-dispatch from inside a subagent unreliable (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md`). Inlining is required, not stylistic:
 1. `apple-ui-reviewer` -- HIG, Liquid Glass, typography, color, navigation, layout
 2. `animation-haptics-engineer` -- motion, springs, haptic design, Reduce Motion
 3. `accessibility-engineer` -- VoiceOver, Dynamic Type, contrast, motor, cognitive
@@ -109,7 +108,7 @@ One failed item -> one re-dispatch to the offending agent with the concrete gap 
 
 ## Execution mode
 
-The session model conducts. The `craft-team-lead` orchestrator and its 5 specialist reviews run in the Fable lane: `model: "fable"` (Fable 5.1) at dispatch plus the prompt line `FABLE-ESCALATION: ui-ux-frontend -- <one-line reason>` (owner directive 2026-09-01; supersedes the Opus 5 pin of 2026-07-24). UI/UX judgment is never run inline in a deep session and never downgraded to an executor-class model. If your harness has no `fable` alias, fall back to `model: "opus"`, never lower; nothing here blocks on a model. Lanes, the Fable fan-out budget, and the fallback rule: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
+The session model conducts. The `craft-team-lead` orchestrator and its 5 specialist reviews are pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24). When the session model is already the strongest tier and the review scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry. Lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
 
 
 ## Review ledger (write it, without asking)
@@ -142,11 +141,11 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Fable 5.1 for the specialist reviews, design, and UI code changes, Opus 5 @ `xhigh` for recon, evidence collection, and other code, Sonnet 5 @ `xhigh` for non-coding collection) |
+| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection) |
 |---|---|
 | Scope decision, severity verdicts, finding dedup + conflict resolution, apply/no-apply judgment, final report synthesis, anything security- or accessibility-verdict-shaped | Recon inventory (map screens/views per scope, SwiftUI-vs-UIKit split, deployment target); per-screen evidence collection against each specialist's checklist; post-approval mechanical application of approved findings (worktree-isolated, one screen-set per executor) |
 
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set per dimension from the ARCHITECTURE reference<->agent matrix + `references/_scaffolding/version-floor-registry.md`.
 - When reviewing motion, translucency, or custom controls, inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- Stage-tier map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection run on Opus-lane or Sonnet-lane executors; the 5 specialist reviews are pinned to the Fable lane at dispatch; merge and report (Process steps 3-4) are conductor-only; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated Fable-lane executors.
+- Stage-tier map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection run as conductor-selected executor teams (Opus 5 @ `xhigh`, or Sonnet 5 @ `xhigh` for non-coding collection); the 5 specialist reviews are pinned to Opus 5 at dispatch; merge and report (Process steps 3-4) are conductor-only; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated Opus 5 executors.

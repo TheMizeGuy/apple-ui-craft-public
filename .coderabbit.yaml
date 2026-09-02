@@ -38,10 +38,12 @@ reviews:
 
     - Model policy: agent frontmatter must carry NO `model:` pin, and no dated
       model ID (e.g. a `-20250101` suffix) may appear anywhere. Models are
-      pinned at DISPATCH with undated aliases only (`fable` for the specialist
-      lane, `opus` / `sonnet` for executors). Flag any reintroduced
-      frontmatter pin, any dated ID, and any change lowering effort below
-      `xhigh`.
+      pinned at DISPATCH with undated aliases only (`opus` for every dispatched
+      agent — specialists, the architect, the dispatched team lead, and UI
+      apply stages — and `sonnet` only for non-coding grunt executors; the
+      0.5.x `fable` specialist lane was withdrawn in 0.5.2). Flag any
+      reintroduced frontmatter pin, any dispatch pin on the withdrawn `fable`
+      alias, any dated ID, and any change lowering effort below `xhigh`.
 
     - Version-bump lockstep: a version change must touch all four together in
       the same commit — `.claude-plugin/plugin.json`, `CHANGELOG.md`,

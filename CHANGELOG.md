@@ -2,6 +2,36 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.5.2 -- 2026-09-02
+
+### The Fable lane is withdrawn; every dispatched agent pins Opus 5 again
+
+Owner directive 2026-09-02 reverses the 2026-09-01 lane that shipped in 0.5.0: it drained
+the weekly Fable allowance in a day. Every dispatched agent -- the five specialist
+reviewers, the architect, and `craft-team-lead` when it is dispatched as a subagent --
+pins `model: "opus"` (Opus 5 @ xhigh) at dispatch again, as does every stage that writes
+or modifies UI code (component scaffolding, the post-approval apply step). The
+`FABLE-ESCALATION` attestation lines, the `model: "fable"` pins, and the
+no-`fable`-alias fallback are gone from the six skills, the seven agent files, the docs,
+and the manifest description. The 2026-07-24 "Opus 5 coding/review floor" is current
+again, and the clause that lets an orchestrator run a specialist review inline when the
+session model is already the strongest tier and the scope is small comes back with it.
+
+The lane table at
+`references/_scaffolding/conductor-dispatch-protocol.md#model-lanes` keeps its anchor --
+six files cite it -- and now names two dispatch lanes plus the conductor: Opus 5 @ xhigh
+for every dispatched agent, Sonnet 5 @ xhigh for non-coding grunt only (data collation,
+template-driven doc transforms, find-stages that never judge), and the session model as
+orchestrator, never dispatched to itself. Agent frontmatter still carries no model pin,
+no dated model ID appears anywhere, and `model` is still never omitted on a dispatch.
+
+Everything else from 0.5.0 and 0.5.1 stands unchanged: the reference-library corrections,
+the reviewers' XcodeBuildMCP tool sets and Runtime evidence mode, the `PLUGIN ROOT:` /
+`REFERENCES:` dispatch lines, the verdict rows, the `NOT_ASSESSED` enums, and the
+Context7 IDs. One incidental fix in the file being rewritten: the duplicated
+`PLUGIN ROOT` / `REFERENCES` bullet 0.5.0 left in the dispatch protocol is now stated
+once.
+
 ## 0.5.1 -- 2026-09-01
 
 Reference-library corrections from the adversarial pass that 0.5.0 announced: five

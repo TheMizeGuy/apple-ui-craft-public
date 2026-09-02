@@ -1,6 +1,6 @@
 # apple-ui-craft
 
-A team of seven specialist agents -- every one dispatched in the Fable 5.1 lane, the session model conducting -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
+A team of seven specialist agents -- every one pinned to Opus 5 at dispatch, the session model conducting -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
 
 New here? The [Usage Guide](USAGE.md) walks through every skill with worked invocations. The [Architecture](ARCHITECTURE.md) has the full file map.
 
@@ -150,12 +150,12 @@ Every report states its evidence mode and coverage as its first line.
 
 ## Ultracode
 
-Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executors run the scoped grunt stages in three lanes (Fable 5.1 for the specialist reviews, design, and UI code changes, Opus 5 @ `xhigh` for recon, evidence collection, and other code, Sonnet 5 @ `xhigh` for non-coding collection), and verdicts are never delegated. The canonical explanation lives in [`USAGE.md` -- How ultracode changes behavior](USAGE.md#how-ultracode-changes-behavior); the shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`.
+Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executors (Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection -- lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`) run the scoped grunt stages, and verdicts are never delegated. The canonical explanation lives in [`USAGE.md` -- How ultracode changes behavior](USAGE.md#how-ultracode-changes-behavior); the shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`.
 
 ## Backed by
 
 - The session model as the ultracode conductor -- always the strongest available Claude, whichever model that is
-- Fable 5.1 (the Fable lane, pinned at dispatch) for every specialist agent and the team lead, the session model as conductor; Opus 5 @ `xhigh` and Sonnet 5 @ `xhigh` as conductor-managed executors for non-UI grunt; never Haiku (`references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`)
+- Opus 5 (pinned at dispatch) for every specialist agent and the team lead, the session model as conductor; Sonnet 5 @ `xhigh` as a conductor-managed executor for non-coding grunt; never Haiku (`references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`)
 - 88-file iOS Development vault (~103,000 lines), distilled into the reference library
 - A Context7-verified version-floor registry (iOS 16 through iOS 27 beta)
 - GoodMem Learnings for prior debugging and audit findings

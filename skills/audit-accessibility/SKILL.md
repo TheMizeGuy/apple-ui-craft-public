@@ -8,7 +8,7 @@ description: |-
 
 ## Dispatch
 
-This skill dispatches one specialist, solo, with the full accessibility reference set. Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/audit-accessibility/SKILL.md`). Every dispatch pins `model: "fable"`, opens its prompt with `FABLE-ESCALATION: ui-ux-frontend -- <specialist> review of <scope>`, and carries `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` so the specialist can resolve every `references/...` path it is told to read -- without those lines it reviews from memory and says so.
+This skill dispatches one specialist, solo, with the full accessibility reference set. Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/audit-accessibility/SKILL.md`). Every dispatch pins `model: "opus"` (Opus 5) and carries `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` so the specialist can resolve every `references/...` path it is told to read -- without those lines it reviews from memory and says so.
 
 ```
 apple-ui-craft:accessibility-engineer
@@ -53,7 +53,7 @@ All findings are advisory. The user chooses what to apply.
 
 ## Execution mode
 
-Every agent this skill dispatches runs in the Fable lane: `model: "fable"` (Fable 5.1) at dispatch plus the prompt line `FABLE-ESCALATION: ui-ux-frontend -- <one-line reason>` (owner directive 2026-09-01; supersedes the Opus 5 pin of 2026-07-24); the session conductor stays orchestrator-only. UI/UX judgment is never run inline in a deep session and never downgraded to an executor-class model. If your harness has no `fable` alias, fall back to `model: "opus"`, never lower; nothing here blocks on a model. Lanes, the Fable fan-out budget, and the fallback rule: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
+The specialist this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the audit scope is small, the orchestrator may run the audit inline in the main context (foreground) instead of dispatching a separate agent, without weakening the accessibility-engineer's read-only guarantee. Lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
 
 
 ## Review ledger (write it, without asking)
@@ -73,11 +73,11 @@ When the harness announces ultracode, this skill runs conductor-executor per `re
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Fable 5.1 for the specialist reviews, design, and UI code changes, Opus 5 @ `xhigh` for recon, evidence collection, and other code, Sonnet 5 @ `xhigh` for non-coding collection) |
+| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection) |
 |---|---|
 | Scope decision, severity verdicts, WCAG-level grading, finding dedup, final report synthesis -- accessibility verdicts are always conductor-class | Per-screen a11y evidence collection against the engineer's 5-dimension check tables; VoiceOver label/trait/order inventory; contrast-pair computation sweeps; Dynamic Type breakpoint capture |
 
 **Executor scoping (on top of the protocol's prompt contract)**
 - Reference set: absolute paths of `references/accessibility/` + `references/_scaffolding/version-floor-registry.md`.
 - Inline the severity scale and the relevant dimension tables from `agents/accessibility-engineer.md` -- its 5-dimension framework is the checklist executors collect evidence against.
-- The `accessibility-engineer` specialist is pinned to the Fable lane at dispatch -- judgment reviewer, never a grunt executor.
+- The `accessibility-engineer` specialist is pinned to Opus 5 at dispatch -- judgment reviewer, never a grunt executor.
