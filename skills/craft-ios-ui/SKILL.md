@@ -10,7 +10,7 @@ The full Apple UI treatment. Five specialists review every dimension of the app'
 
 ## Dispatch
 
-This skill dispatches a single orchestrator. **Do NOT dispatch it via the plugin namespace** -- plugin-namespaced dispatch silently strips the `Agent` tool at runtime, so the team lead cannot fan out and the workflow degrades to nothing.
+This skill dispatches a single orchestrator. **Do NOT dispatch it via the plugin namespace** under this plugin's established orchestration contract. `Agent` access depends on runtime tool grants and nesting depth.
 
 Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/craft-ios-ui/SKILL.md`). Every agent body and every `references/...` path the team lead and its specialists read resolves against that root, so pass it explicitly. Then dispatch:
 
@@ -25,7 +25,7 @@ Agent({
 })
 ```
 
-The team lead then dispatches all 5 review specialists, each pinned to Opus 5 (`model: "opus"`) at dispatch. It inlines each specialist's body into a `general-purpose` dispatch because that is the only shape verified to preserve tools -- the same plugin-namespace limitation above makes namespaced sub-dispatch from inside a subagent unreliable (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md`). Inlining is required, not stylistic:
+The team lead then dispatches all 5 review specialists, each pinned to Opus 5 (`model: "opus"`) at dispatch. It inlines each specialist's body into a `general-purpose` dispatch as required by this plugin's established orchestration contract (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md`). Inlining is required, not stylistic:
 1. `apple-ui-reviewer` -- HIG, Liquid Glass, typography, color, navigation, layout
 2. `animation-haptics-engineer` -- motion, springs, haptic design, Reduce Motion
 3. `accessibility-engineer` -- VoiceOver, Dynamic Type, contrast, motor, cognitive

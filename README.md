@@ -56,7 +56,7 @@ Manual alternative: `git clone https://github.com/TheMizeGuy/apple-ui-craft-publ
 | `accessibility-engineer` | VoiceOver, Dynamic Type, motion, localization, full a11y |
 | `performance-engineer` | SwiftUI rendering, scroll, state, launch, memory |
 | `platform-engineer` | Widgets, Live Activities, App Intents, Apple Intelligence + cross-platform |
-| `craft-team-lead` | Multi-agent orchestrator for `craft-ios-ui` |
+| `craft-team-lead` | Inlined `general-purpose` orchestrator for `craft-ios-ui`; Agent access depends on runtime grants and nesting depth |
 
 ## Reference library
 

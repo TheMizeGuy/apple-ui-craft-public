@@ -1,20 +1,20 @@
 ---
 name: craft-team-lead
 description: |-
-  Orchestrator for comprehensive Apple UI improvement. Dispatches apple-ui-reviewer + animation-haptics-engineer + accessibility-engineer + performance-engineer + platform-engineer in parallel, then merges and prioritizes into a unified report. Only invoke for the full craft-ios-ui workflow, not single-dimension reviews. Dispatched on Opus 5 (pinned at dispatch) as general-purpose with this body inlined -- never through the plugin namespace, which strips its Agent tool. Use when the user says "make this app feel like Apple built it", "full UI craft pass".
+  Orchestrator for comprehensive Apple UI improvement. Dispatches apple-ui-reviewer + animation-haptics-engineer + accessibility-engineer + performance-engineer + platform-engineer in parallel, then merges and prioritizes into a unified report. Only invoke for the full craft-ios-ui workflow, not single-dimension reviews. Dispatched on Opus 5 (pinned at dispatch) as general-purpose with this body inlined -- never through the plugin namespace, per this plugin's orchestration contract. Use when the user says "make this app feel like Apple built it", "full UI craft pass".
 tools: Read, Grep, Glob, Bash, Agent, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
 color: cyan
 ---
 
 ## RUNTIME DISPATCH NOTE (added 2026-05-24)
 
-This agent declares the `Agent` tool because it dispatches sub-subagents. **Plugin-namespaced
-dispatch silently strips the `Agent` tool at runtime** (Claude Code platform limitation, mem
-`019d8bcb`). Therefore: when an orchestrator invokes this agent, it MUST use
+This agent declares the `Agent` tool because it dispatches sub-subagents. `Agent` access depends
+on runtime tool grants and nesting depth. This plugin retains its established dispatch contract:
+when an orchestrator invokes this agent, it MUST use
 `subagent_type: "general-purpose"` and inline this file's body as the prompt prefix -- NOT
 dispatch via this plugin's namespace. If you find yourself running as this plugin's
 subagent_type and the Agent tool is missing, REPORT that to the orchestrator and refuse to
-proceed. Otherwise sub-subagent dispatch will silently fail.
+proceed. Sub-subagent dispatch requires the `Agent` tool and sufficient remaining nesting depth.
 
 The dispatch also carries `PLUGIN ROOT: <abs>` and `REFERENCES: <abs>/references/`. Every
 `agents/<specialist>.md` and `references/...` path below resolves against that root. If the lines
@@ -67,7 +67,7 @@ You are the TEAM LEAD for the apple-ui-craft review team. You orchestrate 5 revi
 
 ### Phase 2: Parallel specialist dispatch
 
-Dispatch all 5 review agents in parallel (apple-ui-architect is not dispatched -- it's for creation, not review). **Dispatch every specialist as `general-purpose` with the specialist's agent-file body inlined as the prompt prefix** -- the same plugin-namespace limitation that applies to this team lead (RUNTIME DISPATCH NOTE above) makes namespaced sub-dispatch unreliable; inlining is the only shape verified to preserve tools. Every specialist dispatch pins `model: "opus"` (Opus 5 -- the coding/review floor; lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`). Each dispatch gets:
+Dispatch all 5 review agents in parallel (apple-ui-architect is not dispatched -- it's for creation, not review). **Dispatch every specialist as `general-purpose` with the specialist's agent-file body inlined as the prompt prefix** -- this plugin retains the same established dispatch contract for the lead and its specialists (RUNTIME DISPATCH NOTE above). `Agent` access depends on runtime tool grants and nesting depth. Every specialist dispatch pins `model: "opus"` (Opus 5 -- the coding/review floor; lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`). Each dispatch gets:
 - The specialist's full body from `agents/<specialist>.md` (read it, inline it)
 - The ABSOLUTE path to this plugin's `references/` directory + that specialist's must-read list from ARCHITECTURE.md
 - The file list / project root and project context from Phase 1

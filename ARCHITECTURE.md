@@ -169,11 +169,11 @@ Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship t
 | `design-ios` | `apple-ui-architect` (then `accessibility-engineer` for an a11y pass) | Sequential |
 | `review-ios-ui` | `apple-ui-reviewer` + `animation-haptics-engineer` + `accessibility-engineer` | Parallel, then merge |
 | `optimize-ios-ui` | `animation-haptics-engineer` + `performance-engineer` | Parallel, then merge |
-| `craft-ios-ui` | `craft-team-lead` orchestrates all 5 review specialists in phases (audit -> plan -> apply per user approval) | Multi-pass, team-lead owns dispatch |
+| `craft-ios-ui` | `craft-team-lead` orchestrates all 5 review specialists in phases (audit -> plan -> apply per user approval) | Multi-pass; team lead owns dispatch, subject to runtime grants and nesting depth |
 | `audit-accessibility` | `accessibility-engineer` (solo, deep) | Single |
 | `integrate-platform` | `platform-engineer` (solo) | Single |
 
-`craft-team-lead` and the specialists it fans out are dispatched as `general-purpose` with the agent body inlined -- plugin-namespaced dispatch strips the Agent tool at runtime. Every dispatch carries `PLUGIN ROOT:` and `REFERENCES:` lines; the agents resolve `references/` from them, with `${CLAUDE_PLUGIN_ROOT}` and the plugin-cache glob as fallbacks.
+`craft-team-lead` and the specialists it fans out are dispatched as `general-purpose` with the agent body inlined -- this is the plugin's established orchestration contract. Agent access depends on runtime tool grants and nesting depth. Every dispatch carries `PLUGIN ROOT:` and `REFERENCES:` lines; the agents resolve `references/` from them, with `${CLAUDE_PLUGIN_ROOT}` and the plugin-cache glob as fallbacks.
 
 ## Reference <-> agent wiring (no orphan references)
 

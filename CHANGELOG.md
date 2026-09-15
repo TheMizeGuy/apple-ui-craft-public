@@ -2,6 +2,10 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.5.3 -- 2026-09-15
+
+- Correct the delegation rationale: Agent access depends on runtime tool grants and nesting depth. Keep the established orchestration paths, tool grants, and model/effort policy.
+
 ## 0.5.2 -- 2026-09-02
 
 ### The Fable lane is withdrawn; every dispatched agent pins Opus 5 again
