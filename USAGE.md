@@ -1,6 +1,6 @@
 # apple-ui-craft -- Usage Guide
 
-The complete guide to driving `apple-ui-craft`: what each skill does, how to invoke it, what you get back, how to apply findings, and how the plugin behaves under ultracode. If you want the internal file map instead, read [`ARCHITECTURE.md`](ARCHITECTURE.md).
+The complete guide to driving `apple-ui-craft`: what each skill does, how to invoke it, what you get back, how to apply findings, and how the skills fan out on a wide scope. If you want the internal file map instead, read [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 
 ## What this plugin is for
@@ -141,16 +141,15 @@ withAnimation(reduceMotion ? nil : .spring) { isExpanded.toggle() }
 Reviews are **read-only by default.** Findings are advisory. The orchestrator applies changes only when you explicitly approve them -- so you can run a review safely on any branch.
 
 
-## How ultracode changes behavior
+## How the skills fan out
 
-When your session is running under **ultracode**, every skill switches to conductor-executor mode automatically. You do not do anything differently; the split happens under the hood:
+On an ordinary scope a skill dispatches its specialists directly and that is the whole story. On a scope too wide for one pass per dimension, the skills split the work. You do not do anything differently:
 
-- **The session model conducts -- always the strongest available Claude, whichever model that is.** It decides scope, grades severity, deduplicates findings, resolves conflicts, and synthesizes the final report. Every verdict is the conductor's, and the workflow runs identically regardless of which model is currently strongest.
-- **Conductor-selected executor teams (Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection -- lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`) do the grunt stages** -- reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application. Each executor is scoped through the skill: a non-overlapping file set, the dimension's reference paths plus the version-floor registry, the severity scale plus the skill's inlined check tables, and a blackboard + escalation contract. Executors report **evidence, never verdicts**. The shared dispatch mechanics, fan-out doctrine (executor teams scale to natural breadth), and validation gate live in `references/_scaffolding/conductor-dispatch-protocol.md`.
-- **The specialist reviewers, the architect, and the team lead run on Opus 5, pinned at dispatch.** Judging Apple-native quality is never delegated to a grunt executor.
-- **Every executor result is gated** -- the conductor reads the durable blackboard (not the truncated final message), spot-checks claims against the actual files, and re-grades before anything reaches you.
+- **Your session picks the model for every agent it dispatches** (Opus 5 is the usual default for design, review and implementation). Nothing in the plugin pins a model or an effort level.
+- **Evidence collection fans out; judgment does not.** Reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application split cleanly across agents, each with a non-overlapping file set, the dimension's reference paths plus the version-floor registry, and the skill's inlined check tables. Scope decisions, severity grading, dedup, conflict resolution, and the final report stay in one place.
+- **Results are checked before they reach you** -- claims spot-checked against the actual files, and the `git diff` read whenever an agent wrote code.
 
-Without ultracode, the skills run their standard direct dispatch. The model invariants hold either way: never Haiku, never Sonnet below `xhigh`, never an executor verdict.
+Shared dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`.
 
 
 ## The reference library
@@ -182,7 +181,7 @@ Run both before shipping: one clears the gate, the other earns the delight.
 | `craft-ios-ui` produces nothing, or the team lead can't fan out to specialists | The team lead lacks Agent access or remaining nesting depth, or the skill's dispatch contract was bypassed | Dispatch `craft-team-lead` as `general-purpose` with its agent-file body inlined as the prompt prefix (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md` and the Dispatch section of `skills/craft-ios-ui/SKILL.md`) |
 | The GoodMem search step is silently skipped | The GoodMem MCP is not configured, or is unreachable, in this session | Expected behavior -- no memory service is required. The space and reranker IDs inlined in the agent files are the plugin author's; substitute your own if you run GoodMem |
 | A finding or design suggests an API that does not compile | Training data is stale for iOS-26-era APIs (Liquid Glass, `.sensoryFeedback`, App Intents) | Check `references/_scaffolding/version-floor-registry.md`'s PHANTOM list, and verify the API shape with Context7 before applying the suggestion |
-| Reviews run standard direct dispatch instead of conductor-executor mode | The harness has not announced ultracode for this session, or ultracode is off | Expected fallback -- every skill runs its standard dispatch (see [How ultracode changes behavior](#how-ultracode-changes-behavior)) without executor teams; no action needed |
+| A review dispatches its specialists directly instead of fanning out an evidence sweep first | The scope is narrow enough that a sweep would add a hop and nothing else | Expected -- the fan-out is for wide scopes only (see [How the skills fan out](#how-the-skills-fan-out)); no action needed |
 | `review-ios-ui` only runs 3 specialists, not all 5 | By design -- `review-ios-ui` scopes to visual + motion + accessibility only | Use `craft-ios-ui` for the full 5-specialist sweep that adds performance and platform-integration coverage |
 | A specialist reports `References: unresolved`, or its findings cite nothing | The dispatch prompt carried no `PLUGIN ROOT:` / `REFERENCES:` line and `${CLAUDE_PLUGIN_ROOT}` was not visible to the subagent | Re-dispatch with both lines; the skills resolve them from `${CLAUDE_PLUGIN_ROOT}` at load, and the agents glob the plugin cache as a last resort |
 | Every review reports Source or Screenshots mode even though a simulator is available | XcodeBuildMCP is not configured in the session, or its simulator workflow is disabled | Configure XcodeBuildMCP (simulator tools are on by default); the reviewer agents carry the build, run, `snapshot_ui`, and gesture tools and reach Runtime mode on their own when those exist |
@@ -201,4 +200,4 @@ Run both before shipping: one clears the gate, the other earns the delight.
 
 **How do I get the most out of a review?** Scope it. Point a skill at the screen or flow you care about rather than the whole project, and you get denser, more actionable findings.
 
-**Which model runs this?** Your session model conducts -- always the strongest available Claude. Every specialist, the architect, and the team lead are pinned to Opus 5 (`model: "opus"`) at dispatch. Under ultracode the grunt stages run on conductor-selected executors (Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection). The invariants never change: never Haiku, never Sonnet below `xhigh`, never an executor verdict.
+**Which model runs this?** Whichever your session chooses for each dispatch -- Opus 5 is the usual default for design, review and implementation. The plugin pins no model and no effort level, so it inherits whatever your session policy is.

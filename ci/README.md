@@ -26,8 +26,9 @@ will point you here rather than write a padded artifact with invented verdicts.
 The artifact lands in `.claude/apple-ui-craft-artifacts/<short-sha>.json`.
 Commit it.
 
-**2. Run the gate in CI.** Namespace runners only, per fleet doctrine -- never
-`ubuntu-latest`, `macos-15`, or any other GitHub-hosted label:
+**2. Run the gate in CI.** It is a Node script with no dependencies, so any
+runner that has Node 20 will do -- substitute the label your fleet uses for
+`<your-runner-label>`:
 
 ```yaml
 name: ui-craft-gate
@@ -35,7 +36,7 @@ on: pull_request
 
 jobs:
   craft-gate:
-    runs-on: nscloud-ubuntu-22.04-arm64-2x4
+    runs-on: <your-runner-label>
     steps:
       - uses: actions/checkout@v4
         with:

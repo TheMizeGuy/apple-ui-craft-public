@@ -54,6 +54,12 @@ const CITATION = /references\/[A-Za-z0-9_\-/]+\.md(#[A-Za-z0-9-]+)?/g;
 const failures = [];
 let citations = 0;
 
+// Release history records what a PAST release said, so a heading renamed since
+// then is expected, not a regression -- and rewriting the entry to satisfy the
+// link check would make the changelog wrong. The file must still exist: a
+// changelog pointing at a deleted reference is a real broken pointer.
+const ANCHOR_EXEMPT = new Set(['CHANGELOG.md']);
+
 for (const f of files) {
   const rel = relative(ROOT, f);
   const lines = readFileSync(f, 'utf8').split('\n');
@@ -64,7 +70,7 @@ for (const f of files) {
       const path = ref.split('#')[0];
       if (!existsSync(join(ROOT, path))) {
         failures.push({ file: rel, line: i + 1, ref, why: 'file does not exist' });
-      } else if (anchor && !slugIndex.get(path)?.has(anchor.slice(1))) {
+      } else if (anchor && !ANCHOR_EXEMPT.has(rel) && !slugIndex.get(path)?.has(anchor.slice(1))) {
         failures.push({ file: rel, line: i + 1, ref, why: 'anchor does not exist in that file' });
       }
     }

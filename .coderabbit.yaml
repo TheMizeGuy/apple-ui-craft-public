@@ -36,14 +36,12 @@ reviews:
 
     BLOCKING rules (flag as error, not nitpick):
 
-    - Model policy: agent frontmatter must carry NO `model:` pin, and no dated
-      model ID (e.g. a `-20250101` suffix) may appear anywhere. Models are
-      pinned at DISPATCH with undated aliases only (`opus` for every dispatched
-      agent — specialists, the architect, the dispatched team lead, and UI
-      apply stages — and `sonnet` only for non-coding grunt executors; the
-      0.5.x `fable` specialist lane was withdrawn in 0.5.2). Flag any
-      reintroduced frontmatter pin, any dispatch pin on the withdrawn `fable`
-      alias, any dated ID, and any change lowering effort below `xhigh`.
+    - Model policy: the dispatching session chooses the model for every agent,
+      per dispatch. Nothing in this repo pins a model or an effort level — not
+      in agent frontmatter, not in a documented dispatch call, not in prose.
+      Flag any reintroduced frontmatter pin, any `model:` or `effort:` argument
+      shown on a dispatch, any dated model ID (e.g. a `-20250101` suffix), and
+      any per-model or per-stage effort rule.
 
     - Version-bump lockstep: a version change must touch all four together in
       the same commit — `.claude-plugin/plugin.json`, `CHANGELOG.md`,
@@ -103,9 +101,9 @@ reviews:
       public mirror. Flag any NEW absolute `/Users/...` path added to a file
       outside `CLAUDE.md`.
 
-    - CI: if a GitHub Actions workflow is ever added, it must target Namespace
-      runners (`nscloud-*` labels). Never `ubuntu-latest`, `macos-15`, or any
-      other GitHub-hosted label.
+    - CI: if a GitHub Actions workflow is ever added, it must target a
+      self-hosted runner label. Never `ubuntu-latest`, `macos-15`, or any other
+      GitHub-hosted label.
 
     Style notes (nitpick, not blocking): the voice is principal-Apple-engineer —
     direct, specific, no hedging, no "at least N" lower bounds, no trailing

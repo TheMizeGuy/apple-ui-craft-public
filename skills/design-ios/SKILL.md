@@ -1,7 +1,7 @@
 ---
 name: design-ios
 description: |-
-  Design new iOS UI from scratch -- a screen, a flow, a component, or a full app interface. Dispatches the apple-ui-architect agent, pinned to Opus 5 at dispatch, which maps the user's task flow before any screen exists, states an explicit adaptive contract per component, ships every state rather than only the loaded one, and produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptic feedback, and accessibility from birth -- then the accessibility-engineer to audit the fresh code before both reports return. Triggers on "design a [screen/flow/component]", "build me a [screen]", "create the UI for", "design the [dashboard/settings/onboarding]". Also use proactively: any new screen, view, or component in an iOS/SwiftUI project starts here, even when the request is just "add a settings page" and never says design.
+  Design new iOS UI from scratch -- a screen, a flow, a component, or a full app interface. Dispatches the apple-ui-architect agent, which maps the user's task flow before any screen exists, states an explicit adaptive contract per component, ships every state rather than only the loaded one, and produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptic feedback, and accessibility from birth -- then the accessibility-engineer to audit the fresh code before both reports return. Triggers on "design a [screen/flow/component]", "build me a [screen]", "create the UI for", "design the [dashboard/settings/onboarding]". Also use proactively: any new screen, view, or component in an iOS/SwiftUI project starts here, even when the request is just "add a settings page" and never says design.
 ---
 
 # Design iOS UI
@@ -12,11 +12,10 @@ This skill dispatches agents in two stages:
 
 ### Stage 1: Design
 
-Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/design-ios/SKILL.md`). Dispatch `apple-ui-craft:apple-ui-architect` with `model: "opus"` (Opus 5), the `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` lines (the architect resolves every `references/...` path from them), and:
+Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/design-ios/SKILL.md`). Dispatch `apple-ui-craft:apple-ui-architect` with the `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` lines (the architect resolves every `references/...` path from them), and:
 - The user's design request
 - Project context (if a project exists: deployment target, existing navigation, design patterns, color conventions)
 - Instruction to read relevant reference files before designing
-- Instruction to search GoodMem for prior learnings
 
 Gather project context BEFORE dispatching -- the architect designs against these facts, and a dispatch without them produces generic output:
 
@@ -30,7 +29,7 @@ Gather project context BEFORE dispatching -- the architect designs against these
 No project (greenfield): default to the current iOS target, `NavigationStack`, semantic colors only -- and state those assumptions explicitly in the dispatch.
 
 ### Stage 2: Accessibility pass
-After the architect produces code, dispatch `apple-ui-craft:accessibility-engineer` (`model: "opus"`, plus the same `PLUGIN ROOT:` and `REFERENCES:` lines) to audit it. Inline the architect's full Stage 1 SwiftUI output -- or the absolute paths of the files it wrote, when a project exists -- directly into this dispatch prompt: the accessibility-engineer shares no conversation state with Stage 1 and can only Read what it is pointed at. It audits for:
+After the architect produces code, dispatch `apple-ui-craft:accessibility-engineer` (with the same `PLUGIN ROOT:` and `REFERENCES:` lines) to audit it. Inline the architect's full Stage 1 SwiftUI output -- or the absolute paths of the files it wrote, when a project exists -- directly into this dispatch prompt: the accessibility-engineer shares no conversation state with Stage 1 and can only Read what it is pointed at. It audits for:
 - VoiceOver labels and reading order
 - Dynamic Type survival at AX sizes
 - Touch target compliance (44x44pt)
@@ -93,25 +92,24 @@ Any failed check goes back to the producing stage with the concrete gap named --
 
 ## Execution mode
 
-Every agent this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the design scope is small, the orchestrator may produce the design inline in the main context (foreground) instead of dispatching a separate agent, without weakening the accessibility-engineer's read-only guarantee in Stage 2. Lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
+Dispatch on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the design scope is small, produce the design inline in the main context instead of dispatching a separate agent -- without weakening the accessibility-engineer's read-only guarantee in Stage 2. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
 
-## Ultracode conductor mode
+## Fanning out on a wide scope
 
-When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard architect + accessibility-pass dispatch above unchanged.
+A design spanning several component families can be scaffolded in parallel once the architecture is set. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard architect + accessibility-pass dispatch above unchanged.
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection) |
+| Stays with the architect and the session | Fans out well |
 |---|---|
-| The design itself (information hierarchy, aesthetic decisions, navigation model, animation/haptic choices) and final synthesis -- design is judgment-class and stays with the architect (Opus 5, pinned at dispatch); the accessibility verdict stays with the accessibility-engineer (Stage 2, also Opus 5) | Component scaffolding from the conductor/architect-approved design spec (one executor per component family); token/asset plumbing; preview-matrix generation (Dynamic Type x color scheme x Reduce Motion) |
+| The design itself (information hierarchy, aesthetic decisions, navigation model, animation/haptic choices) and final synthesis; the accessibility verdict stays with the accessibility-engineer in Stage 2 | Component scaffolding from the approved design spec (one agent per component family); token/asset plumbing; preview-matrix generation (Dynamic Type x color scheme x Reduce Motion) |
 
-Design origination is NOT an executor task -- the `apple-ui-architect` produces the design and the primary SwiftUI. Executors only fan out to scaffold approved component families and generate the preview matrix once the architecture is set, then the conductor and the accessibility pass gate the result.
+Design origination does not fan out -- the `apple-ui-architect` produces the design and the primary SwiftUI. Parallel agents only scaffold approved component families and generate the preview matrix once the architecture is set; the session and the accessibility pass then check the result.
 
-**Executor scoping (on top of the protocol's prompt contract)**
-- Each executor owns one approved component family (non-overlapping) and gets the approved spec inline.
+**Scoping the fan-out (on top of what the protocol says a prompt carries)**
+- Each agent owns one approved component family (non-overlapping) and gets the approved spec inline.
 - Reference set: absolute paths of the relevant `references/design/*`, `references/animation/*`, `references/interaction/*` + `references/_scaffolding/version-floor-registry.md`.
 - Inline the production-SwiftUI rules (system fonts/semantic colors/44pt/RM double-gate/#available gating/no phantom APIs).
-- The `apple-ui-architect` / `accessibility-engineer` are pinned to Opus 5 at dispatch -- design + a11y verdicts are never grunt-executor work.
 
 ## No review ledger
 

@@ -8,7 +8,7 @@ description: |-
 
 ## Dispatch
 
-This skill dispatches one specialist, solo, with the full platform + cross-platform reference set. Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/integrate-platform/SKILL.md`). Every dispatch pins `model: "opus"` (Opus 5) and carries `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` so the specialist can resolve every `references/...` path it is told to read -- without those lines it reviews from memory and says so.
+This skill dispatches one specialist, solo, with the full platform + cross-platform reference set. Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/integrate-platform/SKILL.md`). Every dispatch carries `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` so the specialist can resolve every `references/...` path it is told to read -- without those lines it reviews from memory and says so.
 
 ```
 apple-ui-craft:platform-engineer
@@ -42,7 +42,7 @@ All findings are advisory. The user chooses what to build.
 
 ## Execution mode
 
-The specialist this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the integration scope is small, the orchestrator may run the audit inline in the main context (foreground) instead of dispatching a separate agent, without weakening the platform-engineer's read-only guarantee. Lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
+Dispatch on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the integration scope is small, run the audit inline in the main context instead of dispatching a separate agent -- without weakening the platform-engineer's read-only guarantee. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
 
 
 ## Review ledger (write it, without asking)
@@ -56,17 +56,16 @@ two fields that stop a narrow run from erasing a wide one (`dimensions` and
 A missing or unreadable ledger is an empty prior run, never an error. A ledger
 from a different scope is not a prior run for this scope.
 
-## Ultracode conductor mode
+## Fanning out on a wide scope
 
-When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard dispatch above unchanged.
+An app with many existing surfaces splits into a census and a ranking pass. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard solo dispatch above unchanged.
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection) |
+| Stays with the session | Fans out well |
 |---|---|
-| Opportunity ranking, value-vs-cost judgment, integration plan synthesis, anything entitlement- or privacy-adjacent | Surface census (existing intents, widgets, activities, extensions, plist declarations); per-surface API-shape research from the conductor-approved opportunity list (framework, floor, required entitlements, minimal adoption checklist) |
+| Opportunity ranking, value-vs-cost judgment, integration plan synthesis, anything entitlement- or privacy-adjacent | Surface census (existing intents, widgets, activities, extensions, plist declarations); per-surface API-shape research from the approved opportunity list (framework, floor, required entitlements, minimal adoption checklist) |
 
-**Executor scoping (on top of the protocol's prompt contract)**
+**Scoping the sweep (on top of what the protocol says a prompt carries)**
 - Reference set: absolute paths of `references/platform/` + `references/cross-platform/` + `references/_scaffolding/version-floor-registry.md`.
-- Executors report evidence and research, never rankings -- the conductor ranks. This skill stays advisory end to end: no executor writes project files. Scaffolding is a separate task the user must ask for after the report.
-- The `platform-engineer` specialist is pinned to Opus 5 at dispatch -- judgment reviewer, never a grunt executor.
+- A census returns evidence and research, never rankings -- the session ranks. This skill stays advisory end to end: nothing it dispatches writes project files. Scaffolding is a separate task the user must ask for after the report.

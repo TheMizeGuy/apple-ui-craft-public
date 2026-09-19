@@ -8,7 +8,7 @@ description: |-
 
 ## Dispatch
 
-This skill dispatches 3 specialist agents in parallel. Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/review-ios-ui/SKILL.md`). Every dispatch pins `model: "opus"` (Opus 5) and carries `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` so the specialist can resolve every `references/...` path it is told to read -- without those lines it reviews from memory and says so.
+This skill dispatches 3 specialist agents in parallel. Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/review-ios-ui/SKILL.md`). Every dispatch carries `PLUGIN ROOT: <root>` and `REFERENCES: <root>/references/` so the specialist can resolve every `references/...` path it is told to read -- without those lines it reviews from memory and says so.
 
 ```
 1. apple-ui-craft:apple-ui-reviewer
@@ -66,7 +66,7 @@ All findings are advisory. The user chooses what to apply.
 
 ## Execution mode
 
-Every agent this skill dispatches is pinned to Opus 5 (`model: "opus"`) at dispatch -- the coding/review floor (owner directive 2026-07-24); the session conductor stays orchestrator-only. When the session model is already the strongest tier and the review scope is small, the orchestrator may run a specialist's review inline in the main context (foreground) instead of dispatching a separate agent, without weakening the read-only guarantee the reviewer agents carry. Lanes: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`.
+Dispatch on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the review scope is small, run a specialist's review inline in the main context instead of dispatching a separate agent -- without weakening the read-only guarantee the reviewer agents carry. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
 
 
 ## Review ledger (write it, without asking)
@@ -80,18 +80,18 @@ two fields that stop a narrow run from erasing a wide one (`dimensions` and
 A missing or unreadable ledger is an empty prior run, never an error. A ledger
 from a different scope is not a prior run for this scope.
 
-## Ultracode conductor mode
+## Fanning out on a wide scope
 
-When the harness announces ultracode, this skill runs conductor-executor per `references/_scaffolding/conductor-dispatch-protocol.md` -- read that file before the first executor dispatch; it owns the dispatch mechanics, the fan-out doctrine (executor teams scale to natural breadth; the session-model agent caps do not apply to them), the executor prompt contract, and the validation gate. Without ultracode, run the standard 3-specialist dispatch above unchanged.
+A scope too wide for one pass per dimension splits into an evidence sweep and a grading pass. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard 3-specialist dispatch above unchanged.
 
 **Split of labor**
 
-| Conductor (session model -- never delegated) | Conductor-selected executors (lanes per `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`: Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection) |
+| Stays with the session | Fans out well |
 |---|---|
-| Per-dimension verdicts, severity grading, finding dedup across dimensions, final report synthesis | Per-screen evidence sweeps (one executor per screen group): HIG deviations, contrast pairs, touch-target measurements, Dynamic Type breakpoints -- raw evidence tables for the conductor and the 3 specialists to grade |
+| Per-dimension verdicts, severity grading, finding dedup across dimensions, final report synthesis | Per-screen evidence sweeps (one agent per screen group): HIG deviations, contrast pairs, touch-target measurements, Dynamic Type breakpoints -- raw evidence tables for the session and the 3 specialists to grade |
 
-**Executor scoping (on top of the protocol's prompt contract)**
-- Each executor owns one screen group (non-overlapping) and gets the evidence-table format inline.
+**Scoping the sweep (on top of what the protocol says a prompt carries)**
+- Each agent owns one screen group (non-overlapping) and gets the evidence-table format inline.
 - Reference set: absolute paths of the review dimension's reference files + `references/_scaffolding/version-floor-registry.md`.
 - Inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- The `apple-ui-reviewer` / `animation-haptics-engineer` / `accessibility-engineer` specialists are pinned to Opus 5 at dispatch -- judgment reviewers, never grunt executors.
+- An evidence sweep returns evidence. The verdict is the specialist's and the severity is the session's.

@@ -4,7 +4,7 @@ Internal map of files, responsibilities, and cross-references. Not loaded by Cla
 
 ## Mission
 
-A team of seven specialist agents -- every one pinned to Opus 5 at dispatch, the session model conducting -- embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
+A team of seven specialist agents embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
 
 ## Layout
 
@@ -21,7 +21,7 @@ apple-ui-craft/
 │   ├── craft-ios-ui/SKILL.md        "make this feel Apple-native" (full team)
 │   ├── audit-accessibility/SKILL.md "audit my app for accessibility" (a11y solo, deep)
 │   └── integrate-platform/SKILL.md  "make my app feel native beyond the UI" (platform solo)
-├── agents/                      (7 agents, all pinned to Opus 5 at dispatch; the session model conducts)
+├── agents/                      (7 agents; no model pin -- the dispatching session chooses)
 │   ├── apple-ui-architect.md          greenfield design + production SwiftUI
 │   ├── apple-ui-reviewer.md           HIG + visual + Liquid Glass audit
 │   ├── animation-haptics-engineer.md  motion + interaction/feel + tactile feedback
@@ -32,7 +32,7 @@ apple-ui-craft/
 └── references/                  (14 directories -- self-contained knowledge files)
     ├── _scaffolding/
     │   ├── _TEMPLATE.md                     reference-file skeleton (authoring-only)
-    │   ├── conductor-dispatch-protocol.md   shared ultracode dispatch mechanics (all 6 skills point here)
+    │   ├── conductor-dispatch-protocol.md   shared dispatch mechanics (all 6 skills point here)
     │   └── version-floor-registry.md        SINGLE source of availability floors + PHANTOM list
     ├── design/
     │   ├── 01-apple-design-philosophy.md    clarity, deference, depth
@@ -177,7 +177,7 @@ Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship t
 
 ## Reference <-> agent wiring (no orphan references)
 
-Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appears in at least one agent's read scope.** `_scaffolding/` holds process files, not knowledge: `version-floor-registry.md` is read first by every agent, `conductor-dispatch-protocol.md` is read by the ultracode conductor, `_TEMPLATE.md` is authoring-only. Agents read the floor registry first, then start-here files, then glob the rest of a domain when the task goes deep. Ownership below is the "who authors/owns this concept" map; reviewers read across domains.
+Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appears in at least one agent's read scope.** `_scaffolding/` holds process files, not knowledge: `version-floor-registry.md` is read first by every agent, `conductor-dispatch-protocol.md` is read by whoever dispatches, `_TEMPLATE.md` is authoring-only. Agents read the floor registry first, then start-here files, then glob the rest of a domain when the task goes deep. Ownership below is the "who authors/owns this concept" map; reviewers read across domains.
 
 | Agent | Owns / reads |
 |---|---|
@@ -234,9 +234,9 @@ and dedup key on.
 | CI verdict artifact (schema v1) | `ci/verdict-artifact-schema.json` | `gate.mjs` parses the schema at runtime and HARD-REJECTS a `schemaVersion` mismatch |
 | WCAG 2.2 A/AA coverage | `references/accessibility/08-wcag-2-2-mapping.md` | The audit checklist; an uncited criterion is otherwise indistinguishable from an unmet one |
 
-## Ultracode conductor mode
+## Dispatch
 
-Under ultracode, every skill runs conductor-executor: the session model conducts, conductor-selected executors (Opus 5 @ `xhigh` for every dispatched agent, Sonnet 5 @ `xhigh` for non-coding collection) run the scoped grunt stages, and verdicts are never delegated. Each skill carries only its split-of-labor table and dimension-specific executor scoping; the lanes, the shared dispatch mechanics, fan-out doctrine, executor prompt contract, validation gate, and hard model invariants (never Haiku; never Sonnet below xhigh; never a specialist below the Opus lane) live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md#model-lanes`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-ultracode-changes-behavior).
+The dispatching session chooses the model per dispatch (Opus 5 is the usual default for design, review and implementation); no agent frontmatter carries a pin and no effort level is ever set. On a scope too wide for one pass per dimension, each skill splits evidence collection from grading and fans out the collection; each skill carries only its own split-of-labor table and dimension-specific scoping. The dispatch policy, fan-out, what a dispatch prompt carries, and how to read a result live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-the-skills-fan-out).
 
 ## Relationship to ios-code-review
 
