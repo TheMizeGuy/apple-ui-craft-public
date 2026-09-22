@@ -82,6 +82,8 @@ AsyncImage(url: url) { phase in
 }
 ```
 
+The phase closure stays mandatory, but the caching caveat behind it changed. On iOS 27 `AsyncImage` caches downloaded images automatically through HTTP caching, with `AsyncImage(request:scale:...)` initializers for a custom `cachePolicy` and `View.asyncImageURLSession(_:)` to share one session across a screen. Guidance that says `AsyncImage` never caches now applies only to iOS 26 and earlier, where owning the image pipeline is still the answer for a scrolling list.
+
 ## Empty
 
 Three causes need three treatments -- collapsing all of them into one generic "Nothing here" is the most common empty-state mistake:
@@ -101,7 +103,7 @@ if selectedWorkspace == nil {
 }
 ```
 
-`.search(text:)` -- and the environment-reading static var `.search` -- are iOS 17.0+, the SAME floor as the base initializer. A common over-correction is bumping `.search` to iOS 18 because it "feels newer"; don't -- it shipped alongside the type, and gating it behind an `#available(iOS 18, *)` wall is an unnecessary compatibility tax. `controlSize(.large)` on the empty-state action button is not cosmetic: the default control size in this context can render under the 44pt floor on compact layouts (`references/accessibility/04-motor-interaction.md#touch-targets`). Check "no scope selected" FIRST, before falling through to a loading/failure branch, or the user sees a confusing generic error for a state that isn't actually an error. `ContentUnavailableView` REPLACES the scrollable content; `.overlay {}` on an empty `List` is an Apple-documented alternative, but don't leave the `List`'s own chrome (section headers, a `.refreshable` spinner) visible underneath it -- that reads as two half-rendered UIs stacked.
+`.search(text:)` -- and the environment-reading static var `.search` -- are iOS 17.0+, the SAME floor as the base initializer. A common over-correction is bumping `.search` to iOS 18 because it "feels newer"; don't -- it shipped alongside the type, and gating it behind an `#available(iOS 18, *)` wall is an unnecessary compatibility tax. `ContentUnavailableView` and `.redacted(reason:)` are unchanged in iOS 27. `controlSize(.large)` on the empty-state action button is not cosmetic: the default control size in this context can render under the 44pt floor on compact layouts (`references/accessibility/04-motor-interaction.md#touch-targets`). Check "no scope selected" FIRST, before falling through to a loading/failure branch, or the user sees a confusing generic error for a state that isn't actually an error. `ContentUnavailableView` REPLACES the scrollable content; `.overlay {}` on an empty `List` is an Apple-documented alternative, but don't leave the `List`'s own chrome (section headers, a `.refreshable` spinner) visible underneath it -- that reads as two half-rendered UIs stacked.
 
 ## Error and offline
 
@@ -120,6 +122,22 @@ ContentUnavailableView {
 
 Offline vs. server error is a COPY decision, not a chrome decision -- detect offline specifically (`URLError.notConnectedToInternet`, or a proactive `NWPathMonitor` reading) and say so; a user acts on "you're offline" immediately, but "something went wrong" sends them to support for a problem they could self-diagnose. `error.localizedDescription` is why errors conform to `LocalizedError` -- surfacing a raw `Error` dumps a Swift type name to the user. Keep to ONE primary `.borderedProminent` action; a secondary ("Contact Support") is a plain `Button` below it, never a second prominent one. `alert` is for a transient, interrupting failure the user must acknowledge (a failed save); `ContentUnavailableView` is the durable representation of "this screen has no content because a load failed" -- it persists and carries the retry in one place.
 
+Two rules govern the sentence itself. **Drop "we".** Apple's Writing guidance is explicit that it is unclear who the "we" refers to and singles out error copy: "We're having trouble loading this content" becomes "Unable to load content." **Use possessive pronouns sparingly** -- "Favorites" says what "Your Favorites" says, in fewer words -- and apply whatever capitalization the app has chosen consistently rather than mixing title and sentence case within one element type. `references/design/10-content-and-writing.md` owns the full writing contract.
+
+Not every failure is the user's to act on. A framework error that reports a programming mistake must not reach the user as "Something went wrong": `StoreKitError.invalidPresentationContext` (iOS 27.0+), for instance, means a store sheet was asked to present from a controller that cannot host it -- a detached or already-dismissing presenter. Log it, retry from a live presenter, and never draw a retry button for a condition retrying cannot fix. Sort failures into three buckets -- the user can fix it (offline, wrong input), the app can retry it (timeout, 5xx), or it is a bug in the app. Only the first two get a user-facing message with an action.
+
+### When the target app isn't there
+
+`UIApplication.canOpenURL(_:)` is deprecated at iOS 27.0, and with it the "show the button only if the other app is installed" pattern. Apple's direction is to attempt the open and handle the failure. That is a better error-recovery story: the entry point is always visible, and the miss becomes a designed state instead of a row that mysteriously never appears (which is also what `canOpenURL` produced whenever a scheme was missing from `LSApplicationQueriesSchemes`):
+
+```swift
+openURL(partnerURL) { accepted in
+    if !accepted { linkFailure = .appNotInstalled }   // render a real state: install link, or web fallback
+}
+```
+
+Universal links remove the question entirely, since an uninstalled target falls through to the web.
+
 A proactive offline banner (non-blocking, over cached content) uses a lightweight `@Observable` wrapper around `NWPathMonitor`:
 
 ```swift
@@ -134,6 +152,20 @@ A proactive offline banner (non-blocking, over cached content) uses a lightweigh
 Reachability is a HINT, never a gate -- don't skip firing a request because `isConnected == false`; a satisfied path can still fail (captive portal, DNS, backend down) and an unsatisfied one may recover before your timeout fires. Fire the request, classify the failure. Use `NWPathMonitor` only for the proactive banner and to trigger a single auto-retry when connectivity is REGAINED -- debounce on a satisfied-route CHANGE, not every callback, or a Wi-Fi/cellular handoff burst fires several redundant reconnects.
 
 ## Retry affordances
+
+When a failure does warrant an alert, bind the alert to the error, never to a `Bool` sitting beside it. Xcode 27's `alert(error:actions:)` takes a `Binding<E?>` where `E: LocalizedError` and back-deploys to iOS 15, so this is a toolchain requirement with no `#available` gate:
+
+```swift
+@State private var saveError: SaveError?         // SaveError: LocalizedError
+
+content
+    .alert(error: $saveError) {
+        Button("Try Again") { Task { await save() } }
+        Button("Cancel", role: .cancel) { }
+    }
+```
+
+One optional means the alert can never render stale or empty text, and the `LocalizedError` constraint forces `errorDescription`/`recoverySuggestion` to be real sentences. `references/patterns/05-modality-sheets.md#alerts` owns the full modifier set, including the item-driven `confirmationDialog`.
 
 A failed mutation on a screen that ALREADY has content must never swap to a full error view -- that destroys usable data. Surface it as a transient toast/banner and keep the content:
 
@@ -196,6 +228,11 @@ Redacted skeleton rows must be `.disabled(true)` (or `.allowsHitTesting(false)`)
 | Failed refresh replaces the list with a full error view | Destroys usable content | Toast/banner, keep the content |
 | One dashboard section's failure blanks the whole screen | Blocks unrelated, working content | Per-section `LoadState` + inline retry |
 | Blocking "Success!" alert on every routine save | Web-form thinking ported to iOS | Silent success + `.sensoryFeedback(.success,…)` |
+| `@State var showError = false` beside `@State var error: E?` | The pair drifts; the alert shows stale or empty text | One binding: `alert(error:)` (Xcode 27, runs back to iOS 15) |
+| "We're having trouble loading this content" | Unclear who "we" is; Apple's Writing guidance names this exact sentence | "Unable to load content" |
+| A developer-error case shown as "Something went wrong" with a Retry | Retrying cannot fix a bad presentation context or a malformed request | Classify: user-fixable, retryable, or our bug -- only the first two get a message and an action |
+| An entry point hidden behind `canOpenURL` | Deprecated at iOS 27.0; also silently false on a missing `LSApplicationQueriesSchemes` entry | Always show it; `openURL(_:completion:)` and design the failure |
+| "AsyncImage never caches" as a blanket claim | iOS 27 caches through HTTP caching by default | Scope it to iOS 26 and earlier |
 
 ## Severity guide
 
@@ -204,6 +241,8 @@ CRITICAL: a redacted skeleton left tappable/navigable, or a background refresh f
 ## See also
 
 - `references/design/07-navigation-patterns.md#empty-states-ios-17` -- the one-line entry point this file supersedes with the full taxonomy
+- `references/patterns/05-modality-sheets.md#alerts` -- the item- and error-driven `alert` modifiers this file's failure alerts use
+- `references/design/10-content-and-writing.md` -- the writing contract behind the error-copy rules above
 - `references/design/07-navigation-patterns.md#pull-to-refresh` -- basic `.refreshable`; this file owns the self-cancel pitfall and per-section failure UI
 - `references/performance/02-scroll-list-performance.md#asyncimage-with-phase-handling` -- the list-cell image-loading path this file's `AsyncImage` phase pattern feeds
 - `references/haptics/02-swiftui-sensory-feedback.md#built-in-feedback-types` -- `.success`/`.error`/`.warning` triggers for load outcomes

@@ -16,6 +16,12 @@ Walk it once per audit, mark each row met / not met / not applicable, and follow
 the owner column for the actual rule. A criterion marked not applicable needs a
 reason.
 
+## Which standard applies
+
+WCAG 2.2 Level AA is the target, and the iOS 27 cycle changed nothing about that. WCAG 3.0 is still a **W3C Working Draft** -- most recently republished 2026-09-10, with its own editors noting several years of work remaining -- so it is not a Recommendation, nothing in iOS reflects it, and an agent citing a WCAG 3 requirement is citing a draft as if it were law. The European Accessibility Act has been enforceable since 2025-06-28 and routes through EN 301 549, which points back at WCAG 2.2 AA: the legal target and the technical target are the same document.
+
+Apple's Accessibility Nutrition Labels are a **separate** bar that overlaps this one without implying it in either direction. Clearing every Level AA criterion does not earn a claim, and holding a claim does not prove conformance. See the last section of this file.
+
 ## The three ways WCAG and iOS disagree
 
 Read these before applying any row, or you will file findings the platform
@@ -149,6 +155,37 @@ them regardless. They are graded on the same severity scale.
 | VoiceOver rotor, custom actions, and custom rotors | `accessibility/01-voiceover-fundamentals.md` |
 | Haptics never the sole feedback channel | `haptics/01-haptic-design-principles.md` |
 
+## App Store Accessibility Nutrition Labels
+
+Apple's own bar, declared in App Store Connect and shown on the product page. Declaring is voluntary today; Apple has said it will become mandatory without giving a date, and App Review can require a developer to correct a misleading label. Nine features are declarable, and not all of them on every platform:
+
+| Feature | Claimable on |
+|---|---|
+| VoiceOver | All platforms |
+| Voice Control | All except Apple TV and Apple Watch |
+| Larger Text | iPhone, iPad, Apple TV, Apple Watch, Apple Vision Pro -- **not** Mac |
+| Dark Interface | All platforms |
+| Differentiate Without Color Alone | All platforms |
+| Sufficient Contrast | All platforms |
+| Reduced Motion | All platforms |
+| Captions | All platforms |
+| Audio Descriptions | All platforms |
+
+**The gating rule is uniform, and it is the part that bites.** A feature may be claimed only if users can complete ALL of the app's common tasks using it, where Apple defines common tasks as **primary functionality, first-launch experience, login, purchase, and settings**. The audit scope for one claim is therefore those five categories end to end -- not a screen, and not the happy path. "VoiceOver works on the main list but the purchase sheet traps focus" is a label failure, not only a quality defect.
+
+Two numbers worth quoting verbatim, both from the Larger Text criteria: text must enlarge to **at least 200%** of the default size or the system maximum, and relying on **Zoom or Hover Text** to satisfy it is explicitly forbidden. Larger Text became claimable on Apple TV with tvOS 27's system-wide Text Size control, satisfied by supporting the largest Dynamic Type size or an equivalent size through your own implementation.
+
+Two claims have a standing trap. **Captions** requires the APP to provide the captions or transcripts: captions for video played through the app (spoken dialogue and game interstitials included), or text transcripts for audio-only content, which Apple says need not be time-synchronized. The system's on-device generated subtitles are not something the app provides, so they are not a basis for the claim. **VoiceOver** is about task completion, not label coverage; a screen full of correct labels with a focus trap in the middle of it fails.
+
+| Claim | Owner for the mechanism |
+|---|---|
+| VoiceOver | `accessibility/01-voiceover-fundamentals.md` |
+| Larger Text | `accessibility/02-dynamic-type-adaptation.md` |
+| Sufficient Contrast, Differentiate Without Color Alone, Dark Interface | `accessibility/03-visual-accessibility.md` |
+| Voice Control | `accessibility/04-motor-interaction.md` |
+| Reduced Motion | `accessibility/05-motion-accessibility.md` |
+| Captions, Audio Descriptions | `accessibility/07-cognitive-hearing-assistive.md` |
+
 ## Reporting
 
 Cite the criterion number, name and level on the `WCAG:` line of the finding:
@@ -162,6 +199,8 @@ Rules:
 - **Cite the criterion that is actually failed**, not the nearest famous one.
   Wrong citations are worse than none: they get argued rather than fixed.
 - **Never cite a AAA criterion as required.** Note it as an enhancement.
+- **Never cite WCAG 3.0.** It is a Working Draft, not a Recommendation, and citing it turns a real finding into an arguable one.
+- **A Nutrition Label failure is its own line, not a `WCAG:` citation.** Say which claim it breaks and which common task it breaks it on.
 - **A criterion covered but unverified is `not exercised`, not met.** The
   settings matrix in `agents/accessibility-engineer.md` has that third value for
   exactly this reason.

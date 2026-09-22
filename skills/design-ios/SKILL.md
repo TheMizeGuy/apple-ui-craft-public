@@ -1,7 +1,7 @@
 ---
 name: design-ios
 description: |-
-  Design new iOS UI from scratch -- a screen, a flow, a component, or a full app interface. Dispatches the apple-ui-architect agent, which maps the user's task flow before any screen exists, states an explicit adaptive contract per component, ships every state rather than only the loaded one, and produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptic feedback, and accessibility from birth -- then the accessibility-engineer to audit the fresh code before both reports return. Triggers on "design a [screen/flow/component]", "build me a [screen]", "create the UI for", "design the [dashboard/settings/onboarding]". Also use proactively: any new screen, view, or component in an iOS/SwiftUI project starts here, even when the request is just "add a settings page" and never says design.
+  Design new iOS UI from scratch -- a screen, a flow, a component, or a full app interface. Dispatches the apple-ui-architect agent, which maps the user's task flow before any screen exists, states an explicit adaptive contract per component, ships every state rather than only the loaded one, and produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptic feedback, and accessibility from birth -- then the accessibility-engineer to audit the fresh code before both reports return. Triggers on "design a [screen/flow/component]", "build me a [screen]", "create the UI for", "design the [dashboard/settings/onboarding]", "design an app icon", "make our app icon better" (an icon request produces an Icon Composer-ready layered package). Also use proactively: any new screen, view, or component in an iOS/SwiftUI project starts here, even when the request is just "add a settings page" and never says design.
 ---
 
 # Design iOS UI
@@ -26,7 +26,7 @@ Gather project context BEFORE dispatching -- the architect designs against these
 | Color + type conventions | `Assets.xcassets` color sets; any DesignSystem/Theme/Tokens file |
 | Component conventions | Existing reusable views -- new components copy their API shape |
 
-No project (greenfield): default to the current iOS target, `NavigationStack`, semantic colors only -- and state those assumptions explicitly in the dispatch.
+No project (greenfield): default to an iOS 26 deployment target (the Liquid Glass floor, which reaches iOS 26 and 27 devices) with iOS 27 APIs behind `#available(iOS 27, *)` where they are the better tool, `NavigationStack`, semantic colors only -- and state those assumptions explicitly in the dispatch. A user who names iOS 27 as the target gets the iOS 27 APIs directly, with no fallbacks.
 
 ### Stage 2: Accessibility pass
 After the architect produces code, dispatch `apple-ui-craft:accessibility-engineer` (with the same `PLUGIN ROOT:` and `REFERENCES:` lines) to audit it. Inline the architect's full Stage 1 SwiftUI output -- or the absolute paths of the files it wrote, when a project exists -- directly into this dispatch prompt: the accessibility-engineer shares no conversation state with Stage 1 and can only Read what it is pointed at. It audits for:
@@ -51,6 +51,17 @@ VoiceOver, Dynamic Type, touch targets, Reduce Motion, contrast.
 ```
 
 Present both outputs to the user. The architect's code is the primary deliverable; the accessibility findings are immediate feedback for refinement.
+
+## App icon requests
+
+When the request is the app icon, the architect follows its icon workflow (`references/design/14-app-icons.md`) and delivers a concept, the directions it weighed, a layer inventory, one SVG per layer, an `icon.json`, and an appearance plan -- written into the project as an `.icon` package when a project exists. Skip Stage 2's accessibility pass; verify with the icon checks below instead.
+
+| Check | Pass condition |
+|---|---|
+| Package complete | Every layer in the inventory has its SVG, and `icon.json` references only files that exist |
+| Schema honest | `icon.json` uses only keys `references/design/14-app-icons.md` documents; compiled with `xcrun actool` when Xcode is available, otherwise the `Validation` line says not run |
+| Renditions considered | The appearance plan covers light, dark, clear and tinted, and names what changes per appearance |
+| Smallest size | The rationale says how the mark reads at the smallest system size and in mono |
 
 ## What the architect produces
 

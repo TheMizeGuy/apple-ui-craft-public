@@ -202,7 +202,7 @@ if hasRealityViewEntity {
 }
 ```
 
-`AudioServicesPlaySystemSound` (iOS 2+), `AVAudioSession` categories (iOS 3+), `AVAudioPlayer` (iOS 2.2+), and `CHHapticEngine` audio events (iOS 13+, see `references/haptics/03-core-haptics-engine.md#audio-and-haptic-sync`) all predate this file's practical floor -- no `#available` gating needed for any of them.
+`AudioServicesPlaySystemSound` (iOS 2+), `AVAudioSession` categories (iOS 3+), `AVAudioPlayer` (iOS 2.2+), and `CHHapticEngine` audio events (iOS 13+, see `references/haptics/03-core-haptics-engine.md#audio-and-haptic-sync`) all predate this file's practical floor -- no `#available` gating needed for any of them, and iOS 27 deprecated none of them. The HIG's "Playing audio" page has not been revised since 2023; this file needs no iOS 27 revision.
 
 ## Pairing sound with haptics
 

@@ -97,6 +97,19 @@ struct TripListView: View {
 
 **Migration:** For iOS 17+ projects, use `@Observable`.
 
+A view OWNS its `@Observable` model with `@State`, not `@StateObject`:
+
+```swift
+struct TripListView: View {
+    @State private var store = TripStore()   // Xcode 27: TripStore() runs ONCE for this view's lifetime
+    var body: some View { ForEach(store.trips) { TripRow(trip: $0) } }
+}
+```
+
+Build with Xcode 27 and `@State` resolves to a Swift macro instead of the `State` property wrapper: Apple documents that "a `State()` property instantiates its default value the first time SwiftUI instantiates the view." Under the old wrapper, that initializer re-ran every time the view struct was re-instantiated, which is why "never construct an expensive object in a `@State` default" was standard advice and why reviewers flagged `@State private var vm = ViewModel()` as an allocation bug. On an Xcode 27 build that finding is dead -- the line above is the recommended shape, and nothing needs an `#available` gate because this is a toolchain behavior (Apple states it back-deploys to iOS 17 aligned OSes). It is still a real bug when the project builds with Xcode 26 or earlier. `references/performance/04-state-architecture.md#state-is-a-macro-when-you-build-with-xcode-27` owns the migration's four source breaks.
+
+For bridging an `@Observable` model into a non-SwiftUI surface (UIKit, a Metal renderer, a `CADisplayLink` loop), iOS 27's `withContinuousObservation` replaces the `withObservationTracking` re-arm loop -- see `references/performance/04-state-architecture.md#bridging-observable-into-a-non-swiftui-surface`.
+
 ## Equatable views
 
 Adding `Equatable` conformance to a view skips body evaluation when inputs haven't changed:
@@ -133,6 +146,8 @@ Use this when:
 - Views have expensive body computation
 - Views appear in long lists
 - Views receive frequently-changing parent state but their own inputs change rarely
+
+**iOS 27 changed what `==` is allowed to consider.** Apple fixed a defect where retroactive conformances of SwiftUI types to `Equatable` were not consulted when SwiftUI compared their values. If a hand-written `==` compares a `Color`, `Font`, `Animation` or other SwiftUI type through an `extension` conformance the app declared itself, that comparison was silently unreliable before iOS 27 and is honored from 27 -- so the body may now be skipped more often, or less. Re-measure any `.equatable()` win on a 27 build instead of assuming it carried over. The safe construction is unchanged and works on every version: compare only your own value types, and make sure every property `body` reads appears in `==`.
 
 ## Stable identifiers in ForEach
 
@@ -233,6 +248,9 @@ Use Instruments with the SwiftUI template. Key metrics:
 | Body evaluations | Views that re-evaluate frequently |
 | Identity changes | ForEach elements losing identity (regenerating views) |
 | Time in body | Views with expensive body computation |
+| Layout-cache misses (Instruments 27) | The stated REASON a layout computation wasn't cached |
+
+Instruments 27 adds a **Summary of Updates** focus action on the SwiftUI instrument's View Hierarchy detail, and records why a layout pass was not cached. That turns "this `GeometryReader` is probably forcing repeated layout" from an argument about source into a reading off the trace. `references/performance/03-launch-memory-instruments.md#hangs-hitches-and-the-swiftui-instrument` owns the full workflow.
 
 ### Self._printChanges
 
@@ -335,6 +353,7 @@ For images shown in lists, decode at target size on a background thread before d
 | Expensive shadow per-frame | Computed every frame | Animate opacity, not radius |
 | GeometryReader as parent | Cascade of layout passes | Use container queries or visualEffect |
 | Missing `.equatable()` on expensive view | Body runs unnecessarily | Add Equatable conformance + `.equatable()` |
+| A class instance or closure as an `@Entry` environment default | Shared mutable state; every reader of the key re-evaluates when it changes. The iOS 27 SDK warns on it | Value-type defaults only; inject live objects with `.environment(instance)` |
 
 ## See also
 

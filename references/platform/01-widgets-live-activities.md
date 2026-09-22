@@ -21,9 +21,36 @@ Widgets put your app's content on the home screen and lock screen. Live Activiti
 | `.systemMedium` | 4x2 grid | Multiple pieces, simple layout |
 | `.systemLarge` | 4x4 grid | Detailed data |
 | `.systemExtraLarge` | 8x4 (iPad) | Spreadsheet-style |
+| `.systemExtraLargePortrait` | Tall extra-large (iOS 27+) | iPhone/iPad Home Screen and Today View, macOS Desktop |
 | `.accessoryCircular` | Lock screen circle | Watch-style indicator |
 | `.accessoryRectangular` | Lock screen text | Status line |
 | `.accessoryInline` | Lock screen line | Plain text under clock |
+
+### `.systemExtraLargePortrait` (iOS 27)
+
+`WidgetFamily.systemExtraLargePortrait` is the one genuinely new WidgetKit family in the iOS 27 SDK (iOS/iPadOS/Mac Catalyst/macOS 27.0, visionOS 26.0; no watchOS or tvOS). It is the tallest slot an iPhone Home Screen has ever offered, and an app whose largest layout stops at `.systemLarge` leaves it empty.
+
+Design it as a taller `.systemLarge` -- more rows of the same content -- not as a rotated `.systemExtraLarge`. The timeline provider and entry type are unchanged; only the view branches.
+
+```swift
+var body: some WidgetConfiguration {
+    AppIntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
+        WidgetView(entry: entry)
+            .containerBackground(.fill.tertiary, for: .widget)
+    }
+    .supportedFamilies(supportedFamilies)
+}
+
+private var supportedFamilies: [WidgetFamily] {
+    var families: [WidgetFamily] = [.systemSmall, .systemMedium, .systemLarge]
+    if #available(iOS 27, *) { families.append(.systemExtraLargePortrait) }
+    return families
+}
+```
+
+Below iOS 27 you omit the family; WidgetKit ignores families the OS does not offer, so a single `supportedFamilies` list built this way serves both floors. On an iOS 27 minimum target the `#available` check goes away and the family is just another array element.
+
+An unhandled `systemExtraLargePortrait` falling into a `switch widgetFamily`'s `@unknown default` compiles fine and looks wrong -- the small layout stretched over a tall canvas. Treat it as a layout gap, not a compile concern.
 
 ## Basic widget
 
@@ -86,19 +113,33 @@ struct Provider: AppIntentTimelineProvider {
 | `.after(date)` | At a specific date -- a request, not a guarantee; the system may service it late under budget pressure |
 | `.never` | Manual refresh only -- pair with `WidgetCenter` reloads or the push path below |
 
-WidgetKit grants each widget a rolling background-refresh budget scaled to how often the user actually looks at it: heavily-viewed widgets get roughly **40-70 reloads/day**, rarely-viewed ones far fewer. This range is OBSERVED behavior, not an Apple-published contract -- the budget is adaptive and tightens further in Low Power Mode. Reloads that spend budget: `.atEnd`/`.after` expirations, `WidgetCenter.shared.reloadTimelines(ofKind:)` / `reloadAllTimelines()`, and background-push reloads. Reloads that don't: on-screen relative/timer text (`Text(date, style: .timer)` / `.relative`), and the automatic reload after an interactive-intent `perform()` -- that's a user action, not a background poll.
+WidgetKit grants each widget a rolling background-refresh budget scaled to how often the user actually looks at it: heavily-viewed widgets get roughly **40-70 reloads/day**, rarely-viewed ones far fewer. This range is OBSERVED behavior, not an Apple-published contract -- the budget is adaptive and tightens further in Low Power Mode and whenever `UIApplication.shared.systemPrefersReducedResourceUsage` is `true` (iOS 27+: the system's explicit "scale back resource-intensive work" signal, with `UIApplication.systemPrefersReducedResourceUsageDidChangeNotification` to observe it). Reloads that spend budget: `.atEnd`/`.after` expirations, `WidgetCenter.shared.reloadTimelines(ofKind:)` / `reloadAllTimelines()`, and background-push reloads. Reloads that don't: on-screen relative/timer text (`Text(date, style: .timer)` / `.relative`), and the automatic reload after an interactive-intent `perform()` -- that's a user action, not a background poll.
 
 Design rule: match reload cadence to the data's real change rate. A widget that reloads every 5 minutes "just in case" exhausts its budget by midday and shows stale data for the rest of the day -- worse than a smart hourly schedule.
+
+`systemPrefersReducedResourceUsage` lives on `UIApplication`, which app extensions cannot touch, so read it in the host app and let it gate the `WidgetCenter` calls the app makes on the extension's behalf:
+
+```swift
+// Host app, not the widget extension.
+func refreshWidgetsIfWorthIt() {
+    if #available(iOS 27, *), UIApplication.shared.systemPrefersReducedResourceUsage {
+        return  // System asked for less work; the timeline's own schedule still runs.
+    }
+    WidgetCenter.shared.reloadTimelines(ofKind: "MyWidget")
+}
+```
+
+Below iOS 27 the nearest approximations are `ProcessInfo.processInfo.isLowPowerModeEnabled` and `thermalState` -- narrower signals that miss the cases the system now tells you about directly.
 
 ### Push-based reloads (iOS 26)
 
 Widgets can be reloaded by a server push instead of only timeline expiration -- built for event-driven data (a score change, a delivery step) where polling would waste budget and still lag:
 
-1. The widget vends a push token, surfaced per-configuration through `WidgetCenter` push info. Forward it to your backend the same way you handle a Live Activity token.
+1. Register a `WidgetPushHandler` type on the configuration with `.pushHandler(MyPushHandler.self)`. WidgetKit instantiates it whenever push tokens change; forward the token to your backend the same way you handle a Live Activity token. (Controls use the parallel `ControlPushHandler` / `ControlWidgetConfiguration.pushHandler(_:)` pair.)
 2. Your server sends an APNs push with **push-type `widgets`** -- topic header `<your-bundle-id>.push-type.widgets`. The push does not carry rendered content; it tells WidgetKit to request a fresh timeline, so `timeline(for:in:)` still runs -- keep it cheap.
 3. Push reloads are still rate-managed by the system, throttled like the background budget -- push buys timeliness, not an unlimited firehose.
 
-Pattern: `Timeline(entries: [entry], policy: .never)` + push, so you never burn budget polling. Confirm the exact symbol names (`WidgetPushHandler` and the push-token accessor) against the Xcode 26 SDK before shipping -- the mechanism is stable; the surface names are newer than the rest of this API.
+Pattern: `Timeline(entries: [entry], policy: .never)` + push, so you never burn budget polling.
 
 ## Interactive widgets (iOS 17+)
 
@@ -215,7 +256,7 @@ WidgetCenter.shared.reloadAllTimelines()
 | One purpose per widget | Don't cram multiple data views |
 | Tap = open relevant deep link | Not just open the app |
 | Use system materials and Liquid Glass | `.containerBackground(.fill.tertiary, for: .widget)` |
-| Test all sizes | Small/Medium/Large/ExtraLarge |
+| Test all sizes | Small/Medium/Large/ExtraLarge/ExtraLargePortrait |
 | Test light + dark | Both modes |
 | No UI controls except buttons (iOS 17+) | No text fields, sliders |
 | Respect Dynamic Type | Use system styles |
@@ -237,10 +278,14 @@ Live Activities show real-time status during an ongoing event. They appear:
 | Workout | EXCELLENT (in-progress fitness) |
 | Ride share | EXCELLENT (driver location) |
 | Timer / stopwatch | EXCELLENT |
-| Music playback | Use system NowPlayingInfoCenter, not Live Activity |
+| Music playback | NO -- the Now Playing framework owns this surface |
 | Long download | OK (but be respectful of attention) |
 | Notifications | NO (use regular push) |
 | Marketing | NO (will be removed) |
+
+Playback is the one "ongoing event" that is never a Live Activity. On an iOS 27 floor the answer is the `NowPlaying` framework: a `MediaSession` observes your app's `MediaSessionRepresentable` model and syncs title, artwork, elapsed time and a typed `[MediaCommand]` list to the Lock Screen, Control Center, Apple Watch and CarPlay -- the first structural replacement for the `MPNowPlayingInfoCenter` dictionary plus `MPRemoteCommandCenter` target-action pair in over a decade. `RemoteMediaSession` covers playback running on another device and carries its own push-to-start and update tokens. Declaring commands as values makes the transport affordances a reviewable list instead of a set of `MPRemoteCommand` handlers that silently do nothing when you forget to register one.
+
+`MPNowPlayingInfoCenter` and `MPRemoteCommandCenter` are not deprecated and stay the `#available(iOS 27, *)` else-branch below the new floor.
 
 ### ActivityAttributes
 
@@ -353,6 +398,41 @@ struct DeliveryActivityWidget: Widget {
 }
 ```
 
+### Dynamic Island in landscape (iOS 27)
+
+iOS 27 presents the compact and minimal Live Activity views in landscape as well as portrait. The pill is width-constrained there, so every shipping Live Activity has a presentation its author never designed: a `compactTrailing` that comfortably held a running timer in portrait gets clipped.
+
+`\.isDynamicIslandLimitedInWidth` reports the constraint. It applies to `compactLeading`, `compactTrailing` and `minimal` -- not to the expanded regions.
+
+```swift
+} compactTrailing: {
+    if #available(iOS 27, *) {
+        AdaptiveCompactTrailing(deadline: context.state.estimatedDelivery)
+    } else {
+        Text(context.state.estimatedDelivery, style: .timer).monospacedDigit()
+    }
+}
+
+@available(iOS 27, *)
+private struct AdaptiveCompactTrailing: View {
+    let deadline: Date
+
+    @Environment(\.isDynamicIslandLimitedInWidth) private var isLimited
+
+    var body: some View {
+        if isLimited {
+            Image(systemName: "timer")          // A glyph of progress, not a number.
+        } else {
+            Text(deadline, style: .timer)
+                .monospacedDigit()
+                .frame(maxWidth: 44)
+        }
+    }
+}
+```
+
+The property itself is iOS 27, so the view that reads it carries `@available` and the pre-27 branch is the unconstrained layout you already ship. An unbranched `compactTrailing` carrying text or a timer is a HIGH finding on an iOS 27 floor.
+
 ## Push updates for Live Activities
 
 For server-driven updates (e.g., delivery status from backend):
@@ -407,6 +487,8 @@ Design update cadence around the real event, not an assumed rate ceiling. Exceed
 | Live Activity that never ends | Persists indefinitely | End when event completes |
 | Push tokens not synced to backend | Updates don't reach activity | Send `activity.pushToken` to server |
 | Heavy view in Dynamic Island | Cropped or rejected | Keep DI views minimal |
+| Compact Dynamic Island view assumes portrait | Clipped in landscape on iOS 27 | Branch on `\.isDynamicIslandLimitedInWidth` |
+| `supportedFamilies` stops at `.systemLarge` | The tallest iOS 27 slot stays empty | Append `.systemExtraLargePortrait` behind `#available(iOS 27, *)` |
 | Same view code for all widget sizes | Bad layout for some | Branch on `widgetFamily` environment value |
 
 ## See also

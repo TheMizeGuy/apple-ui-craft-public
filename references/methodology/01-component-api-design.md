@@ -97,7 +97,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 Button("Save") { save() }.buttonStyle(PrimaryButtonStyle())
 ```
 
-`makeBody(configuration:)` is declared `@ViewBuilder @MainActor`; `BUTTONStyleConfiguration` exposes `.label` and `.isPressed: Bool` (iOS 26 adds `.role` so a style can react to `.destructive`/`.cancel`). Reserve `PrimitiveButtonStyle` for the rare case you must own the interaction yourself (custom gesture, long-press-to-fire, simultaneous gestures) -- it hands you `configuration.trigger()` instead of `isPressed`, so you synthesize press state. 95% of custom buttons should be plain `ButtonStyle`.
+`makeBody(configuration:)` is declared `@ViewBuilder @MainActor`; `ButtonStyleConfiguration` exposes `.label`, `.isPressed: Bool`, and `.role: ButtonRole?` (iOS 15+) so a style can react to `.destructive`/`.cancel`. Reserve `PrimitiveButtonStyle` for the rare case you must own the interaction yourself (custom gesture, long-press-to-fire, simultaneous gestures) -- it hands you `configuration.trigger()` instead of `isPressed`, so you synthesize press state. 95% of custom buttons should be plain `ButtonStyle`.
 
 A style is not a `View`, but it CAN declare `@Environment` -- it resolves when `makeBody` runs:
 
@@ -205,7 +205,7 @@ extension View { func cardEmphasis(_ emphasis: CardEmphasis) -> some View { envi
 // locally override with its own .cardEmphasis(.quiet) without the parent knowing.
 ```
 
-NEVER make callers write `.environment(\.cardEmphasis, .prominent)` directly -- always ship the convenience setter modifier (Apple's own guidance on `EnvironmentValues/subscript(_:)`). Trade-offs specific to component config: environment values are IMPLICIT, so discoverability is lower than an init parameter -- reserve it for genuinely cross-cutting config, keep required per-instance data as explicit `init` parameters; a nested `NavigationStack`/sheet presentation inherits environment from its presenter in modern SwiftUI, but a detached `UIHostingController` root does not, so re-inject theming config at any such boundary.
+NEVER make callers write `.environment(\.cardEmphasis, .prominent)` directly -- always ship the convenience setter modifier (Apple's own guidance on `EnvironmentValues/subscript(_:)`). Keep `@Entry` defaults inert values: against the iOS 27 SDK the macro warns when a default is a class instance or a closure, because a shared reference default couples every reader of the key. A live service belongs in a `@State`-owned `@Observable` injected with `.environment(_:)`. And a presented sheet or popover does not inherit everything: built with the 27 SDK, `controlSize`, `buttonSizing`, `buttonRepeatBehavior`, `menuIndicatorVisibility` and `ButtonBorderShape` reset inside presented content, so a component library that styles through them re-applies the modifier inside each presentation. Trade-offs specific to component config: environment values are IMPLICIT, so discoverability is lower than an init parameter -- reserve it for genuinely cross-cutting config, keep required per-instance data as explicit `init` parameters; a nested `NavigationStack`/sheet presentation inherits environment from its presenter in modern SwiftUI, but a detached `UIHostingController` root does not, so re-inject theming config at any such boundary.
 
 ## Generics and @resultBuilder
 
@@ -219,7 +219,7 @@ struct Badge<Content: View>: View {                         // generic over labe
 }
 ```
 
-`@ViewBuilder` (Apple's built-in result builder) already supports `if`/`else`, `switch`, `for-in`, and `#available` inside any slot -- for 95% of "let the caller pass children" needs, a `@ViewBuilder` closure IS the whole answer; do not write a custom builder for view content. Write a CUSTOM `@resultBuilder` only when children are a DOMAIN type (not `View`) you want declared inline with control flow -- a list of actions, form fields, or menu commands:
+Built with Xcode 27, SwiftUI's own signatures spell the attribute `@ContentBuilder` -- `typealias ContentBuilder = ViewBuilder`, the one builder that now also stands in for `ToolbarContentBuilder` and `CommandsBuilder` at call sites. A component's slot can use either spelling; `@ViewBuilder` keeps compiling with older toolchains, and neither needs an `#available` gate. `@ViewBuilder` (Apple's built-in result builder) already supports `if`/`else`, `switch`, `for-in`, and `#available` inside any slot -- for 95% of "let the caller pass children" needs, a `@ViewBuilder` closure IS the whole answer; do not write a custom builder for view content. Write a CUSTOM `@resultBuilder` only when children are a DOMAIN type (not `View`) you want declared inline with control flow -- a list of actions, form fields, or menu commands:
 
 ```swift
 @resultBuilder
@@ -251,6 +251,7 @@ Default to the plain array. A hand-rolled builder for a 3-call-site component is
 | 8+ non-defaulted `init` parameters | Unreadable call site, brittle to reorder | Data-only `init`; optional config on modifiers/environment |
 | `Bool` flags for variants (`isDestructive:`, `big:`) | Doesn't scale, unreadable at N flags | A semantic enum or `OptionSet` (`role: .destructive`) |
 | Storing a `@ViewBuilder` closure and re-invoking it in `body` | Defeats view identity, can re-run side effects | Capture the built value once in `init` |
+| `@State private var expanded = false` plus `_expanded = State(initialValue: startsExpanded)` in the component's `init` | Xcode 27's `@State` macro rejects a declaration-site value AND an `init` assignment on the same property; it no longer compiles | Declare `@State private var expanded: Bool` with no default and assign once in `init` -- and remember the seed is read only once (`references/performance/04-state-architecture.md#state-ownership-and-the-initialization-trap`) |
 | A public `.modifier(FooModifier())` call site | Leaks an implementation type, reads awkwardly | Wrap in a named `View` extension |
 | `AnyView`-erased style body on a hot list row | Defeats structural diffing at scale | Plain parameterized view or `ViewModifier` instead |
 | `.environment(\.cardStyle, value)` at the call site | Bypasses the intended convenience API | Ship and require the setter modifier |

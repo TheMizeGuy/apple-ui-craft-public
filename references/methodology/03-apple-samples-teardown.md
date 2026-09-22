@@ -7,7 +7,7 @@ An agent asked to "make this feel like a real Apple app" needs more than a list 
 
 ## The Apple way
 
-- One `@Observable` store, injected once at the scene root, read by type anywhere below it -- never passed down as an init parameter.
+- One `@Observable` store, injected once at the scene root with `.environment(_:)`, read by type anywhere below it. That is the samples' pattern for app-wide state; per-screen models still pass through `init` (the cheaper path for previews and tests), and a project with an established injection style keeps it.
 - The top-level navigation SHAPE is chosen by information architecture (list-selects-detail, peer sections, flat utility) and adapts on size class, never on device idiom or a second code path.
 - Toolbars and floating controls group into shared-glass clusters; a lone `.glassEffect()` call is the exception, not the default.
 - Every card, sheet, and hero surface uses continuous ("squircle") corners; a `.circular` corner at hero scale is the fastest tell of a non-Apple screen.

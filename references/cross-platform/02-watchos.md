@@ -1,7 +1,7 @@
 # watchOS Craft
 
 > Owner: `references/cross-platform/02-watchos.md` owns watchOS-specific UI craft -- Digital Crown input, watch navigation/layout/typography, complications, Always-On rendering, and watch notifications -- per the ARCHITECTURE ownership map. Liquid Glass material rules are owned by `references/design/02-liquid-glass.md` (this file states only the watch-specific consequences). `SensoryFeedback` / `.sensoryFeedback` is owned by `references/haptics/02-swiftui-sensory-feedback.md` (`.start`/`.stop` is watchOS-primary but lives there). WidgetKit fundamentals (`TimelineProvider`, container background, App Groups) are owned by `references/platform/01-widgets-live-activities.md`; this file covers only the watch face's accessory families and Smart Stack.
-> Floors: `digitalCrownRotation(_:)` basic binding and the ranged `(_:from:through:by:sensitivity:isContinuous:isHapticFeedbackEnabled:)` overload are **watchOS 6.0+**; only the overload that adds `onChange:`/`onIdle:` closures (event or detent form) is **watchOS 9.0+** -- see `references/_scaffolding/version-floor-registry.md#not-ios-the-1-mis-gate-class` (do not invert these). `NavigationStack` = watchOS 9.0+; `NavigationSplitView` also ships watchOS 9.0+ (Context7-verified) but rarely earns its three columns on a 41-49mm screen. `.tabViewStyle(.verticalPage)` = watchOS 10.0+. `handGestureShortcut(.primaryAction)` (Double Tap) = watchOS 11.0+.
+> Floors: `digitalCrownRotation(_:)` basic binding and the ranged `(_:from:through:by:sensitivity:isContinuous:isHapticFeedbackEnabled:)` overload are **watchOS 6.0+**; only the overload that adds `onChange:`/`onIdle:` closures (event or detent form) is **watchOS 9.0+** -- see `references/_scaffolding/version-floor-registry.md#not-ios-the-1-mis-gate-class` (do not invert these). `NavigationStack` = watchOS 9.0+; `NavigationSplitView` also ships watchOS 9.0+ (Context7-verified) but rarely earns its three columns on a 41-49mm screen. `.tabViewStyle(.verticalPage)` = watchOS 10.0+. `handGestureShortcut(.primaryAction)` (Double Tap) = watchOS 11.0+. `reorderable()` + `reorderContainer(for:isEnabled:move:)` and `TabRole.prominent` = **watchOS 27.0+** (reordering reaches the watch for the first time). `WKExtension` / `WKExtensionDelegate` are deprecated in the watchOS 27 SDK for apps with a minimum deployment target of watchOS 9.2 or later.
 
 A watchOS screen is judged in the two seconds a wrist stays raised: one hero value, one Digital Crown or touch interaction, and text that keeps updating correctly when the display dims. The most common craft failure is treating the watch as a tiny iPhone -- porting `NavigationView`-era chrome, hardcoding `.system(size:)` text, or hand-formatting a countdown string that freezes the instant Always-On dims the screen.
 
@@ -70,7 +70,34 @@ Give the destination its branded backdrop with `containerBackground(_:for: .navi
 List { /* rows */ }.containerBackground(.blue.gradient, for: .navigation)
 ```
 
-`.tabViewStyle(.verticalPage)` (watchOS 10.0+) is the full-screen, crown-driven vertical pager the Workout app uses to page between metrics, controls, and Now Playing -- prefer it over ported horizontal-dot tabs. `.listStyle(.carousel)` scales and centers rows as they scroll under the crown; reserve it for short tappable menus (~10 rows), not long data lists, where `.plain` reads better.
+`.tabViewStyle(.verticalPage)` (watchOS 10.0+) is the full-screen, crown-driven vertical pager the Workout app uses to page between metrics, controls, and Now Playing -- prefer it over ported horizontal-dot tabs. `.listStyle(.carousel)` scales and centers rows as they scroll under the crown; reserve it for short tappable menus (~10 rows), not long data lists, where `.plain` reads better. `TabRole.prominent` (watchOS 27.0+) gives one destination a separate, trailing, visually emphasised slot -- use it for the one screen that must stay reachable from anywhere (the active workout, the running timer), not as a second navigation style.
+
+### Reordering on the wrist (watchOS 27)
+
+`reorderable()` plus `reorderContainer(for:isEnabled:move:)` (watchOS 27.0+) bring drag-to-reorder to watchOS for the first time, and they work in any container -- `List`, `LazyVGrid`, a custom layout -- not just `List`'s `onMove`:
+
+```swift
+@State private var favorites: [Favorite] = Favorite.stored
+
+List {
+    ForEach(favorites) { FavoriteRow($0) }
+        .reorderable()                                   // marks this content draggable
+}
+.reorderContainer(for: Favorite.self) { difference in    // declares the surrounding container
+    let moving = Set(difference.sources)
+    let moved = favorites.filter { moving.contains($0.id) }
+    var remaining = favorites.filter { !moving.contains($0.id) }
+    if case .before(let anchorID) = difference.destination.position,
+       let index = remaining.firstIndex(where: { $0.id == anchorID }) {
+        remaining.insert(contentsOf: moved, at: index)
+    } else {
+        remaining.append(contentsOf: moved)              // .end
+    }
+    favorites = remaining
+}
+```
+
+This removes a standing reason to push editing back to the phone: an ordered list of workouts, shortcuts or favourites is now rearrangeable where the user is looking at it. Below watchOS 27 there is no built-in reordering on the watch at all, so the pre-27 branch is a phone-side editor, not a degraded watch one.
 
 Layout for 41-49mm screens (roughly 176-205 pt after safe-area insets): one flexible column, no fixed pixel widths, keep primary content off the extreme corners since full-bleed art clips against the rounded display. Typography is SF Compact at watch-calibrated Dynamic Type sizes tested independently of the phone's text-size setting (Settings ▸ Display & Brightness ▸ Text Size is watch-local) -- bias the one number that matters to `.title2`/`.largeTitle`, everything else to `.caption`/`.footnote`.
 
@@ -108,6 +135,14 @@ Only the Long Look is customizable (Short Look is system-drawn): declare a `WKNo
 
 Double Tap (`handGestureShortcut(.primaryAction)`, watchOS 11.0+) binds ONE control per screen to the thumb-index pinch gesture; move the binding via `isEnabled:` as the primary action changes rather than leaving two bound at once. Wrist Flick (watchOS 26) is system-only with no developer binding API -- apps benefit automatically by using standard dismissible sheets/alerts instead of a bespoke full-screen modal the system cannot dismiss. Pair every Double Tap binding with `accessibilityQuickAction(style:)` so motor-accessibility users (AssistiveTouch clench) reach the same primary action.
 
+watchOS 27 adds two more system-only affordances of the same shape, with no API to bind: a **single-handed tap gesture opens the focused Smart Stack widget**, and pressing the Digital Crown opens a **dynamic grid of Siri-suggested apps**. `handGestureShortcut(_:isEnabled:)` still documents only `.primaryAction`; inventing a binding for either would be a phantom API. What follows for craft is entirely upstream: both make a well-ranked Smart Stack widget cheaper to reach, which raises the payoff of the relevance work above. Keep the widget's tap target the app's genuine primary action, because one-handed tap now lands on it directly.
+
+## watchOS 27: lifecycle and on-device generation
+
+`WKExtension` and `WKExtensionDelegate` are deprecated in the watchOS 27 SDK for apps whose minimum deployment target is watchOS 9.2 or later -- the last WatchKit-era lifecycle scaffolding. A watch target still routing launch, background refresh or snapshot scheduling through `WKExtensionDelegate` should move to the SwiftUI `App`/`Scene` lifecycle; lowering the deployment target to keep the old path is a stopgap, not a fix. Also fixed in 27: `WCSession.transferCurrentComplicationUserInfo` now works with WidgetKit-built complications, so a workaround built around that bug can be deleted.
+
+Foundation Models reaches the watch in the same release: `LanguageModelSession` lists watchOS 27.0 (it was absent in 26.x), along with the 27.0-era `LanguageModelError`, `Attachment` and `ToolCallingMode` types. `SystemLanguageModel` itself is still documented without watchOS, so check availability through the session's own path rather than assuming the model type is there. A watch screen has no room for a spinner and no patience for one, which makes the streaming and partial-render discipline in `references/platform/06-apple-intelligence-ui.md#foundation-models-sessions-streaming-and-tool-calling-ui` more load-bearing here than on the phone, not less. tvOS has no Foundation Models on any version -- exclude it with `#if os(tvOS)`, not an availability check.
+
 ## Availability + fallbacks
 
 ```swift
@@ -122,6 +157,14 @@ if #available(watchOS 9.0, *) {
         onChange: { _ in }, onIdle: { })
 } else {
     canvas.digitalCrownRotation($stepAsDouble, from: 0, through: 4, by: 1)  // no detent snap pre-9
+}
+
+// watchOS 27 reordering has no watch-side fallback -- below the floor, editing lives on the phone.
+if #available(watchOS 27, *) {
+    favoritesList
+        .reorderContainer(for: Favorite.self) { apply($0) }
+} else {
+    favoritesList                                                // read-only order; edit in the iOS app
 }
 ```
 
@@ -140,10 +183,13 @@ None of this file's motion is system-auto-gated. Custom crown-driven or Double-T
 | Registering Smart Stack relevance for every context | System deprioritizes spammy suggesters | 1-2 genuine, well-chosen moments |
 | Custom full-screen modal with only an on-screen close button | Wrist Flick and system dismissal can't reach it | Standard sheet/alert presentation |
 | Two `handGestureShortcut(.primaryAction)` active at once | Ambiguous Double Tap target | One per screen; move via `isEnabled:` |
+| Sending the user to the phone to reorder a watch list | watchOS 27 reorders in place | `reorderable()` + `reorderContainer(for:isEnabled:move:)` |
+| A watch target still built on `WKExtensionDelegate` | Deprecated in the watchOS 27 SDK at a watchOS 9.2 minimum | SwiftUI `App`/`Scene` lifecycle |
+| Binding a "handler" to the watchOS 27 one-handed tap or Crown app grid | Both are system-only; no such API exists | Invest in Smart Stack relevance instead |
 
 ## Severity guide
 
-CRITICAL: a primary action reachable only by Double Tap or Wrist Flick with no touch/Quick Action equivalent. HIGH: `digitalCrownRotation` missing `.focusable()`, or sensitive data unredacted on wrist-down. MEDIUM: hand-formatted time text that freezes under Always-On, or a Smart Stack card that needs a tap to make sense. LOW: `.high` sensitivity on a fine-adjustment dial. NIT: `.listStyle(.carousel)` applied to a long data list where `.plain` reads better.
+CRITICAL: a primary action reachable only by Double Tap, Wrist Flick, or the watchOS 27 one-handed Smart Stack tap with no touch/Quick Action equivalent. HIGH: `digitalCrownRotation` missing `.focusable()`, or sensitive data unredacted on wrist-down. MEDIUM: hand-formatted time text that freezes under Always-On, a Smart Stack card that needs a tap to make sense, or a watch target still routing lifecycle through `WKExtensionDelegate`. LOW: `.high` sensitivity on a fine-adjustment dial, or an ordered watch list that still sends the user to the phone to rearrange it on a watchOS 27 target. NIT: `.listStyle(.carousel)` applied to a long data list where `.plain` reads better.
 
 ## See also
 
@@ -151,5 +197,6 @@ CRITICAL: a primary action reachable only by Double Tap or Wrist Flick with no t
 - `references/haptics/02-swiftui-sensory-feedback.md#built-in-feedback-types` -- `SensoryFeedback` including `.start`/`.stop` (watchOS-primary, owner)
 - `references/platform/01-widgets-live-activities.md` -- `TimelineProvider`, container background, App Groups (owner)
 - `references/platform/03-controls-standby.md` -- the relevance-scoping table shared with Live Activities and controls (owner)
+- `references/platform/06-apple-intelligence-ui.md#foundation-models-sessions-streaming-and-tool-calling-ui` -- session, streaming, and error UI for the Foundation Models surface that reaches watchOS 27 (owner)
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- 44pt baseline this file's scarce screen real estate must still honor
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate (owner)

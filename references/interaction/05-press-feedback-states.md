@@ -1,7 +1,7 @@
 # Press Feedback States
 
 > Owner: this file owns the press/touch-feedback lifecycle -- `ButtonStyle`/`configuration.isPressed`, asymmetric press-in/press-out timing, multi-property press (scale/dim/shadow), row and card press states, and `.hoverEffect` (pointer/gaze pre-touch feedback). It does NOT own: gesture arena disambiguation (`references/interaction/04-gesture-disambiguation.md`), the `SensoryFeedback` API surface (`references/haptics/02-swiftui-sensory-feedback.md`), or spring-curve vocabulary (`references/animation/02-spring-physics.md`) -- cite, don't restate.
-> Floors: `references/_scaffolding/version-floor-registry.md`. the custom closure form `hoverEffect(in:isEnabled:body:)`, `HoverEffectGroup`, and `CustomHoverEffect` are visionOS 2.0+ ONLY (the registry's Not-iOS class); `hoverEffect(_:)` with `.automatic`/`.highlight`/`.lift` is the iPadOS/tvOS/visionOS 13.4+ path (no-op on iPhone).
+> Floors: `references/_scaffolding/version-floor-registry.md`. the custom closure form `hoverEffect(in:isEnabled:body:)`, `HoverEffectGroup`, and `CustomHoverEffect` are visionOS 2.0+ ONLY (the registry's Not-iOS class); `hoverEffect(_:)` with `.automatic`/`.highlight`/`.lift` is the iPadOS/tvOS/visionOS 13.4+ path (no-op on iPhone). The `inputKinds:` overloads of `onTapGesture`/`onLongPressGesture` are iOS 27.0+ (the long-press one is not on tvOS).
 
 A press is not a tap. The visual press state tracks the finger from touch-down through lift; the tap ACTION is a separate touch-up-inside event that only fires if the finger lifts inside the target. Conflating the two is why some buttons buzz on an aborted press and others feel like they never registered the touch at all.
 
@@ -39,6 +39,47 @@ A touch-DOWN haptic is correct only when touch-down itself is meaningful (a cont
 ```
 
 Full `SensoryFeedback` case catalog and this `condition:` overload's exact signature: `references/haptics/02-swiftui-sensory-feedback.md` (OWNER).
+
+## Input kinds on tap and long press (iOS 27+)
+
+A press-down animation shaped for a fingertip reads wrong under a trackpad pointer, and on iPad and Mac Catalyst the same view receives both. iOS 27 adds an `inputKinds:` parameter to the two modifiers that drive press feedback, so a recipe can exclude the input source it was not designed for:
+
+```swift
+nonisolated func onTapGesture(count: Int = 1, coordinateSpace: some CoordinateSpaceProtocol = .local,
+                              inputKinds: GestureInputKinds = .all,
+                              perform action: @escaping (CGPoint) -> Void) -> some View        // all platforms
+
+nonisolated func onLongPressGesture(minimumDuration: Double = 0.5, maximumDistance: CGFloat = 10,
+                                    inputKinds: GestureInputKinds = .all,
+                                    perform action: @escaping () -> Void,
+                                    onPressingChanged: ((Bool) -> Void)? = nil) -> some View   // NOT tvOS
+```
+
+`onLongPressGesture` keeps `onPressingChanged`, which is what press-feedback recipes key their scale-down and touch-down haptic off -- so the filter costs nothing:
+
+```swift
+@available(iOS 27, *)
+struct TouchOnlyPeek: View {
+    @State private var isPressing = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        CardArt()
+            .scaleEffect(isPressing ? 0.97 : 1)
+            .animation(reduceMotion ? nil : (isPressing ? .spring(duration: 0.14, bounce: 0)
+                                                        : .spring(duration: 0.30, bounce: 0.26)),
+                       value: isPressing)
+            .onLongPressGesture(minimumDuration: 0.4, inputKinds: .directTouch) {
+                openPeek()
+            } onPressingChanged: { isPressing = $0 }
+            .sensoryFeedback(.selection, trigger: isPressing) { was, now in !was && now }
+    }
+}
+```
+
+Below iOS 27, use the unlabelled `onLongPressGesture(minimumDuration:maximumDistance:perform:onPressingChanged:)` / `onTapGesture(count:coordinateSpace:perform:)` and accept every input source -- the press feel is slightly wrong under a pointer, not broken. Note the missing tvOS availability on the long-press overload when writing a cross-platform style. The option-set vocabulary and the nine gesture types that gained the same parameter are owned by `references/interaction/04-gesture-disambiguation.md#input-kinds-partitioning-by-hardware-ios-27` (OWNER).
+
+Filtering is a refinement, never a substitute for a real `Button`: a tap target that must be pressable, cancellable and accessible is still `Button` + `ButtonStyle`, with `inputKinds:` reserved for the cases where a pointer click and a direct touch genuinely mean different things.
 
 ## Asymmetric press-in vs. press-out
 

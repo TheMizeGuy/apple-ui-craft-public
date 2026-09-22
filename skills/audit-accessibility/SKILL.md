@@ -47,6 +47,7 @@ matrix (what changes under each accessibility setting).
 - Per-finding: WCAG criterion + level, affected assistive technology, concrete SwiftUI rewrite
 - Settings matrix: behavior under Reduce Motion, Reduce Transparency, Increase Contrast,
   Bold Text, AX text sizes, VoiceOver, Switch Control
+- Accessibility Nutrition Label readiness: which App Store accessibility claims the audited scope could honestly make, and the finding blocking each one it cannot
 - Top 3 priority actions
 
 All findings are advisory. The user chooses what to apply.

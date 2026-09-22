@@ -33,7 +33,7 @@ information architecture, error recovery, adaptive layout, density -- because
 those had no regression protection at all. The visual dimensions, animation,
 haptics, VoiceOver, performance and platform integration have **no labels here**;
 read any recall number as recall over the labelled dimensions, never as coverage
-of the plugin's twenty-four.
+of the plugin's twenty-five.
 
 **Fixtures are read, not compiled.** There is no Xcode target, so an editor
 resolving them against the host macOS SDK will flag iOS-only API

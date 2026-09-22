@@ -1,7 +1,7 @@
 # Media and Rich Content
 
 > Owner: `references/design/11-media-content.md` owns video playback (`VideoPlayer`/AVKit, Picture in Picture), Live Photos, HDR still-image display, and Photos import (`PhotosPicker`), per the ARCHITECTURE ownership map. `AsyncImage` semantics and list-cell image loading/caching are owned by `references/performance/02-scroll-list-performance.md` -- cite it, don't restate. Swift Charts is owned by `references/design/09-swift-charts.md`.
-> Floors: `VideoPlayer` iOS 14.0+; `PhotosPicker` iOS 16.0+; `Image.DynamicRange`/`allowedDynamicRange` iOS 17.0+; `AVCaptureSlider` **AVFoundation** iOS 18.0+ (not AVKit -- see below). See `references/_scaffolding/version-floor-registry.md` for the full matrix.
+> Floors: `VideoPlayer` iOS 14.0+; `PhotosPicker` iOS 16.0+ (unchanged in iOS 27); `Image.DynamicRange`/`allowedDynamicRange` iOS 17.0+; `AVCaptureSlider` **AVFoundation** iOS 18.0+ (not AVKit -- see below); `photosReferenceImageViewer(...)` and the shared-album sheets iOS 27.0+. See `references/_scaffolding/version-floor-registry.md` for the full matrix.
 
 Apple ships a system player, picker, and Live Photo view for nearly every media surface -- the craft failure is almost always reaching for a custom bridge (or a raw `AVPlayerLayer`) when the system component already gives correct transport, captions, and accessibility for free, or forgetting the one accessibility contract every media surface shares: no autoplay without a motion check, and no silent color-inversion trap.
 
@@ -144,6 +144,26 @@ PhotosPicker(selection: $items, maxSelectionCount: 5, selectionBehavior: .ordere
 
 `PHPickerFilter` composes `.images`, `.videos`, `.livePhotos`, `.screenshots`, `.panoramas`, `.bursts`, `.cinematicVideos`, `.slomoVideos`, `.depthEffectPhotos`, `.timelapseVideos` via `.any(of:)`/`.all(of:)`/`.not(_:)`. `loadTransferable(type: Image.self)` is convenient for display; for anything you upload, resize, or persist, load `Data`/a custom `Transferable` -- `Image.self` can't be resized/inspected and drops silently on failure.
 
+`PhotosPicker` itself is unchanged in iOS 27 -- PhotoKit shipped no 2026 updates. What did arrive are more system surfaces beside it.
+
+### System photo surfaces (iOS 27)
+
+Adopting a system surface buys correct Liquid Glass chrome, correct privacy affordances and correct accessibility for free -- the same argument that favours `PhotosPicker` over a custom grid. A hand-built shared-album creation flow on iOS 27 is reinventing a system sheet.
+
+```swift
+// iOS 27.0+ / iPadOS 27.0+ / Mac Catalyst 27.0+ / macOS 27.0+ (the viewer is NOT on visionOS)
+@State private var referenceAsset: PHAsset?
+
+contentView
+    .photosReferenceImageViewer(asset: $referenceAsset) { result in
+        if case .failure = result { showProcessingError = true }
+    }
+```
+
+Overloads take `fileURL:`, `pickerItem:` or `pickerResult:` in place of `asset:`. The shared-album family is `photosSharedAlbumCreationSheet(isPresented:defaultTitle:defaultSharingPolicy:photoLibrary:onCompletion:)`, `photosSharedAlbumPostingSheet(isPresented:items:defaultAlbumIdentifier:photoLibrary:completion:)` and `photosSharedAlbumCustomizationSheet(isPresented:albumIdentifier:photoLibrary:onCompletion:)`, all iOS 27.0 including visionOS.
+
+Below iOS 27 there is no system equivalent: present your own viewer or sheet over `PHPhotoLibrary`, and gate the adoption rather than shipping a blank surface.
+
 ### Camera capture surfaces
 
 There is still no pure-SwiftUI camera preview -- bridge `AVCaptureVideoPreviewLayer` via `UIViewRepresentable`. The physical Camera Control surface (iPhone 16+) exposes app parameters through **`AVFoundation`**, not AVKit:
@@ -156,11 +176,13 @@ session.controls.append(slider)
 
 `AVCaptureSystemZoomSlider`/`AVCaptureSystemExposureBiasSlider` mirror the built-in Camera app for free; `AVCaptureSlider(_:symbolName:in:)` (continuous) or `AVCaptureSlider(_:symbolName:values:)` (discrete) expose a custom parameter. `.onCameraCaptureEvent { }` (SwiftUI, AVKit, iOS 18+) is the hardware-button hook (volume buttons, Camera Control press, AirPods H2 stem click on iOS 26) -- always ship an on-screen shutter too, since Switch Control/VoiceOver users and unsupported hardware need it.
 
+On folding hardware a camera UI can no longer hard-code "front camera = selfie, shown on this display": which direction a capture device faces depends on the pose and on which display the UI is on, so a flip-camera control built on a fixed `AVCaptureDevice.Position` mapping will point the wrong way in some poses. AVKit's `AVCaptureDeviceDirectionCoordinator` is the source of truth for labelling and orienting those controls, and it pairs with SwiftUI's `CameraCaptureAccessory` scene for outer-display preview. Both land in Apple's September 2026 / 27.1-era wave rather than iOS 27.0 -- **treat them as beta, gate behind `#available(iOS 27.1, *)`, and verify against the installed SDK before shipping.** Below that floor, `AVCaptureDevice.Position` is what exists, and it is pose-unaware.
+
 ## Text over images: scrim and progressive blur
 
 Text set directly on a photo is a legibility defect: contrast depends on whatever pixels sit behind each glyph. A full-frame dim (`Color.black.opacity(0.5)` over everything) reads, but dulls the very image the layout is built around. The two shipping-grade treatments:
 
-**Gradient scrim** — the default. The image displays untouched, then converges into a text-readable zone behind the copy:
+**Gradient scrim** -- the default. The image displays untouched, then converges into a text-readable zone behind the copy:
 
 ```swift
 Image("hero")
@@ -179,7 +201,7 @@ Image("hero")
     .overlay(alignment: .bottomLeading) { heroCopy.padding() }
 ```
 
-**Progressive blur (masked material)** — the premium layer on top of the scrim. There is no public "variable blur" modifier; the sanctioned form is a material fill masked by a `LinearGradient`, so blur ramps up toward the text zone while the rest of the image stays sharp (this is the pattern Apple's own media-catalog sample uses):
+**Progressive blur (masked material)** -- the premium layer on top of the scrim. There is no public "variable blur" modifier; the sanctioned form is a material fill masked by a `LinearGradient`, so blur ramps up toward the text zone while the rest of the image stays sharp (this is the pattern Apple's own media-catalog sample uses):
 
 ```swift
 .overlay {
@@ -197,7 +219,9 @@ Image("hero")
 }
 ```
 
-Rules: verify the copy's contrast against the *darkest converged region* of the scrim, not the image average; keep the gradient's onset below the focal subject so the transition never bands across a face; a Reduce Transparency check matters here — materials collapse to near-opaque, so the masked-material variant degrades gracefully by design (see `references/accessibility/03-visual-accessibility.md`).
+Rules: verify the copy's contrast against the *darkest converged region* of the scrim, not the image average; keep the gradient's onset below the focal subject so the transition never bands across a face; a Reduce Transparency check matters here -- materials collapse to near-opaque, so the masked-material variant degrades gracefully by design (see `references/accessibility/03-visual-accessibility.md`).
+
+The same arithmetic governs glass controls floating over media, and the HIG gives a number: clear Liquid Glass is only for components over visually rich backgrounds, and "if the underlying content is bright, consider adding a dark dimming layer of 35% opacity. If the underlying content is sufficiently dark, or if you use standard media playback controls from AVKit that provide their own dimming layer, you don't need to apply a dimming layer." AVKit's own transport already carries its dimming, which is one more reason a custom overlay player starts behind. `references/design/02-liquid-glass.md#clear-glass-needs-a-dimming-layer` owns the rule and the code.
 
 ## Availability + fallbacks
 
@@ -250,7 +274,7 @@ CRITICAL: autoplay with no motion/setting gate, or flashing media with no `acces
 
 ## See also
 
-- `references/performance/02-scroll-list-performance.md` -- `AsyncImage` caveats, custom cached/downsampled image loaders for lists (owner)
+- `references/performance/02-scroll-list-performance.md` -- `AsyncImage` caveats and the iOS 27 `URLRequest`/`asyncImageURLSession(_:)` caching story, custom cached/downsampled image loaders for lists (owner)
 - `references/design/09-swift-charts.md` -- Swift Charts data visualization (owner)
 - `references/accessibility/03-visual-accessibility.md` -- Reduce Transparency, Smart Invert, seizure safety (owner)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate (owner)

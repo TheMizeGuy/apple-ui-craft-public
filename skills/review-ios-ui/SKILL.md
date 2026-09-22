@@ -1,7 +1,7 @@
 ---
 name: review-ios-ui
 description: |-
-  Review existing iOS UI code for Apple-native quality. Dispatches 3 specialists in parallel: apple-ui-reviewer (HIG + visual + Liquid Glass + window economy + task flow + information architecture + error recovery + adaptive layout), animation-haptics-engineer (motion + tactile), and accessibility-engineer (VoiceOver + Dynamic Type + contrast + motor). Merges findings into a unified report with per-dimension verdicts. Triggers on "review my iOS UI", "check this screen", "does this feel Apple-native?", "audit the UI", "HIG review", "can a user actually finish this flow?", "why does my iPad build waste the screen?", "it breaks at large text sizes". Also use proactively after any work that built or modified SwiftUI/UIKit UI: run it on the diff before claiming done, even when nobody asked for a review. When accessibility is the whole ask ("is my app accessible?"), use audit-accessibility instead.
+  Review existing iOS UI code for Apple-native quality. Dispatches 3 specialists in parallel: apple-ui-reviewer (HIG + visual + Liquid Glass + window economy + task flow + information architecture + error recovery + adaptive layout), animation-haptics-engineer (motion + tactile), and accessibility-engineer (VoiceOver + Dynamic Type + contrast + motor). Merges findings into a unified report with per-dimension verdicts. Triggers on "review my iOS UI", "check this screen", "does this feel Apple-native?", "audit the UI", "HIG review", "can a user actually finish this flow?", "why does my iPad build waste the screen?", "it breaks at large text sizes", "review my app icon". Also use proactively after any work that built or modified SwiftUI/UIKit UI: run it on the diff before claiming done, even when nobody asked for a review. When accessibility is the whole ask ("is my app accessible?"), use audit-accessibility instead.
 ---
 
 # Review iOS UI
@@ -13,7 +13,7 @@ This skill dispatches 3 specialist agents in parallel. Resolve the plugin root f
 ```
 1. apple-ui-craft:apple-ui-reviewer
    - Scope: all files in the review scope
-   - Reviews: HIG, Liquid Glass, typography, color, SF Symbols, navigation, layout, micro-interactions
+   - Reviews: HIG, Liquid Glass, typography, color, SF Symbols, navigation, layout, micro-interactions, and the app icon when icon artwork is in scope
 
 2. apple-ui-craft:animation-haptics-engineer
    - Scope: same files

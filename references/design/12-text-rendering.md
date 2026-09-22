@@ -1,7 +1,7 @@
 # Advanced Text Rendering
 
 > Owner: this file owns `TextRenderer`, `Text.Layout`, per-glyph/line text effects, `Text` composition, `AttributedString` in `Text`, and text-fitting (`lineLimit`, truncation, scaling). `references/design/03-typography-dynamic-type.md` owns font styles, weight/width/design, and inline spacing controls (`tracking`, `kerning`, `baselineOffset`, `leading`) -- cite it, don't restate. `references/design/13-canvas-shaders.md` owns writing and profiling Metal shaders; this file owns using a `Shader` to fill text.
-> Floors: cite `references/_scaffolding/version-floor-registry.md`. Headline floor: `TextRenderer` requires **iOS 18.0+** -- DocC's `draw(layout:in:)` method page and the `Text.Layout` struct page both read "iOS 17.0+"; that is a DocC artifact, not the real floor. Gate everything TextRenderer-shaped on 18. Individual `Text.Layout` members can carry an earlier availability than the protocol that produces them -- see `Text.Layout.DrawingOptions` below.
+> Floors: cite `references/_scaffolding/version-floor-registry.md`. iOS 27 added no `TextRenderer`, `Text.Layout` or `AttributedString`-display API -- the only change in this file's surface is behavioral, and it is under Text selection. Headline floor: `TextRenderer` requires **iOS 18.0+** -- DocC's `draw(layout:in:)` method page and the `Text.Layout` struct page both read "iOS 17.0+"; that is a DocC artifact, not the real floor. Gate everything TextRenderer-shaped on 18. Individual `Text.Layout` members can carry an earlier availability than the protocol that produces them -- see `Text.Layout.DrawingOptions` below.
 
 `Text` in SwiftUI is a value type that composes: differently-styled runs, inline SF Symbols, and auto-formatted numbers/dates all wrap and Dynamic-Type-scale as one paragraph. `TextRenderer` (iOS 18+) lets you replace the drawing of that paragraph entirely, glyph by glyph, without dropping to Core Text or UIKit -- the most common way this goes wrong is moving text into a `Canvas` to get a custom effect, which silently erases the text from VoiceOver.
 
@@ -242,6 +242,24 @@ Text(order.confirmationCode)      // "8F3K-92QX"
 
 `.textSelection(_:)` propagates to descendants; override a subtree with `.textSelection(.disabled)`. Enable for confirmation/2FA codes, IDs, addresses, phone numbers, error/log detail, quotes, formatted dates/amounts users may paste. Leave disabled for buttons, nav titles, ephemeral labels, tab bars. Editable selection (iOS 18+): `TextField`/`TextEditor` take a `Binding<TextSelection?>` to read/set the caret or range programmatically.
 
+`.textSelection(_:)` itself is still iOS 15.0, but what it *does* changed. Apple: "In apps built with the iOS 27.0 and iPadOS 27.0 SDKs, a `Text` view with `.textSelection(.enabled)` applied now supports user-interactive selection using the system text selection UI. Previously, selectable `Text` views on iOS and iPadOS offered selection functionality through a callout menu." Selection is drag handles now, not a long-press menu.
+
+That is a silent recompile-time behavior change with a real regression: a `Text` carrying both `.textSelection(.enabled)` and a custom tap or drag gesture can now lose that gesture to the system selection handles. Apple names the fix:
+
+```swift
+Text(transcript.line)
+    .textSelection(.enabled)
+    .highPriorityGesture(                       // beats the system selection gesture
+        TapGesture().onEnded { jumpToTimestamp(transcript.timestamp) }
+    )
+```
+
+Put that on a pre-ship checklist for any 27-SDK rebuild: audit every selectable `Text` that also carries a gesture. Building against the 26 SDK keeps the old callout-menu behavior, which is the only "fallback" here -- there is nothing to gate at runtime.
+
+The same release fixed the composition gap: a custom `TextRenderer` applied with `.textRenderer(_:)` now takes effect on selectable text, where it was previously dropped. An animated-text effect and selectable body copy finally coexist.
+
+Field chrome is a separate axis and is not this file's: iOS 27 adds `.textFieldStyle(.bordered)` with `textInputBorderShape(_:)` (`.automatic` / `.capsule` / `.roundedRectangle`) as the sanctioned replacement for a plain field wrapped in a hand-drawn `RoundedRectangle` overlay. `references/patterns/02-forms-data-entry.md` owns it.
+
 ## Non-Latin typesetting
 
 When a `Text`'s content language differs from the UI language, tell SwiftUI so it uses that language's line height and breaking rules -- wrong typesetting clips tall scripts (Thai, Devanagari, Arabic) or breaks CJK lines illegally:
@@ -266,6 +284,7 @@ Use `.explicit` behavior for content whose language you know at runtime (user-ge
 | Drawing text inside a `Canvas` for a custom look | `Canvas` is invisible to VoiceOver | `TextRenderer` -- keeps the semantic `Text` intact |
 | `.frame(height: 44)` on a text row | Truncates at large Dynamic Type | `.minHeight`, let it grow |
 | `minimumScaleFactor` with no `lineLimit` set | Does nothing | Add a finite `lineLimit` first |
+| A custom tap/drag gesture on a `Text` that is also `.textSelection(.enabled)` | Under the 27.0 SDK the system selection handles swallow it | `.highPriorityGesture(...)` for the gesture that must win |
 | Glow/blur from a `TextRenderer` clipped at the edge | Effect draws outside the text's frame | `.padding()` around the `Text` |
 
 ## Severity guide

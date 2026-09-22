@@ -117,6 +117,15 @@ nowhere else.
 Manager both change `horizontalSizeClass` live. A layout that reads the size
 class once in `init` or caches a branch decision will not update.
 
+**Continuous resizing on iPad is no longer opt-in.** In apps built with the iOS
+27.0 SDK, iPad windows resize regardless of the app's declared orientations,
+and iPhone Mirroring applies the same freedom. `UIRequiresFullScreen` no longer
+buys immunity either -- it only downgrades continuous resizing to discrete steps,
+each delivered as a new `UIScreen` with updated bounds. Declaring portrait-only,
+or leaving the full-screen flag set, no longer buys a fixed size -- it only leaves the app untested at the sizes it will now be
+given. Every iPad layout has to survive an arbitrary, live-changing window, so
+the Stage Manager row above is the default case rather than an edge one.
+
 ## 4. Dynamic Type is the platform's zoom
 
 Web reflow at 320px and 200% zoom has a direct iOS analogue, and it is stricter:
@@ -228,6 +237,7 @@ alongside it.
 | `.frame(width:)` on content | Answers the size proposal with a number | Intrinsic sizing, or `maxWidth` |
 | `UIScreen.main.bounds` | Describes hardware the app may not own; wrong under Split View, Stage Manager, and Mac | The window's own geometry, or `containerRelativeFrame` |
 | `UIDevice.current.userInterfaceIdiom` branching | The idiom does not change when the window does | `horizontalSizeClass` |
+| Declared orientations or `UIRequiresFullScreen` relied on to pin an iPad size | Apps built with the iOS 27.0 SDK resize regardless -- `UIRequiresFullScreen` only makes the resize discrete, not absent -- and iPhone Mirroring does the same | Treat arbitrary, live-changing window size as the default case |
 | `ViewThatFits` whose last candidate overflows | The system renders it anyway | The last candidate is the always-fits one |
 | `GeometryReader` to size a child | Takes all offered space; collapses the surrounding layout | `containerRelativeFrame`, or `ViewThatFits` |
 | `minimumScaleFactor` on body text | Undoes the accessibility setting the user chose | Reflow with `ViewThatFits` or `AnyLayout` |

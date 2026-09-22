@@ -11,6 +11,9 @@ A screen where every animation belongs to one motion family reads as designed by
 - First-party apps commit to ONE motion personality and hold it everywhere. The personality axis runs from utility (fast, minimal overshoot -- Calculator, Settings) through standard tactile (visible spring settle -- Home Screen, Sheets, Dynamic Island) to expressive (pronounced bounce reserved for content and celebration -- Journal onboarding, Fitness rings). Pick the point on that axis that matches the app's job, then stop picking.
 - The palette is at most THREE DISCRETE-STATE springs: quick feedback, standard interaction, expressive settle. Every `withAnimation`/`.animation` call site that flips a discrete state uses one of the three, and a fourth discrete-state spring means one of the first three was chosen wrong. Continuous and lifecycle motion is counted separately and is NOT palette drift: gesture-tracking interactive springs (`references/animation/05-gesture-driven.md#interactive-springs-for-gesture-handoff`) and the asymmetric press-in/press-out pair (`references/interaction/05-press-feedback-states.md#asymmetric-press-in-vs-press-out`, which occupies one slot as a pair, not two springs) both sit outside the count. So does a depth variant of a palette spring applied to background layers -- `references/animation/02-spring-physics.md#composing-springs` is the precedent for that exemption, not proof of containment.
 - Motion earns its slot by frequency: the more often a person triggers a surface, the less it may animate. Rare moments get the delight budget; hundred-times-a-day paths get speed.
+- Personality can legitimately vary by INPUT SOURCE, because the platform already does it: the HIG's Motion page states that Liquid Glass "responds to direct touch interaction with greater emphasis to reinforce the feeling of a tactile experience, but produces a more subdued effect when a person interacts using a trackpad." A quieter variant of a palette spring under a pointer is following the system, not drifting from the palette. Partitioning the gesture itself by hardware is `references/interaction/04-gesture-disambiguation.md#input-kinds-partitioning-by-hardware-ios-27` (OWNER).
+
+The doctrine in this file is unchanged by iOS 27: the HIG's Motion page was last revised in the iOS 26 cycle (for Liquid Glass), and Apple shipped no iOS 27 change to `Animation`, `Spring`, `PhaseAnimator`, `KeyframeAnimator`, the keyframe family, `ContentTransition`, `matchedGeometryEffect`, `matchedTransitionSource` or `.navigationTransition(.zoom)`. The only iOS-27 additions in the animation surface are the two navigation transitions owned by `references/animation/04-transitions-geometry.md#cross-fade-navigation-transition-ios-27`.
 
 ## The locked palette as tokens
 
@@ -102,6 +105,12 @@ ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                    value: hasAppeared)
 }
 ```
+
+## Evidence: measuring motion smoothness (Xcode 27)
+
+A palette argument is a taste argument until it is measured. Xcode 27's Organizer replaces the old Scrolling metric with a **Hitches** metric that reports animation hitches across ALL animations in the app, not only scrolling -- so a claim that a transition or a gesture-driven settle is janky can now be backed by a field number, not a demo. The Animation Hitches instrument additionally supports visionOS 27+ devices, and the SwiftUI instrument now records why a layout pass was not cached and offers a Summary of Updates action in the View Hierarchy.
+
+Before Xcode 27, the available evidence was the Scrolling metric plus the Animation Hitches instrument on device, and `MetricKit`'s `scrollHitchTimeRatio` (iOS 14+) in the field -- all scroll-shaped, which is why non-scroll motion complaints historically arrived as opinions. Frame-budget numbers and the instrument workflow are owned by `references/performance/03-launch-memory-instruments.md#hangs-hitches-and-the-swiftui-instrument`.
 
 ## Accessibility contract
 

@@ -17,7 +17,7 @@ Bridges the gap between "code that compiles" and "UI that feels right." Existing
 
 Run `ios-code-review` for "will Apple accept this?" Run `apple-ui-craft` for "will users love this?"
 
-Targets **iOS 26** (Liquid Glass, `.sensoryFeedback`, `@Observable`, App Intents, Foundation Models). iOS 27 beta APIs are quarantined behind `#available` + an SDK-verify caveat. Availability floors are Context7-verified and centralized in `references/_scaffolding/version-floor-registry.md`.
+Targets **iOS 26 and iOS 27** (Liquid Glass, `.sensoryFeedback`, `@Observable`, App Intents, Foundation Models, and the iOS 27 toolbar, reorder, Siri AI and MetricKit surfaces). iOS 27.0 APIs lead where they are the right tool, gated with an iOS 26 fallback; only still-beta point-release symbols (iOS 27.1/27.2) are fenced. Availability floors are Context7-verified and centralized in `references/_scaffolding/version-floor-registry.md`.
 
 ## Installation
 
@@ -53,14 +53,14 @@ Manual alternative: `git clone https://github.com/TheMizeGuy/apple-ui-craft-publ
 | `apple-ui-architect` | Greenfield design + production SwiftUI |
 | `apple-ui-reviewer` | HIG + visual + Liquid Glass audit |
 | `animation-haptics-engineer` | Motion, interaction/feel, tactile feedback |
-| `accessibility-engineer` | VoiceOver, Dynamic Type, motion, localization, full a11y |
+| `accessibility-engineer` | VoiceOver, Dynamic Type, motion, localization, full a11y, App Store Accessibility Nutrition Label readiness |
 | `performance-engineer` | SwiftUI rendering, scroll, state, launch, memory |
-| `platform-engineer` | Widgets, Live Activities, App Intents, Apple Intelligence + cross-platform |
+| `platform-engineer` | Widgets, Live Activities, App Intents and Siri AI, Apple Intelligence + cross-platform |
 | `craft-team-lead` | Inlined `general-purpose` orchestrator for `craft-ios-ui`; Agent access depends on runtime grants and nesting depth |
 
 ## Reference library
 
-**93 reference files** (~23,500 lines) in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 13 content domains plus `_scaffolding` (14 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
+**94 reference files** in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 13 content domains plus `_scaffolding` (14 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
 
 ```
 references/
@@ -96,7 +96,7 @@ Per-domain file counts:
 
 | Domain | Files | Domain | Files |
 |---|--:|---|--:|
-| design | 13 | interaction | 6 |
+| design | 14 | interaction | 6 |
 | patterns | 11 | cross-platform | 6 |
 | platform | 9 | usability | 5 |
 | performance | 8 | exemplars | 5 |
@@ -105,7 +105,7 @@ Per-domain file counts:
 | | | review | 4 |
 | | | `_scaffolding` | 3 |
 
-**Total: 93 files** across 13 content domains plus `_scaffolding`.
+**Total: 94 files** across 13 content domains plus `_scaffolding`.
 
 The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the single source of truth for availability floors, deprecated APIs, and the PHANTOM list -- APIs that do not exist and must never be emitted. Every reference file cites it rather than restating floors.
 
@@ -155,7 +155,7 @@ The session that runs a skill chooses the model for each agent it dispatches (Op
 ## Backed by
 
 - 88-file iOS Development vault (~103,000 lines), distilled into the reference library
-- A Context7-verified version-floor registry (iOS 16 through iOS 27 beta)
+- A version-floor registry verified against Apple's symbol metadata (iOS 13 through iOS 27, with the 27.1/27.2 beta tier fenced)
 - GoodMem Learnings for prior debugging and audit findings
 - serena for symbol-level project navigation
 - Context7 for live Apple framework docs

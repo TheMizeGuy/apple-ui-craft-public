@@ -52,6 +52,8 @@ Group { showList ? AnyView(ListView(items)) : AnyView(EmptyStateView()) }
 
 If a single statement has MANY of {overloaded operators, untyped numeric literals, heterogeneous collection literals, different-typed conditional branches, inferred closure element types}, it is a type-check risk regardless of line count. The fix is always the same shape: cut it into smaller, explicitly-typed pieces.
 
+**`@ContentBuilder` is one more of these contexts, not a new kind of problem.** Build with Xcode 27 and `ContentBuilder` -- documented as a `typealias` for `ViewBuilder` -- is the unified replacement for type-specific builders like `ToolbarContentBuilder` and `CommandsBuilder`, and the new iOS 27 SwiftUI APIs take it in their signatures (`swipeActions(edge:allowsFullSwipe:content:onPresentationChanged:)` takes `@ContentBuilder content: () -> some View`). Apple has been tuning its type-check cost through the 27 betas. Nothing about the fix hierarchy changes: annotate types at the seams, split long bodies, and measure with `-warn-long-expression-type-checking`. Below the 27.0 SDKs, use `ViewBuilder`, `ToolbarContentBuilder` and `CommandsBuilder` individually.
+
 ## AnyView: the compile-time crutch that is a runtime tax
 
 Developers reach for `AnyView` to SILENCE the type-checker ("unable to type-check," "return types don't match"), trading a compile-time problem for a runtime one -- almost always the wrong trade.
@@ -155,6 +157,15 @@ Reduce the recompilation blast radius:
 - **Split into modules / local SwiftPM packages.** Only the edited module and its dependents rebuild; siblings stay cached. The highest-leverage STRUCTURAL fix for a large app -- convert stable, leaf-y code (design system, models, networking) into local packages.
 - **Declare input/output files on every Run Script build phase** (SwiftGen, SwiftLint, R.swift, etc.). Without them the phase runs on EVERY build and serializes the graph; with them Xcode skips the phase when inputs are unchanged.
 
+## Xcode 27 toolchain changes worth a migration pass
+
+The Swift dependency scanner was optimized to skip redundant setup and header searches when looking up Clang modules within a single dependency-scan action, which materially speeds up scanning. It comes with a requirement: **every Clang module reachable from one Swift dependency-scan action must have a unique module name.** If two module maps visible to the same scan declare a Clang module with the same name, the scan may report an error where Xcode 26 silently tolerated the duplicate. Apple names the two common causes -- a project or SDK vending the same Clang module name from more than one location on the header search path, and vendored third-party sources shipping a `module.modulemap` that redeclares an SDK module. Audit for duplicate module names BEFORE attributing an Xcode 27 scan failure to anything else.
+
+Two smaller items from the same release:
+
+- **LLDB imports explicitly built Swift modules and PCH straight from DerivedData**, which can dramatically speed up the first expression or `po` in a debug session involving a bridging header. If a team disabled explicitly built modules to work around debugger slowness, re-measure.
+- **The ld64 linker is removed** -- `-ld_classic` is no longer supported. Strip it from `OTHER_LDFLAGS`; a lingering copy is now a hard link failure rather than a legacy opt-in.
+
 ## Cross-module optimization (Release, opt-in)
 
 Enable via `OTHER_SWIFT_FLAGS -cross-module-optimization` in Xcode (SwiftPM: `-Xswiftc -cross-module-optimization`), paired with `@inlinable` on the APIs you want inlined across module boundaries. This is a build-setting flag, not a named Xcode toggle -- lets the optimizer inline across module boundaries for better runtime performance at the cost of longer, coarser-grained Release builds. Release-only; never Debug.
@@ -171,6 +182,8 @@ Enable via `OTHER_SWIFT_FLAGS -cross-module-optimization` in Xcode (SwiftPM: `-X
 | A Run Script phase with no declared input/output files | Runs and serializes the build graph on every build | Declare inputs/outputs so Xcode can skip it |
 | `-O` added to Debug "to test performance" | Wrecks the incremental edit loop | Profile a Release/Instruments build instead |
 | Chasing an editor-only "unable to type-check" squiggle | SourceKit's interactive budget is smaller than `xcodebuild`'s | Confirm against a clean command-line build first |
+| A vendored `module.modulemap` redeclaring an SDK Clang module | The Xcode 27 dependency scanner requires unique module names and errors instead of tolerating it | Rename the vendored module before blaming the toolchain |
+| `-ld_classic` left in `OTHER_LDFLAGS` | ld64 is removed in Xcode 27 -- the flag is no longer supported | Delete it |
 
 ## See also
 

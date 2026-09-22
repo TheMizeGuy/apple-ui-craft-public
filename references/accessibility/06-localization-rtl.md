@@ -1,7 +1,7 @@
 # Localization, RTL, and String Catalogs
 
 > Owner: `references/accessibility/06-localization-rtl.md` owns String Catalog authoring (`.xcstrings`), pluralization/grammar-agreement mechanics, right-to-left mirroring, and locale-aware value formatting. `references/design/10-content-and-writing.md` owns writing/tone; cite it for content strategy, this file for the plumbing that makes translated content correct.
-> Floors: cite `references/_scaffolding/version-floor-registry.md#ios-160` / `#ios-150-and-earlier` for version-gated members. Stated inline: `String.LocalizationOptions.replacements` = iOS 16.0+; `#bundle` macro compiles with Xcode 26 / Swift 6.2, runtime floor iOS 15.0+ (back-deployable, not iOS-26-gated).
+> Floors: cite `references/_scaffolding/version-floor-registry.md#ios-160` / `#ios-150-and-earlier` for version-gated members. Stated inline: `String.LocalizationOptions.replacements` = iOS 16.0+; `#bundle` macro compiles with Xcode 26 / Swift 6.2, runtime floor iOS 15.0+ (back-deployable, not iOS-26-gated); localized asset packs = iOS 27.0 + Xcode 27, with `NSBundleResourceRequest` (On Demand Resources) deprecated at iOS 27.0. The Xcode 27 String Catalog and Previews changes are tooling and carry no runtime floor.
 
 Localization is not "translate the strings" -- it is translated strings, an equally translated accessibility layer, layout that survives text 35% longer than English, mirrored layout for RTL languages, and locale-correct numbers/dates/currency. Most of that is free if you use the right API; almost all of it breaks silently (compiles, ships, wrong) when hand-rolled.
 
@@ -50,7 +50,15 @@ String(localized: "greeting", bundle: #bundle, comment: "Onboarding welcome line
 Text("greeting", bundle: #bundle)
 ```
 
-Comments are load-bearing, not optional -- they are the ONLY context a translator has. `String(localized: "save", comment: "")` ships wrong-context translations for every overloaded English word ("Save" the recipe vs. "Save" a discount vs. "Save" a life are three different words in most languages).
+Comments are load-bearing, not optional -- they are the ONLY context a translator has, human or machine. `String(localized: "save", comment: "")` ships wrong-context translations for every overloaded English word ("Save" the recipe vs. "Save" a discount vs. "Save" a life are three different words in most languages). Since Xcode 27 translates from the comment (below), a `Text("...")` with no comment is a concrete defect, not a missing nicety.
+
+### Names are the hardest strings to translate
+
+WWDC26's "Craft clear names for features and labels in your app" gives three tests for any feature or control name, and the third is a localization test: a name must **belong** (fit the interface language the app already speaks), **set expectations** (predict what the user gets, in neutral industry-standard terms), and **work everywhere** (translate across languages and markets, and function across platforms). Invented and metaphor-heavy names fail the third test hardest -- they have no target-language equivalent, so a translator either transliterates or guesses. Apple's own worked examples are the pattern: Balance over Spending Power, Enhance Dialogue over Vocal Isolation. The same names feed VoiceOver, where they are read with no surrounding UI (`references/accessibility/01-voiceover-fundamentals.md#naming-the-three-tests`).
+
+### Pronunciation and mixed-language speech
+
+A localized string is not automatically a correctly SPOKEN string: a French product name inside an English sentence, an acronym, a unit abbreviation. Below iOS 27 the levers are `accessibilitySpeechLanguage` for a foreign-language span (the 3.1.2 Language of Parts mechanism) and `accessibilitySpeechIPANotation` for pronunciation. On iOS 27 a single `AXSpeechAttributeSSML` fragment covers inline language switching, pronunciation, and say-as interpretation on the ranges it annotates, without changing the visible or Braille text -- `references/accessibility/01-voiceover-fundamentals.md#speech-control-with-ssml-ios-27` owns it.
 
 ## Pluralization: CLDR categories and the singular-canonical-key trap
 
@@ -152,6 +160,22 @@ options.replacements = [userName]
 let greeting = String(localized: "Welcome back, %@", options: options)
 ```
 
+## Machine translation is now a visible tier (Xcode 27)
+
+Xcode 27 can translate String Catalogs with agents -- across a feature or a whole project, adding languages to project settings and creating the missing `.xcstrings` files on the way. The String Catalog editor gained a Generate Translations button and a context-menu path for specific strings, and per-language style guides steer the agent's tone. Three mechanical consequences matter to review:
+
+| Xcode 27 behavior | What it means for review |
+|---|---|
+| A localization comment saying "do not translate" marks the string Don't Translate in the catalog and `translate="no"` in exported XLIFF | The comment is now machine-readable policy. Brand names, code identifiers and units get an explicit do-not-translate comment, not a hope |
+| Exported XLIFF carries `state-qualifier="leveraged-mt"` on machine-translated strings | Machine-translated copy is identifiable. Treat it as unverified until a native speaker signs it off -- it is a draft, not a translation |
+| `NSLocalizedString` and friends are now extracted from header files as well as implementation files | Strings that used to silently miss extraction are picked up; re-export before assuming a catalog is complete |
+
+WWDC26 session 213 supplies the workflow around it: keep glossaries, do-not-translate terms and tone in a `TRANSLATION.md` or `AGENTS.md` the agent reads; validate with native speakers through TestFlight; and review every language for the three failure modes machine translation does not catch -- truncation from expansion, vertical clipping (Thai), and RTL alignment (Arabic). The pass below is unchanged in substance, only faster.
+
+### Heavy per-language resources: asset packs, not On Demand Resources
+
+Shipping localized video, recorded voiceover, or region-specific imagery goes through Background Assets **localized asset packs** (iOS 27 + Xcode 27), which the system delivers based on the user's preferred languages. `NSBundleResourceRequest` and the rest of the On Demand Resources API -- including `Bundle.preservationPriority(forTag:)` -- are deprecated at iOS 27.0. Recommending ODR tags for language-specific media is recommending a deprecated API; below iOS 27 it remains the only mechanism and is not deprecated there.
+
 ## Testing localization and RTL
 
 Bugs cluster at the corners -- locale x Dynamic Type x layout direction:
@@ -171,6 +195,8 @@ Bugs cluster at the corners -- locale x Dynamic Type x layout direction:
 | Accented Pseudolanguage | Un-extracted (hardcoded) strings -- they stay un-accented |
 | Right-to-Left Pseudolanguage | Mirroring + expansion at once -- run it even before shipping a real RTL translation |
 
+Xcode 27's canvas overrides picker also previews a different localization directly, which turns the `#Preview` locale matrix above into a toggle on a single preview rather than one `#Preview` per language. It sits beside the Color Scheme Contrast and Control Borders groups (`references/accessibility/03-visual-accessibility.md#xcode-27-canvas-overrides`); the locale x Dynamic Type x direction corners are still the ones to check.
+
 `simctl` screenshot automation has a re-launch trap: `-AppleLanguages`/`-AppleLocale` launch arguments work on a cold launch but are LOST across `simctl terminate` + relaunch. Persist the locale in defaults instead: `xcrun simctl spawn <udid> defaults write <bundle-id> AppleLanguages -array es`, then terminate/relaunch. Minimum coverage matrix per screen: `en`/`.large` baseline, `de`/`.xxxLarge` (expansion + big type), `ar`/RTL/`.large` (mirroring), `ar`/RTL/`.accessibility3` (mirroring + expansion + big type -- where things actually break), `ja`/`.large` (CJK line breaking). For CI, assert on the String Catalog's `variations.plural` JSON node per locale, not a source-grep guard -- a guard that special-cases any `Text(...)` containing `\(` interpolation as "already localized" says nothing about whether the plural slot is populated.
 
 ## Anti-patterns
@@ -185,12 +211,14 @@ Bugs cluster at the corners -- locale x Dynamic Type x layout direction:
 | `.offset(x: 12)` on a custom badge | Absolute geometry doesn't mirror | `.offset(x: isRTL ? -12 : 12)` |
 | `"$" + String(amount)` | Wrong symbol/placement/decimal convention per locale | `Text(Decimal(amount), format: .currency(code:))` |
 | `.replacing(arguments:)` on `String.LocalizationOptions` | Method does not exist | Set the `replacements` property, then `String(localized:options:)` |
+| Shipping `leveraged-mt` strings as finished translations | Machine output is a draft; Xcode marks it precisely so it can be reviewed | Native-speaker validation before release; keep the qualifier until then |
+| On Demand Resources for language-specific media | `NSBundleResourceRequest` is deprecated at iOS 27.0 | Background Assets localized asset packs |
 
 ## Severity guide
 
 - **CRITICAL**: accessibility labels/hints never localized -- VoiceOver ships English audio in every locale; or a plural key mis-split across a hand-rolled ternary so a non-English locale ships wrong grammar.
 - **HIGH**: fixed-width/fixed-height container clips translated text at default or large Dynamic Type.
-- **MEDIUM**: directional SF Symbol (`.left`/`.right`) used for a navigation affordance instead of `.forward`/`.backward`; custom-drawn directional glyph missing `flipsForRightToLeftLayoutDirection`.
+- **MEDIUM**: directional SF Symbol (`.left`/`.right`) used for a navigation affordance instead of `.forward`/`.backward`; custom-drawn directional glyph missing `flipsForRightToLeftLayoutDirection`; `leveraged-mt` strings shipped with no native-speaker pass.
 - **LOW**: missing translator `comment:`; hardcoded number/date/currency formatting that happens to look right in English.
 
 ## See also

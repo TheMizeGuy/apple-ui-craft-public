@@ -2,6 +2,34 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.6.0 -- 2026-09-22
+
+### iOS 27 is current, the app icon is a first-class craft, and every area was scored by Jev
+
+iOS 27.0 shipped on 2026-09-14 with Xcode 27 and Swift 6.4. The library had last been verified on 2026-07-03, when iOS 27 was a developer beta, so it quarantined iOS 27 symbols behind `// SDK-verify`, kept them out of primary examples, and called iOS 26 the shipping baseline. This release brings every domain current, adds an app-icon craft layer, and records how both were checked.
+
+**How it was checked.** Ten research passes re-derived the iOS 27 delta per domain from Apple's DocC symbol metadata (`introducedAt`, `beta`, `deprecatedAt`), the iOS 27 and Xcode 27 release notes, WWDC26 sessions and HIG change logs: 306 verified items, plus 57 verified app-icon facts. Eight writers and the lead rewrote the library against them, and ten verifiers re-checked every changed line against DocC (and against `xcrun actool` for the icon schema), which caught and fixed some 60 errors before release. TypeSafe Jev (`jev-1.13.0`) scored all ~1,480 sections of the shipped markdown with calibrated yes/no judgments, before and after:
+
+| Jev measure | Before | After |
+|---|--:|--:|
+| iOS 27 items covered in their owning file | 29 / 306 | 296 / 306 |
+| Verified app-icon facts covered | 3 / 57 | 56 / 57 |
+| HIG topics covered | 111 / 125 | 116 / 125 |
+| Sections treating iOS 27.0 as beta or unconfirmed | 24 | 3 (all correctly note Apple labels Siri AI beta) |
+| Agent/skill sections that cap output, suppress reasoning, force a fixed design template, run unconditional rituals, or pin a model | 0 | 0 |
+
+The HIG topics still below the line are a documented scope boundary (SharePlay, printing, HealthKit, HomeKit, Game Center, NFC, AR, photo-editing extensions), recorded in the what's-new log.
+
+**The availability discipline changed.** iOS 27.0 APIs are current and may lead an example, gated `#available(iOS 27, *)` with a real iOS 26 fallback when the target is lower. Toolchain-only changes (the `@State` macro, `ContentBuilder`, item/error alerts) need Xcode 27, not a gate. Only symbols Apple still labels beta -- the iOS 27.1 iPhone Duo surface and 27.2 -- stay fenced. DocC stamps soft deprecations with the newest SDK, so "deprecated in 27.2" is never written. The registry gains shipped, toolchain, built-with-27-SDK and beta tables.
+
+**Phantoms and wrong facts removed.** `toolbarMinimizeBehavior` (renamed before release to `toolbarMinimizationBehavior`), `ScrollHitchTimeMetric` (pulled before release; `HitchTimeMetric`), `ResultsSectionCollection` (never existed; `SectionedResults`), a framework `ReorderDifference.apply`, `.draggable(configuration:)`, `draggedItemIDs(type:)`, `preferredSubscriptionPricingTerms` -- all now on the PHANTOM list. Corrected floors include the drag-container modifiers (27.0 on iOS, not 26), `GlassButtonStyle.init(_:)` (26.1; the `.glass(_:)` factory is 26.0), `.task(id:)` (iOS 15), `appearsActive` (iOS 18), `ButtonStyleConfiguration.role` (iOS 15), the eight newer App Intents schema domains (27.0), and the Siri revamp (iOS 27, not 26.4). Icon Composer's "2027 operating systems" is Apple's model-year name for the 27 releases: design generation 27 renders today.
+
+**New and rewritten coverage.** Toolbar overflow and minimization, prominent tabs, item/error alerts, `presentationPlacement`, `.crossFade`, `dismissalConfirmationDialog`, reordering and swipe actions in any container, `GestureInputKinds`, the `@State` macro and its source breaks, Swift MetricKit, `AsyncImage` caching, SwiftData sections, approachable concurrency, Siri AI and the App Intents entity model, the Foundation Models iOS 27 surface, scene-lifecycle and launch-screen requirements, the Liquid Glass slider and HIG guidance, iPad and iPhone Mirroring resizing, CarPlay 27, tvOS Dynamic Type, App Store Accessibility Nutrition Labels, Xcode 27 preview overrides, Apple Pencil and Scribble, `ColorPicker`, search tokens and scopes, and paged content.
+
+**App icons.** New owner file `references/design/14-app-icons.md`: the layer/group model, six renditions from three authored appearances, design generations 26/27, concept exploration judged at the smallest size and in mono, every Icon Composer property, and an Icon Composer-ready deliverable (layer SVGs plus an `icon.json` using only `actool`-validated keys). The architect designs icons as that package; the reviewer gains an **App icon** dimension (registered in `review/01` and the CI schema enum); `design-ios` and `review-ios-ui` route icon requests.
+
+**Prompt quality.** Agent personas keep the principal-engineer voice without invented authorship. The architect weighs two or three structural directions and designs one deliberate signature moment, scales its write-up to the request, and states that the project's own design system outranks the plugin's taste defaults. A contradiction between the accessibility engineer's 44pt rule and its WCAG calibration is gone; the platform engineer assesses Apple Intelligence, notifications, Maps, web content and Now Playing; the accessibility engineer reports Nutrition Label readiness. The `craft-ios-ui` worked example now follows the plugin's own Reduce Motion gate.
+
 ## 0.5.3 -- 2026-09-15
 
 - Correct the delegation rationale: Agent access depends on runtime tool grants and nesting depth. Keep the established orchestration paths, tool grants, and model/effort policy.

@@ -30,6 +30,10 @@ The interface defers to content. Fluid motion and a crisp, beautiful interface h
 
 **Engineering implication:** Use semantic colors that adapt. Use system materials. Let content -- not chrome -- be the visual focus.
 
+Deference is also why brand color belongs in the content layer rather than on the chrome. The HIG is direct about it: "Minimize its use on controls and instead use it intentionally for primary actions or status indicators, like badges for unread content or an icon for the selected tab in a tab bar. To express your brand through color, consider moving it into the content layer, where it scrolls beneath Liquid Glass controls and gets picked up dynamically." A brand-tinted toolbar fights the glass layer's job, which is to sample and refract whatever scrolls underneath it. `references/design/04-color-system.md#accent-color` owns the rule.
+
+The same principle explains why the glass appearance is not yours to set. iOS 27 replaced iOS 26.1's binary Clear/Tinted toggle with a continuous slider in Settings, from ultraclear to fully tinted. It ships with no API on any platform: the system applies the user's position to every `.glassEffect()` call site with zero code, and there is nothing to read or branch on.
+
 ### Depth
 
 Visual layers and realistic motion convey hierarchy, impart vitality, and facilitate understanding.
@@ -132,6 +136,7 @@ NavigationLink(value: item) {
 | "Apple's UI is about beauty" | Apple's UI is about COMMUNICATION. Beauty emerges from solving the problem well. |
 | "Avoid all custom controls" | Use system controls when they fit; use custom only when system genuinely doesn't work for the use case. The Maps app has many custom controls. |
 | "Skeuomorphism is dead" | Liquid Glass is a return to physical metaphor. Real glass with real refraction. |
+| "Icon Composer 2.0's sharper rendering mode is for a future OS" | It is **design generation 27**, and iOS/iPadOS/macOS/watchOS 27 render it today. Apple's "upcoming 2027 operating systems" is the model-year name for the 27-numbered OSes (iOS 26 was the 2026 OS), which shipped 2026-09-14; the Icon Composer doc is explicit that refraction has no visible effect only "in versions earlier than 27." Refractivity and Inside/Outside specular are live on 27 and inert on generation 26 -- progressive enhancement, not a future bet. Author layers once, preview in BOTH generations, ship one asset that holds up in each. See `references/design/14-app-icons.md#design-generations-26-and-27`. |
 
 ## The litmus test
 

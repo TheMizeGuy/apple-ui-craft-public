@@ -51,6 +51,10 @@ TabView(selection: $selectedTab) {
 .tabViewStyle(.sidebarAdaptable)   // becomes a sidebar on iPad and Mac, stays a tab bar on iPhone
 ```
 
+**A tab set that changes shape has to clamp its selection.** In apps built with the iOS 27.0 and iPadOS 27.0 SDKs, `TabView` enforces that its selection resolves to a visible tab and can crash when it does not. Any app that hides tabs conditionally -- feature flags, entitlement state, `TabViewCustomization`, sign-in gating -- or restores a selection from `@SceneStorage`/`@AppStorage` must validate the restored value against the currently visible set on appear and whenever that set changes, resetting to a known-visible tab otherwise. It fires on a recompile alone, with no deployment-target bump, which makes it a CRITICAL finding for any non-static tab set.
+
+**Segmented control or tabs is a semantics question.** A segmented control that switches which content is shown has always been announced to VoiceOver as a value picker, which misdescribes the control. From iOS 27, `.pickerStyle(.tabs)` (not watchOS) reads as tabs; `.segmented` stays correct for choosing a value. Reviewing an in-page segmented control now means asking which of the two jobs it does; below iOS 27 the manual equivalent is `.segmented` plus the `isTabBar` trait (iOS 17+) on the container.
+
 ### Push versus present: the decision table
 
 The single most-violated iOS structural rule, and the one that most makes an app
@@ -171,6 +175,7 @@ enum Route: Hashable, Codable {
 | Deep link to a gated screen loses the target after sign-in | HIGH |
 | Spotlight or notification lands on a detail with no route to its list | MEDIUM |
 | Termination returns to root with a draft in progress | HIGH (see `references/usability/01-task-flows-and-journeys.md`) |
+| A restored tab selection pointing at a tab that is no longer visible | CRITICAL on a 27.0-SDK build: `TabView` can crash rather than fall back |
 | No `NSUserActivity` on the primary content screen | MEDIUM: no Handoff, no Spotlight, no Siri Suggestions |
 
 ## 6. Grouping and labelling
@@ -188,12 +193,14 @@ enum Route: Hashable, Codable {
 
 | Surface | Constraint |
 |---|---|
-| Tab bar | 5 items; a `role: .search` tab gets the system placement |
-| Toolbar placement | Past 5 controls in one placement, group into a `Menu` |
+| Tab bar | 5 items; a `role: .search` tab gets the system placement; the selection must always resolve to a visible tab |
+| Toolbar placement | Past 5 controls in one placement, group into a `Menu`. On iOS 27, rank what survives with `visibilityPriority(_:)` -- lowest priority overflows first -- rather than letting the system choose; `references/design/07-navigation-patterns.md` owns the API |
+| Search scope bar (UIKit) | In apps built with the iOS 27.0 SDK, center search-bar placement puts the scope bar inline on the search field's own row. It reclaims a row of chrome and shortens the space each scope title gets: re-check any search UI with more than three scopes or long titles |
 | Sheet detents | The primary action must be reachable at the smallest offered detent |
 | iPhone SE / smallest window | Everything above must still hold at 320pt of width |
 | iPad Slide Over | A compact-width window on a large device: the split view must collapse, not clip |
 | Stage Manager / Mac | The window can be resized to arbitrary sizes with no notification; see `references/usability/05-adaptive-review-method.md` |
+| iPhone Duo | Not a new platform: a compact-width layout on the outer display and a regular-width layout on the inner one covers every pose, and a `NavigationSplitView` collapses and expands the way it already does between size classes. Bars move to the side, so a toolbar item needs **both** a title and a symbol (the system will not present a title-only or custom-view item vertically), and items group with `ToolbarItemGroup`/`UIBarButtonItemGroup` rather than manual spacers. Keep text-only buttons to a minimum. `references/cross-platform/01-ipados-multiplatform.md` owns the layout rules |
 
 ## 8. Reviewing IA and navigation
 
@@ -235,6 +242,8 @@ relaunch; rotate at depth 3; run it in Slide Over.
 | `NavigationLink(destination:)` for a linkable screen | Not a value, so no deep link and no restoration | `navigationDestination(for:)` with a `Codable` route |
 | Back returning to the top of the list | Loses the user's place in long content | `.scrollPosition(id:)` |
 | Icon-only tab bar | Guessing game; breaks Voice Control | Icon and label |
+| A persisted tab selection bound straight to the `TabView` | On a 27.0-SDK build it can crash when that tab is hidden | Clamp to the visible set on appear and on every change |
+| A toolbar item with a title and no symbol | The system cannot present it vertically on iPhone Duo, so it drops out of the side bar | Give every toolbar item both a title and a symbol |
 | "More" or "Other" as a section name | The taxonomy failed | Name the real category |
 
 ## Severity guide

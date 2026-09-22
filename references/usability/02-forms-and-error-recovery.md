@@ -194,6 +194,7 @@ HIGH finding and it ships constantly.
 | Trigger | Required behaviour |
 |---|---|
 | Sheet swipe-dismiss with unsaved content | `.interactiveDismissDisabled(true)` plus a confirmation, plus a visible Cancel |
+| Window closed with unsaved content (iPad) | `dismissalConfirmationDialog(_:shouldPresent:actions:)` (iOS 27.0+) -- the swipe guard does not cover a window closing, so a form with unsaved work needs both |
 | Navigation back with unsaved content | Confirm, or autosave |
 | Backgrounding | Persist on `scenePhase` change; do not wait for a save button |
 | Termination | The draft is on disk; see `references/usability/01-task-flows-and-journeys.md` section 4 |
@@ -288,6 +289,19 @@ Enumerate. Each row needs a designed screen, not a generic alert.
 **Silent last-write-wins on a conflict is a CRITICAL finding.** The user's
 colleague's work vanished and nobody was told.
 
+Bind any failure alert to the failure itself. Building with Xcode 27, `alert(error:actions:)`
+takes one `Binding<E?>` where `E: LocalizedError` and back-deploys to iOS 15, so the
+`Bool`-plus-optional pair that shows an alert with stale or empty text has no reason to
+exist and no availability gate to justify it. `references/patterns/05-modality-sheets.md#alerts`
+owns the modifier set.
+
+Export is where a recovery path most often degenerates into N dialogs, and it never had
+to. `fileExporter` has taken a whole collection and presented **one** dialog since iOS
+14; a loop that presents an export sheet per document is a self-inflicted finding at any
+deployment target. iOS 27 adds collection overloads for the new document types, plus
+`contentTypes:` and an `onCancellation:` closure, so the single-dialog shape now covers
+the modern document stack too.
+
 ## 10. Submission state
 
 | Moment | Required |
@@ -335,11 +349,21 @@ grep -rln "\.sheet(" --include=*.swift . | xargs grep -Ln "interactiveDismissDis
 grep -rn "localizedDescription" --include=*.swift .
 # Submit paths with no in-flight guard
 grep -rn -A3 "Button {" --include=*.swift . | grep -B1 "Task {"
+# Selectable Text carrying a custom gesture -- the 27.0-SDK selection UI takes it
+grep -rln "textSelection(.enabled)" --include=*.swift . \
+  | xargs grep -ln "onTapGesture\|DragGesture\|LongPressGesture" \
+  | xargs grep -Ln "highPriorityGesture"
 ```
 
 Driven review: submit empty, submit garbage, submit valid then kill the network
 mid-flight, background during submit, swipe-dismiss the sheet with content in
-it, double-tap submit, and rotate the device with the keyboard up.
+it, close the window with content in it, double-tap submit, and rotate the
+device with the keyboard up.
+
+On the first build against the iOS 27.0 SDK, add one pass over selectable text: a
+`Text` with `.textSelection(.enabled)` now gets the system selection UI rather than a
+callout menu, so a custom tap or drag on that text can be swallowed by the selection
+handles. The fix Apple names is `.highPriorityGesture(_:)` on the custom gesture.
 
 ## Accessibility contract
 
@@ -369,6 +393,8 @@ it, double-tap submit, and rotate the device with the keyboard up.
 | Silent last-write-wins | Destroys someone's work invisibly | Detect and present the conflict |
 | Undo that recreates | New id, broken relationships | Restore the original object |
 | Confirmation AND no undo on a cheap reversible action | Friction with no benefit | Undo alone |
+| One export dialog per document in a batch | N interrogations for one intent, and never necessary | `fileExporter(isPresented:documents:…)`, one dialog for the collection |
+| A `Bool` beside an optional error driving a failure alert | The two drift; the alert renders stale or empty | `alert(error:)` with one binding |
 | Neither confirmation nor undo on an irreversible one | Unrecoverable loss | Confirm, naming the object |
 
 ## Severity guide

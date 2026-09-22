@@ -1,7 +1,7 @@
 # Authentication and Account Management
 
-> Owner: `references/patterns/09-auth-account.md` owns Sign in with Apple button craft and HIG placement, passkey sign-in UX, the credential text-field stack, auth-flow states (loading/cancel/error/success), the account settings screen (profile header, sign-out, credential-state recovery), and account deletion UX. The settings `Form`/`Section` shell and where an account section sits in a broader hierarchy is owned by `references/patterns/06-settings.md#account-section-placement` -- cite it, don't restate. Liquid Glass button styles are owned by `references/design/02-liquid-glass.md`; haptic outcome semantics by `references/haptics/02-swiftui-sensory-feedback.md`; 44pt targets by `references/accessibility/04-motor-interaction.md`.
-> Floors: see `references/_scaffolding/version-floor-registry.md#ios-160` for `AddPassToWalletButton`-adjacent floors; `SignInWithAppleButton` is iOS 14+, `.textContentType(.oneTimeCode)`/passkey APIs are iOS 16+ -- both stated inline below since they're this file's headline APIs.
+> Owner: `references/patterns/09-auth-account.md` owns Sign in with Apple button craft and HIG placement, passkey sign-in UX, one-step passkey account creation, the credential text-field stack, auth-flow states (loading/cancel/error/success), identity verification through Wallet, the account settings screen (profile header, sign-out, credential-state recovery), and account deletion UX. The settings `Form`/`Section` shell and where an account section sits in a broader hierarchy is owned by `references/patterns/06-settings.md#account-section-placement` -- cite it, don't restate. Liquid Glass button styles are owned by `references/design/02-liquid-glass.md`; haptic outcome semantics by `references/haptics/02-swiftui-sensory-feedback.md`; 44pt targets by `references/accessibility/04-motor-interaction.md`.
+> Floors: see `references/_scaffolding/version-floor-registry.md#ios-160` for `AddPassToWalletButton`-adjacent floors; `SignInWithAppleButton` is iOS 14+, `.textContentType(.oneTimeCode)`/passkey APIs are iOS 16+ -- both stated inline below since they're this file's headline APIs. Sign in with Apple is unchanged in iOS 27; `ASAuthorizationAccountCreationProvider` is iOS 26.0, and `ASDeliveredVerificationCodesManager` plus the new identity elements are iOS 27.0 (`references/_scaffolding/version-floor-registry.md`).
 
 Auth screens are high-stakes: get the flow wrong and you either lock a user out entirely or leak App Store Review rejections (Guideline 4.8 third-party sign-in parity, 5.1.1(v) account deletion). This file covers the craft layer -- label, style, placement, field modifiers, state handling -- not the `ASAuthorizationController` delegate wiring, which lives in goodmem Learnings (cited at the end).
 
@@ -85,6 +85,25 @@ Button {
 
 For a returning user, a COMBINED request (passkey assertion + SIWA + password provider handed to one `ASAuthorizationController`) lets the system present one unified sheet and return whichever credential the user picks -- fewer choices on screen than three separate buttons.
 
+## One-step account creation (iOS 26+)
+
+The signup form -- email field, verification-code screen, password field, name field -- collapses into one system sheet. `ASAuthorizationAccountCreationProvider` creates the account and its passkey together: the user picks an already-verified email or phone number and optionally shares a name, and the result arrives as `ASAuthorizationResult.passkeyAccountCreation`.
+
+```swift
+let provider = ASAuthorizationAccountCreationProvider()
+let request = provider.createPlatformPublicKeyCredentialRegistrationRequest(
+    acceptedContactIdentifiers: acceptedIdentifiers,   // [ASContactIdentifierRequest]: .email and/or .phoneNumber
+    shouldRequestName: true,
+    relyingPartyIdentifier: "example.com",
+    challenge: challenge,
+    userID: userID)
+// -> ASAuthorizationResult.passkeyAccountCreation through the usual controller delegate
+```
+
+iOS 26.0+ (iPadOS/Catalyst/macOS/visionOS 26.0), unchanged in iOS 27. This is the strongest current answer to the HIG's "simplify initial signup by asking only for necessary information," and on an iOS 26+ target an account-creation screen that never considers it is a gap worth raising.
+
+Two error codes are routing signals, not failures to alert on. `ASAuthorizationError.Code.preferSignInWithApple` means hand the user to the Sign in with Apple button -- surface that path, don't show an error. `.deviceNotConfiguredForPasskeyCreation` means the device cannot make a passkey right now, so the email sign-up path must still exist and be reachable; a flow that leads only through this sheet strands those users. Below iOS 26: collect an identifier, verify it, then offer passkey creation as a post-signup upgrade.
+
 ## Credential field stack
 
 The field modifiers below are load-bearing -- omitting them breaks Keychain AutoFill, the QuickType bar, or keyboard flow, not just cosmetics.
@@ -115,6 +134,8 @@ TextField("Verification code", text: $code)
 ```
 
 **`.username` vs. `.emailAddress`** -- the field the user logs in WITH must be `.username`; `.emailAddress` alone does not trigger the saved-password pairing. **`.newPassword` is what makes Strong Password appear** -- using `.password` on a signup field means iOS won't offer to generate/save one. Pair the visible email field (`.username`) with the `.newPassword` field so iOS associates the credential pair. **`.oneTimeCode` needs no extra wiring** -- don't build a custom 6-box OTP UI that can't receive it; if you want the segmented look, keep one hidden real field bound to `.oneTimeCode` and mirror characters into the boxes.
+
+That rule is unchanged by iOS 27, and the API that looks like it changes it does not. `ASDeliveredVerificationCodesManager` (iOS 27.0+) streams the one-time codes the system has received and lets a caller mark one consumed -- `oneTimeCodes(preferredDuration:anchor:)` returning an `AsyncSequence` of `ASVerificationCode`, plus `consumeOneTimeCode(_:)`. It is scoped to credential-manager apps: an ordinary app gets `.appIsNotEnabledCredentialProvider` back. Cite it when reviewing a password manager or authenticator; for every normal sign-in screen, one real `.textContentType(.oneTimeCode)` field and the QuickType bar remain the whole answer.
 
 Wire the keyboard's return key to walk fields with `@FocusState` + `submitLabel`:
 
@@ -194,6 +215,18 @@ A haptic confirms the outcome of a call the user can't otherwise see:
 ```
 
 One haptic per outcome -- never on keystroke, never on the loading spinner itself. Full `.sensoryFeedback` contract owned by `references/haptics/02-swiftui-sensory-feedback.md#built-in-feedback-types`. Resign focus the instant the request starts so the keyboard isn't fighting the spinner for space, and cross-fade or push into the app root with a spring rather than snapping so the state change reads as earned -- pointer to `references/animation/02-spring-physics.md#spring-presets` for `.smooth`/`.snappy`. Skip a standalone success-checkmark screen for routine login; reserve a "You're all set" confirmation for account CREATION, where the user benefits from an explicit landing beat.
+
+## Identity verification through Wallet
+
+An ID-verification screen is a data-minimization problem before it is a UI problem. iOS 27 adds two levers that keep it honest.
+
+`PKIdentityElement.name` (iOS 27.0+, iOS/iPadOS/Catalyst/visionOS) is a requestable element for the user's full name, so a flow that only needs a name requests a name instead of a whole document. `PKIdentityDocumentDescriptor.issuerIdentifiers` (`[Data]`, X.509 authority key identifiers) scopes the request to documents from issuers you can actually accept, so the system sheet stops offering a document the flow will reject afterwards. Both remove the same dead end: "I shared my ID and it was rejected."
+
+Design the screen around that. Say which single fact is being verified before the sheet opens, request the narrowest element that proves it, and scope the issuers. Below iOS 27, request the existing elements and validate the issuer after the fact -- which means the copy has to prepare the user for a possible rejection. The Wallet pass and payment side of PassKit is owned by `references/patterns/08-paywall-storekit-applepay.md`.
+
+## Age assurance and guardian consent
+
+An age-gated or child-directed account flow does not collect a birthdate on iOS 26 and later. `DeclaredAgeRange` returns a privacy-preserving range, and PermissionKit carries a guardian's approval for a significant change -- including the iOS 27 `askSignificantChangePermission(for:permissionFlow:in:)`, whose `PermissionResult.cancel` is a decision and not an error, exactly like `ASAuthorizationError.canceled` above. `references/patterns/03-onboarding-tipkit.md#age-assurance-and-parental-consent` owns both, including the regional `requiredRegulatoryFeatures` check that decides whether to run the flow at all.
 
 ## Account settings screen
 
@@ -297,6 +330,11 @@ Auth screens are high-stakes for accessibility -- a blind user who can't complet
 | Custom 6-box OTP UI with no real field | Can't receive the Messages-sourced code, breaks AutoFill | One `.oneTimeCode` field, mirrored into boxes if needed |
 | Only offering "deactivate account" | Fails Guideline 5.1.1(v) outright | Full in-app deletion, plus SIWA server-side revoke |
 | Sign Out styled destructive-red | Confuses a reversible action with permanent deletion | Neutral row; only Delete Account is red |
+| `.preferSignInWithApple` surfaced as an error alert | It is a routing signal, not a failure | Hand the user to the Sign in with Apple button |
+| Account creation reachable only through the one-step passkey sheet | `.deviceNotConfiguredForPasskeyCreation` strands the user | Keep a real email sign-up fallback |
+| `ASDeliveredVerificationCodesManager` reached for on an ordinary sign-in screen | Credential-provider only; returns `.appIsNotEnabledCredentialProvider` | One `.textContentType(.oneTimeCode)` field |
+| A whole ID document requested when a name would do | Over-collection, and the user can pick a document you will reject | `PKIdentityElement.name`, scoped `issuerIdentifiers` |
+| A birthdate form to age-gate on iOS 26+ | Collects what Apple's API deliberately avoids | `DeclaredAgeRange` (`references/patterns/03-onboarding-tipkit.md#age-assurance-and-parental-consent`) |
 
 ## Severity guide
 

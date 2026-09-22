@@ -30,7 +30,9 @@ struct SettingsView: View {
 }
 ```
 
-Group related rows into `Section`s -- two to six rows per section is the Settings-app rhythm; one giant flat section reads wrong. The current initializer is `Section(content:header:footer:)`, used with trailing-closure syntax `Section { … } header: { … } footer: { … }`; the header-first `Section(header:footer:content:)` ordering is deprecated (iOS 13.0-27.0) -- never emit it in new code.
+Group related rows into `Section`s -- two to six rows per section is the Settings-app rhythm; one giant flat section reads wrong. The current initializer is `Section(content:header:footer:)`, used with trailing-closure syntax `Section { … } header: { … } footer: { … }`; the header-first `Section(header:footer:content:)` ordering is soft-deprecated -- never emit it in new code.
+
+Write "soft-deprecated; use `<replacement>`" with no version range for this class of symbol. Apple stamps an unversioned soft deprecation with whatever SDK built the docs, so the number moves (it read 27.0 one archive ago and reads 27.2 now) and any range written into guidance is wrong by the next release. A genuine deprecation carries a `.0` stamp and a shipped release behind it.
 
 ### In-app vs. defer-to-system
 
@@ -60,7 +62,8 @@ Picker("Appearance", selection: $appearance) {
     ForEach(Appearance.allCases) { Text($0.label).tag($0) }
 }
 Picker("Sort", selection: $sort) { /* … */ }.pickerStyle(.menu)        // inline pop-up, short list
-Picker("View", selection: $mode) { /* … */ }.pickerStyle(.segmented)   // 2-4 mutually exclusive VIEW modes, not values
+Picker("Units", selection: $units) { /* … */ }.pickerStyle(.segmented) // 2-4 mutually exclusive VALUES
+Picker("View", selection: $mode) { /* … */ }.pickerStyle(.tabs)        // iOS 27.0+ -- choosing which CONTENT is shown
 
 // 3. Stepper -- bounded integer/value
 Stepper("Reminders: \(count)", value: $count, in: 0...10)
@@ -78,7 +81,21 @@ Button("Clear Cache") { clearCache() }
 Button("Delete Account", role: .destructive) { confirmDelete() }   // renders red; Sign Out stays a plain row (patterns/09)
 ```
 
-Tag types on a `Picker` must match the selection binding's type exactly, or the row renders blank with no error. `LabeledContent` beats a hand-built `HStack { Text; Spacer; Text }` -- it groups as one VoiceOver element and gets correct trailing alignment for free; `HStack` reads as two disjoint elements. `TextField`/`SecureField` cover editable text (`.textContentType`/`.keyboardType` set so AutoFill and the right keyboard appear); the full field-modifier contract lives in `references/patterns/09-auth-account.md#credential-field-stack`.
+Tag types on a `Picker` must match the selection binding's type exactly, or the row renders blank with no error. `LabeledContent` beats a hand-built `HStack { Text; Spacer; Text }` -- it groups as one VoiceOver element and gets correct trailing alignment for free; `HStack` reads as two disjoint elements. `TextField`/`SecureField` cover editable text (`.textContentType`/`.keyboardType` set so AutoFill and the right keyboard appear); the full field-modifier contract lives in `references/patterns/09-auth-account.md#credential-field-stack`. A bordered field in a settings screen is `.textFieldStyle(.bordered)` with `.textInputBorderShape(_:)` for the shape (both iOS 27.0+; `.roundedBorder` is soft-deprecated) -- see `references/patterns/02-forms-data-entry.md#text-field-style-and-border-shape`.
+
+Which picker style a row takes is now a semantic decision, not a visual one. `.segmented` announces itself to VoiceOver as a value picker, which is right for units, sort order or a quality level. `.pickerStyle(.tabs)` (iOS 27.0+, all platforms except watchOS) looks similar but VoiceOver reads it as "tabs", which is what a control that swaps which content is shown actually does. Ask which job the control is doing:
+
+```swift
+if #available(iOS 27, *) {
+    modePicker.pickerStyle(.tabs)
+} else {
+    modePicker.pickerStyle(.segmented)
+        .accessibilityElement(children: .contain)
+        .accessibilityAddTraits(.isTabBar)          // iOS 17.0+ -- the manual equivalent
+}
+```
+
+Two iOS 27 row fixes worth knowing. Before iOS 27, a `Button` carrying both an icon and a title inside a `List`/`Form` section header or footer laid out with the wrong icon-to-title spacing; iOS 27 fixes it, so any hand-tuned `HStack(spacing:)` added to compensate now over-corrects and should be deleted rather than kept. And a custom background drawn behind a row inside a rounded section can read the container's real corner radii from `GeometryProxy.concentricCornerRadii` (iOS 27.0+) instead of guessing a number -- that is the difference between a nested card that reads as designed and one whose corners visibly fight the section.
 
 ## Persisting state: @AppStorage vs. an @Observable model
 
@@ -178,6 +195,18 @@ if let url = URL(string: UIApplication.openNotificationSettingsURLString) { open
 
 There is no public API to deep-link into an arbitrary Settings sub-pane -- both constants land on your app's own page in Settings. Pair the button with an explanatory row driven by the current authorization status; never auto-navigate the user there without an explicit tap. `Link` rows for help/privacy/contact content, and the `requestReview()` env action for an in-app rating affordance, are covered in `references/patterns/07-feedback-reviews-notifications.md`.
 
+**Stop hiding rows behind `canOpenURL`.** `UIApplication.canOpenURL(_:)` is deprecated at iOS 27.0; Apple's direction is to attempt the open and handle the failure. A settings screen is where the old pattern is thickest -- a row that links into Wallet, the App Store, or a partner app, shown only if `canOpenURL` returned true. That check also silently returns false when a scheme is missing from `LSApplicationQueriesSchemes`, which is how a row "that never appears" ships unnoticed:
+
+```swift
+Button("Open in Partner App") {
+    openURL(partnerURL) { accepted in            // openURL's completion, not canOpenURL
+        if !accepted { linkFailure = .partnerAppMissing }   // a designed state, not a silent no-op
+    }
+}
+```
+
+The affordance always appears and the failure path is designed. Universal links remove the question entirely, since they fall through to the web.
+
 ## Settings under Liquid Glass (iOS 26+)
 
 A `Form` presented normally -- full-screen, pushed in a `NavigationStack` -- already renders with the correct grouped Liquid Glass look: the nav bar and any tab bar float as glass, section cards sit on the grouped background, and nothing in this file changes. The complication is a settings `Form` living inside a `.sheet`, where the form's own opaque background fights the sheet's translucent glass surface.
@@ -208,6 +237,8 @@ Form { /* … */ }
 
 Do not wrap individual settings rows in `.glassEffect()` -- grouped rows are content, not floating controls; Liquid Glass belongs on the navigation chrome the system already handles. A full-screen settings `Form` in a `NavigationStack` needs zero glass modifiers of its own -- the hidden-background trick is a sheet-only remedy.
 
+One control-sizing change bites a settings sheet on rebuild alone. In apps built with the 27.0 SDKs, `controlSize`, `buttonSizing`, `buttonRepeatBehavior`, `menuIndicatorVisibility` and `ButtonBorderShape` reset to their defaults inside sheets and popovers instead of inheriting from the presenter. A settings sheet whose button sizing came from a `.controlSize(.large)` set once at the app root silently reverts to default-sized controls after an Xcode 27 build. Apply those modifiers inside the sheet's own content, which is also correct below iOS 27.
+
 ## macOS: Settings scene + SettingsLink
 
 macOS owns its preferences window through a dedicated `Settings { }` scene rather than a pushed screen:
@@ -226,6 +257,8 @@ Button("Settings…") { openSettings() }
 
 An account/sign-in section belongs near the BOTTOM of the settings hierarchy -- after general preferences, before or alongside About -- with sign-out as a plain (non-red) row and account deletion isolated in its own trailing destructive section. The full profile-header, sign-out, credential-recovery, and account-deletion craft is owned by `references/patterns/09-auth-account.md#account-settings-screen`; this file only fixes where that section sits.
 
+Two subscription rows live in this same area rather than on the paywall. A **Redeem Code** row is one of the three entry points the Apple In-App Purchase HIG asks for (paywall, onboarding, settings); on iOS 27 it is a plain `Button` carrying `.offerCodeRedemption(options:isPresented:onCompletion:)`, whose completion returns the transaction so the row can route straight to the newly unlocked content instead of dumping the user back in Settings (`references/patterns/08-paywall-storekit-applepay.md#offer-code-redemption-ios-27`). And an app selling seats through Group Purchases or volume purchasing needs a **seat-management** screen here -- who holds a seat, revoke, resend an invitation -- because Apple ships no system view for it; the merchandising half stays on the paywall.
+
 ## Accessibility contract
 
 `Form` auto-associates each control's label with the control for VoiceOver -- a `Picker`/`Toggle` announces its label and value with no extra work, which is why `LabeledContent`/`Label` are preferred over a hand-built `HStack`. A decorative leading icon inside `Label`'s icon slot is already ignored by VoiceOver; don't add a manual `.accessibilityHidden` unless you built a raw `Image` outside `Label`. On iOS 18/Xcode 26 a `Picker` row inside a `Form` realizes in the accessibility tree as an `XCUIElement.button` (the row is the tap target), not the `otherElement` container older iOS versions produced -- a UI test that only queries `otherElements`/`staticTexts` for a picker row gives a false "not visible" negative; probe every realization a Form row can take. Add `.accessibilityIdentifier(_:)` to interactive rows for stable UI-test hooks -- identifiers are invisible to users and stable across localization.
@@ -242,6 +275,10 @@ An account/sign-in section belongs near the BOTTOM of the settings hierarchy -- 
 | Wrapping an individual settings row in `.glassEffect()` | Grouped rows are content, not floating controls -- muddies the hierarchy | Leave glass to the system-owned nav/tab chrome |
 | `@Observable` settings model with no persist step | UI updates but nothing survives relaunch | Explicit `.onChange` → `persist()` per mutable property |
 | Faking an OS-owned toggle (e.g. a local "Notifications" switch that doesn't call `UNUserNotificationCenter`) | Diverges from the real system state the first time it's checked elsewhere | `LabeledContent` showing real status + a deep-link button |
+| A row shown only when `canOpenURL` returns true | Deprecated at iOS 27.0; also silently false on a missing `LSApplicationQueriesSchemes` entry -- the row never appears | Always show it, call `openURL(_:completion:)`, design the failure |
+| `.pickerStyle(.segmented)` on a control that swaps content | VoiceOver announces a value picker for what is really navigation | `.pickerStyle(.tabs)` (iOS 27.0+), `.isTabBar` below |
+| Root-level `.controlSize` relied on to size a settings sheet's buttons | Resets to default inside sheets and popovers in apps built with the 27.0 SDKs | Set control sizing inside the sheet's own content |
+| A version range written for a soft deprecation | The stamp tracks whatever SDK built the docs and moves every release | "soft-deprecated; use `<replacement>`", no numbers |
 
 ## Severity guide
 

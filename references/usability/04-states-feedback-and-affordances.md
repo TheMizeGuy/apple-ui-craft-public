@@ -134,6 +134,17 @@ failure, `.selection` for discrete value changes. A `.success` haptic on a
 failed operation actively misinforms, and blind users may have nothing else. See
 `references/haptics/02-swiftui-sensory-feedback.md`.
 
+**Where the system already owns the feedback, adding your own is the defect.**
+The Apple Pay sheet draws its own progress; stacking a spinner over it is a HIG
+violation, not extra reassurance. The same sheet is why the payment button is
+not a static graphic -- the system may draw the customer's default card on it --
+so overlaying, masking, screenshotting or shrinking it below its documented
+minimum breaks a surface the app does not own. Choosing the button's *type* is a
+content decision with the same weight as writing the CTA: a donation flow that
+ships "Buy with Apple Pay" is a HIG violation.
+`references/patterns/08-paywall-storekit-applepay.md#apple-pay-wallet` owns the
+button contract.
+
 ## 5. Affordances and signifiers
 
 iOS has no hover, so the web's primary affordance channel does not exist. Every
@@ -185,6 +196,15 @@ Button("Send") { submit() }
 ```
 
 ## 7. Optimistic updates and rollback
+
+A rollback that has to interrupt binds its alert to the failure, not to a `Bool`
+beside it: on Xcode 27, `alert(error:actions:)` takes one `Binding<E?>` where
+`E: LocalizedError` and back-deploys to iOS 15, so the two-state pattern that
+shows an alert with stale or empty text has no reason to exist and needs no
+availability gate. The same release adds
+`dismissalConfirmationDialog(_:shouldPresent:actions:)` (iOS 27.0+), the system's
+confirm-before-discard hook for an iPad window closing over unsaved work --
+`interactiveDismissDisabled` covers the swipe and does not cover the close.
 
 | Rule | Detail |
 |---|---|
@@ -275,6 +295,10 @@ nobody can see them.
 | Silent optimistic rollback | Reads as data loss | Show the failure |
 | `.sensoryFeedback(.success)` on a failure | Actively misinforms, and may be the only channel a blind user has | Match the semantic |
 | A spinner for a 60ms operation | Flashes; worse than nothing | No indicator under 100ms |
+| Your own spinner over the Apple Pay sheet | The sheet draws its own progress; the overlay is a HIG violation | Let the system surface own its feedback |
+| The Apple Pay button overlaid, masked, or shrunk below 100x30pt | The system may draw the customer's default card on it -- it is not a static graphic | System button, `.frame` for size only |
+| An error alert driven by a `Bool` beside the error value | The pair drifts; the alert renders stale or empty text | One binding: `alert(error:)` (Xcode 27, runs back to iOS 15) |
+| Unsaved work guarded only against the sheet swipe | On iPad the window can close out from under the form | Add `dismissalConfirmationDialog(_:shouldPresent:actions:)` (iOS 27.0+) |
 
 ## Severity guide
 

@@ -1,7 +1,7 @@
 # Scroll-Driven Effects
 
-> Owner: `references/animation/06-scroll-driven-effects.md` owns scroll-position-driven behavior -- the scroll-observation family (`onScrollGeometryChange`/`onScrollPhaseChange`/`onScrollVisibilityChange`), scroll targeting (`scrollTargetBehavior`/`scrollTargetLayout`/`scrollPosition`/`containerRelativeFrame`/`contentMargins`), and composite patterns (peeking carousels, sticky/stretchy headers, pull-to-refresh). `.scrollTransition`/`.visualEffect` API basics live at `references/animation/04-transitions-geometry.md#scrolltransition-ios-17` (OWNER); system chrome auto-minimize (`TabBarMinimizeBehavior`/`ToolbarMinimizeBehavior`) lives at `references/animation/05-gesture-driven.md#scroll-driven-chrome-minimize-ios-26` (OWNER) -- this file is the effects you build ON TOP of scroll position, not those two.
-> Floors: cite `references/_scaffolding/version-floor-registry.md#ios-180` for the iOS 18 scroll-observation additions; `.scrollTransition`/`scrollTargetBehavior`/`containerRelativeFrame` are iOS 17.0+.
+> Owner: `references/animation/06-scroll-driven-effects.md` owns scroll-position-driven behavior -- the scroll-observation family (`onScrollGeometryChange`/`onScrollPhaseChange`/`onScrollVisibilityChange`), scroll targeting (`scrollTargetBehavior`/`scrollTargetLayout`/`scrollPosition`/`containerRelativeFrame`/`contentMargins`), and composite patterns (peeking carousels, sticky/stretchy headers, pull-to-refresh). `.scrollTransition`/`.visualEffect` API basics live at `references/animation/04-transitions-geometry.md#scrolltransition-ios-17` (OWNER); system chrome auto-minimize (`TabBarMinimizeBehavior`/`ToolbarMinimizationBehavior`) lives at `references/animation/05-gesture-driven.md#scroll-driven-chrome-minimize-ios-26` (OWNER) -- this file is the effects you build ON TOP of scroll position, not those two.
+> Floors: cite `references/_scaffolding/version-floor-registry.md#ios-180` for the iOS 18 scroll-observation additions; `.scrollTransition`/`scrollTargetBehavior`/`containerRelativeFrame` are iOS 17.0+; `scrollEdgeEffectStyle`/`safeAreaBar` are iOS 26.0+. No SwiftUI API in this file changed in iOS 27 -- the scroll-observation, scroll-targeting and scroll-transition surfaces are all unmoved -- but two iOS 27 behavior changes touch scroll feel: the status-bar tap-to-top `scrollPosition` binding fix and the `containerRelativeFrame` safe-area fix documented below, plus the toolbar-minimization rename owned by `animation/05`.
 
 Scroll offset is a continuous, per-frame signal -- the only way a scroll-linked effect stays at 120fps on ProMotion is picking an API that never triggers a layout pass, and never attaching an animation to the `ScrollView`/`List` container itself. Get those two rules wrong and every scroll-linked effect on the screen jank simultaneously, not just the one you added.
 
@@ -60,6 +60,8 @@ ScrollView(.horizontal) {
 ```
 
 `.contentMargins(_:_:for:)` (iOS 17+) insets the SCROLLABLE CONTENT region so `.viewAligned` snapping still centers correctly and scroll indicators stay right. Padding on the stack shifts content visually but snap alignment still targets the un-padded edges -- cards land off-center by the padding amount.
+
+Built against the iOS 27 SDK, `scrollPosition(id:)`'s binding is finally updated when the user taps the status bar to scroll to top; before 27 it went stale and scroll-position-derived motion desynced. Any reconciliation workaround written for that bug double-applies once the app is rebuilt at a 27 floor -- delete it. (The same release also fixed `containerRelativeFrame` miscalculating safe-area insets on a scroll view's non-scrollable axis.) Below iOS 27, reconcile the binding after a tap-to-top by hand, or read position from `onScrollGeometryChange` instead of the binding.
 
 `ViewAlignedScrollTargetBehavior.LimitBehavior` controls how far a fling can travel: `.automatic`, `.always`, `.never`, `.alwaysByFew`, `.alwaysByOne`. Switching a paging carousel from `.automatic` to `.viewAligned(limitBehavior: .alwaysByOne)` fixes the #1 carousel complaint ("it flew past the card I wanted") with zero custom code -- a fast fling still advances exactly one card.
 
@@ -177,7 +179,7 @@ Content is never hidden under Reduce Motion -- the card/row/header still appears
 
 - `references/animation/04-transitions-geometry.md#scrolltransition-ios-17` -- `.scrollTransition` base API, `ScrollTransitionConfiguration` (OWNER)
 - `references/animation/04-transitions-geometry.md#visual-effects-ios-17` -- `.visualEffect` base API (OWNER)
-- `references/animation/05-gesture-driven.md#scroll-driven-chrome-minimize-ios-26` -- `TabBarMinimizeBehavior`/`ToolbarMinimizeBehavior` system chrome (OWNER)
+- `references/animation/05-gesture-driven.md#scroll-driven-chrome-minimize-ios-26` -- `TabBarMinimizeBehavior` (26.0) / `ToolbarMinimizationBehavior` (27.0) system chrome (OWNER)
 - `references/performance/01-swiftui-rendering.md#animation-cost-layout-vs-render` -- compositor-safe vs expensive property cost table (OWNER)
 - `references/accessibility/05-motion-accessibility.md` -- Reduce Motion double-gate contract (OWNER)
 - `references/haptics/02-swiftui-sensory-feedback.md#conditional-feedback` -- the `condition:` overload the armed-edge haptic uses

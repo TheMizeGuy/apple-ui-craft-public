@@ -1,7 +1,7 @@
 # Gesture Disambiguation
 
 > Owner: this file owns the gesture ARENA -- which modifier wins a touch, `GestureMask`, hit-testing/`contentShape` before recognition even starts, and the scroll-vs-drag conflict. `references/animation/05-gesture-driven.md` owns gesture composition SYNTAX (`.sequenced`/`.simultaneously`/`.exclusively`) and gesture-driven animation handoff -- cite it, don't restate it.
-> Floors: `references/_scaffolding/version-floor-registry.md`. `UIGestureRecognizerRepresentable` is iOS 18.0+ (Context7-verified) -- state inline, it is this file's headline API.
+> Floors: `references/_scaffolding/version-floor-registry.md`. `UIGestureRecognizerRepresentable` is iOS 18.0+ -- state inline, it is this file's headline API. `GestureInputKinds` is iOS 27.0+ on every platform; the `inputKinds:` gesture initializers are iOS 27.0+ with per-gesture platform lists -- only `TapGesture`'s reaches tvOS, and `MagnifyGesture`/`RotateGesture` skip tvOS and watchOS.
 
 SwiftUI runs every touch through a gesture arena: when a finger lands, every eligible recognizer in the hit view's ancestry competes, and by default only ONE wins. Disambiguation is choosing, deliberately, which one -- and the single most common ship-blocking bug in the whole domain is a custom drag inside a `ScrollView`/`List` that either eats the scroll or gets eaten by it. That bug has exactly one correct fix, and it is not `.simultaneousGesture`.
 
@@ -40,6 +40,50 @@ card
 ```
 
 The buttons stay tappable until a real drag begins, then go inert so a fingertip sliding off a button mid-drag never fires it. That is the difference between "feels precise" and "why did it open that?"
+
+## Input kinds: partitioning by hardware (iOS 27+)
+
+`GestureMask` decides which recognizer may compete. `GestureInputKinds` decides which HARDWARE may wake one, and it resolves the conflicts the mask cannot -- a pencil stroke that must mark while a finger pans, a pointer click that must mean something different from a tap. Before iOS 27 that required a `UIGestureRecognizerRepresentable` bridge inspecting `UITouch.type`; now it is a parameter at construction.
+
+`GestureInputKinds` is an option set with five members: `.all` (every present and future input kind, the default everywhere), `.directTouch` (finger on screen), `.indirectTouch` (trackpad, remote), `.pencil`, `.pointer` (mouse or trackpad button press). Nine gesture types gained an `inputKinds:` initializer overload -- `DragGesture`, `TapGesture`, `LongPressGesture`, `MagnifyGesture`, `RotateGesture`, `RotateGesture3D`, `SpatialTapGesture`, `SpatialEventGesture`, `WindowDragGesture`:
+
+```swift
+init(minimumDistance: CGFloat = 10, coordinateSpace: some CoordinateSpaceProtocol = .local,
+     inputKinds: GestureInputKinds = .all)                                   // DragGesture
+init(count: Int = 1, inputKinds: GestureInputKinds = .all)                   // TapGesture
+init(minimumDuration: Double = 0.5, maximumDistance: CGFloat = 10,
+     inputKinds: GestureInputKinds = .all)                                   // LongPressGesture
+init(minimumScaleDelta: CGFloat = 0.01, inputKinds: GestureInputKinds = .all) // MagnifyGesture
+init(minimumAngleDelta: Angle = .degrees(1), inputKinds: GestureInputKinds = .all) // RotateGesture
+```
+
+Two view modifiers carry it directly: `onTapGesture(count:coordinateSpace:inputKinds:perform:)` (all platforms) and `onLongPressGesture(minimumDuration:maximumDistance:inputKinds:perform:onPressingChanged:)` (not tvOS) -- both owned by `references/interaction/05-press-feedback-states.md#input-kinds-on-tap-and-long-press-ios-27`.
+
+The canonical case is the drawing surface, where pencil and finger must mean different things:
+
+```swift
+@available(iOS 27, *)
+struct DrawingSurface: View {
+    @Binding var strokes: [Stroke]
+    @Binding var canvasOffset: CGSize
+
+    var body: some View {
+        CanvasLayer(strokes: strokes)
+            .gesture(                                                // pencil marks, never pans
+                DragGesture(minimumDistance: 0, inputKinds: .pencil)
+                    .onChanged { strokes.appendPoint($0.location) }
+            )
+            .simultaneousGesture(                                    // finger and trackpad pan, never mark
+                DragGesture(minimumDistance: 10, inputKinds: [.directTouch, .indirectTouch])
+                    .onChanged { canvasOffset = $0.translation }
+            )
+    }
+}
+```
+
+Because the parameter defaults to `.all`, adding it is source-compatible and changes nothing for input sources you do not name -- which makes it a safe additive adoption behind `#available(iOS 27, *)`, with the pre-27 branch falling back to the `UIGestureRecognizerRepresentable` bridge below or to priority juggling. This is the platform's own model, not an app-level invention: Apple's HIG "Motion" already states that Liquid Glass "responds to direct touch interaction with greater emphasis to reinforce the feeling of a tactile experience, but produces a more subdued effect when a person interacts using a trackpad." System components have always varied behavior by input source; `inputKinds:` is the first time an app can.
+
+On a content-creation surface, treating every input source identically is now a reviewable defect on a 27 floor, and any bespoke pencil-vs-finger disambiguation hack is legacy code to delete.
 
 ## Scroll-vs-drag: the one correct fix
 
@@ -97,7 +141,9 @@ HStack { icon; Text(title); Spacer() }
 
 `contentShape` also takes a kind: `.contentShape(.interaction, Rectangle())` (default hit-test/gesture region), `.contentShape(.dragPreview, RoundedRectangle(cornerRadius: 16))` (the shape lifted for `.draggable`/context-menu drag), `.contentShape(.contextMenuPreview, ...)` (context-menu highlight region).
 
-Two shipped-bug rules worth memorizing: (1) a hit-testable view inside a body-scope `.overlay` SHADOWS any `.simultaneousGesture`/`.highPriorityGesture` on the view beneath it -- a `Color.clear.contentShape(Rectangle())` catcher in an overlay eats the hit-test for the whole subtree, and even a *failing* `.onTapGesture` still consumes it; don't stack hit-testable overlays over gesture-active regions. (2) a button inside a draggable card can fire at the moment the finger lifts at the end of a drag, unless you disarm it during the drag with the `GestureMask` pattern above or `.allowsHitTesting(!isDragging)`.
+Three shipped-bug rules worth memorizing: (1) a hit-testable view inside a body-scope `.overlay` SHADOWS any `.simultaneousGesture`/`.highPriorityGesture` on the view beneath it -- a `Color.clear.contentShape(Rectangle())` catcher in an overlay eats the hit-test for the whole subtree, and even a *failing* `.onTapGesture` still consumes it; don't stack hit-testable overlays over gesture-active regions. (2) a button inside a draggable card can fire at the moment the finger lifts at the end of a drag, unless you disarm it during the drag with the `GestureMask` pattern above or `.allowsHitTesting(!isDragging)`. (3) a `Text` carrying `.textSelection(.enabled)` now competes for the touch: rebuilt against the iOS 27 SDK it gains user-interactive system text selection where it previously offered only the callout menu, so a custom long-press or drag on that text is silently swallowed.
+
+Rule (3) is the rare disambiguation regression that arrives on an SDK rebuild with no code change, and Apple's own remedy is a priority escalation rather than an arena trick -- attach the custom gesture with `.highPriorityGesture(_:)` so it beats the system selection gesture, or drop `.textSelection(.enabled)` on that view. In review, every custom gesture on a selectable `Text` is worth grepping for on any project moving to the 27 SDK.
 
 Prefer a real `Button` + `ButtonStyle` over `.onTapGesture` whenever the thing is semantically a button -- you inherit correct hit-testing, the pressed state, accessibility traits, and correct scroll arbitration for free. Full press-state treatment: `references/interaction/05-press-feedback-states.md` (OWNER).
 
@@ -146,6 +192,13 @@ if #available(iOS 18.0, *) {
             }
     )
 }
+
+// Input-source partitioning: iOS 27 does it declaratively, earlier targets bridge to UIKit.
+if #available(iOS 27, *) {
+    canvas.gesture(DragGesture(minimumDistance: 0, inputKinds: .pencil).onChanged(mark))
+} else {
+    canvas.gesture(PencilOnlyPan(onChange: mark))            // UIGestureRecognizerRepresentable, UITouch.type == .pencil
+}
 ```
 
 ## Accessibility contract
@@ -170,12 +223,14 @@ A `.highPriorityGesture` that greedily claims every touch can also swallow the s
 | Two tap modifiers (single + double) without `ExclusiveGesture` | Both fire, or single tap races the double | `TapGesture(count: 2).exclusively(before: TapGesture(count: 1))`, accept the ~0.3s single-tap delay |
 | Hit-testable `Color.clear` catcher in an `.overlay` over a gesture-active view | Shadows the gesture beneath even when the tap fails | Don't stack hit-testable overlays over gesture regions; use `GestureMask` instead |
 | Custom gesture with no `.accessibilityAction` | Invisible to VoiceOver/Switch Control/AssistiveTouch | Mirror every gesture outcome with a named accessibility action |
+| Custom gesture on a `Text` with `.textSelection(.enabled)`, plain `.gesture(_:)` | On the iOS 27 SDK the system's interactive text selection swallows it -- a regression with no code change | `.highPriorityGesture(_:)`, or remove `.textSelection(.enabled)` from that view |
+| Pencil-vs-finger split hand-rolled with `simultaneousGesture` priority juggling on a 27 floor | Reimplements a system primitive, and still misclassifies a pointer drag | `inputKinds:` at gesture construction (`.pencil` vs `[.directTouch, .indirectTouch]`) |
 
 ## Severity guide
 
 - **CRITICAL** -- a custom gesture has no accessibility path at all (feature does not exist for VoiceOver/Switch Control users); `.highPriorityGesture` breaks scrolling app-wide.
-- **HIGH** -- scroll-vs-drag solved with `.simultaneousGesture` (both fire); `minimumDistance: 0` used to paper over an unrelated conflict.
-- **MEDIUM** -- missing `GestureMask` disarm lets a drag accidentally fire an inner button on release.
+- **HIGH** -- scroll-vs-drag solved with `.simultaneousGesture` (both fire); `minimumDistance: 0` used to paper over an unrelated conflict; a custom gesture on selectable `Text` left at plain `.gesture(_:)` after moving to the iOS 27 SDK (the gesture stops firing).
+- **MEDIUM** -- missing `GestureMask` disarm lets a drag accidentally fire an inner button on release; a content-creation surface on a 27 floor treats pencil, finger and pointer identically.
 - **LOW** -- axis-lock bias not tuned for the surrounding scroll direction; `contentShape` kind mismatch (rectangle hit-shape under a rounded drag-preview).
 
 ## See also

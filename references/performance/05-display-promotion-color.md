@@ -16,6 +16,8 @@ ProMotion refreshes ADAPTIVELY, chosen frame-by-frame by the system between roug
 
 Recalibrate any hitch-severity intuition for a ProMotion device: sustained >8ms of main-thread commit work per frame is the "moderate" threshold there, not 16ms. Even on a 120Hz-capable device the rate actually GRANTED varies -- the system requests max during active scrolling/gesture interaction and throttles down when content is static, to save power. An idle screen does not run at 120Hz just because the hardware supports it.
 
+The current Pro hardware changes none of this. iPhone 18 Pro (6.3-inch, 2622x1206) and 18 Pro Max (6.9-inch, 2868x1320), both 460 ppi OLED on A20 Pro, carry "ProMotion technology with adaptive refresh rates up to 120Hz" -- adaptive, not pinned -- so the budget is still 8.33 ms and still a request. Two panel numbers do matter downstream: **1 nit minimum brightness**, which is why an Always-On or dark-room surface has to be authored to stay legible at very low luminance, and **3000 nits outdoor peak** (1600 nits HDR peak, 2,000,000:1 typical contrast), which widens the gap between an assumed peak and the real one and makes the "declare intent, let the system tone-map" rule below more important, not less.
+
 Query the device's ceiling through a window scene, never through the deprecated singleton:
 
 ```swift
@@ -149,7 +151,7 @@ Glass and `Material` backgrounds are SDR by design -- they sample and blur conte
 
 The Simulator cannot reproduce any of this -- it renders through the Mac's own display and refresh rate, so refresh cadence, P3 saturation, and EDR headroom all look wrong or absent there.
 
-- **Refresh rate:** test on both a ProMotion device and a 60Hz device. Smoothness tuned by eye at 60Hz can stutter at 120Hz, and vice versa. Profile with the **Animation Hitches** Instruments template on device -- see `references/performance/03-launch-memory-instruments.md#hangs-hitches-and-the-swiftui-instrument` for the measurement workflow and hitch-ratio target.
+- **Refresh rate:** test on both a ProMotion device and a 60Hz device. Smoothness tuned by eye at 60Hz can stutter at 120Hz, and vice versa. Profile with the **Animation Hitches** Instruments template on device -- see `references/performance/03-launch-memory-instruments.md#hangs-hitches-and-the-swiftui-instrument` for the measurement workflow and hitch-ratio target. For a Metal-backed surface, frame pacing now has a FIELD counterpart as well: `MetalFrameRateMetric` (iOS/iPadOS/Mac Catalyst/macOS 27.0, read through `MetricResult.metalFrameRate(_:)`) reports per-`CAMetalLayer` pacing from real devices, which Instruments alone could never give you. Read it against `HitchTimeMetric` -- a healthy CA hitch ratio with a poor Metal frame rate points at the renderer, not at SwiftUI body cost. Below iOS 27 there is no field equivalent; use Metal System Trace or the Metal Performance HUD locally.
 - **Display P3:** compare `Color(.displayP3, red: 1, green: 0, blue: 0)` against `Color(.sRGB, red: 1, green: 0, blue: 0)` side by side on a real P3 device -- the P3 red is visibly more saturated. Sample a device screenshot with macOS Digital Color Meter set to "Display P3" to confirm components exceed sRGB gamut.
 - **HDR:** verify on an XDR-capable panel (iPhone Pro, iPad Pro, Pro Display XDR) under varying brightness/Low Power Mode to confirm graceful tone-mapping rather than clipping.
 

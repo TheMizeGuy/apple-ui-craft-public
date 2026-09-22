@@ -1,8 +1,8 @@
 # Exemplar: Liquid Glass Screen
 
-> Status: signature-drafted, build-pending (requires Xcode build at iOS 18 + iOS 26 targets).
+> Status: signature-drafted, build-pending (requires Xcode build at iOS 18, iOS 26 and iOS 27 targets).
 > Composes: `references/design/02-liquid-glass.md` (owner of the Glass API), `references/design/07-navigation-patterns.md` (Tab/toolbar), `references/animation/02-spring-physics.md` (spring presets), `references/haptics/02-swiftui-sensory-feedback.md` (`.sensoryFeedback`), `references/accessibility/05-motion-accessibility.md` (Reduce Motion double-gate). This file demonstrates composition -- it does not own any concept it uses.
-> Floors: base file targets iOS 18+; every Liquid Glass API is gated `#available(iOS 26.0, *)` with a `.regularMaterial`/`.thinMaterial` fallback per `references/_scaffolding/version-floor-registry.md#ios-26x`.
+> Floors: base file targets iOS 18+; every Liquid Glass API is gated `#available(iOS 26.0, *)` with a `.regularMaterial`/`.thinMaterial` fallback per `references/_scaffolding/version-floor-registry.md#ios-26x`. iOS 27 added no glass API at all, so that gate is still 26.0 -- the separate `#available(iOS 27.0, *)` branches below are toolbar placements and overflow, nothing glass.
 
 A content-detail screen where a floating glass functional layer (tab bar, action cluster, toolbar) sits above a scrolling content layer, glass is grouped in one `GlassEffectContainer` per cluster, and every surface degrades correctly under accessibility settings and pre-iOS-26 SDKs. This is the reference an agent should hold up as the target when reviewing a Liquid Glass screen.
 
@@ -96,11 +96,22 @@ struct ExhibitDetailView: View {
     }
 
     // Fix 1 continued: ToolbarSpacer (iOS 26.0+) gated; pre-26 keeps one grouping, no spacer.
+    // iOS 27 adds two independent gates on top: the anchor action takes .topBarPinnedTrailing so
+    // overflow can never swallow it, and secondary actions go to the SYSTEM overflow rather than
+    // an app-drawn ellipsis Menu. Every item carries both a title and a symbol, which is what
+    // lets the system present it on a vertical bar.
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Button("Info", systemImage: "info.circle") { }
+        if #available(iOS 27.0, *) {
+            ToolbarItem(placement: .topBarPinnedTrailing) {
+                Button("Info", systemImage: "info.circle") { }
+            }
+        } else {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Info", systemImage: "info.circle") { }
+            }
         }
+
         if #available(iOS 26.0, *) {
             ToolbarSpacer(.fixed)   // breaks the shared glass background into two capsules
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -111,6 +122,20 @@ struct ExhibitDetailView: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button("Map", systemImage: "map") { }
                 Button("Hours", systemImage: "clock") { }
+            }
+        }
+
+        if #available(iOS 27.0, *) {
+            ToolbarOverflowMenu {
+                Button("Share Exhibit", systemImage: "square.and.arrow.up") { }
+                Button("Report an Issue", systemImage: "exclamationmark.bubble") { }
+            }
+        } else {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu("More", systemImage: "ellipsis") {
+                    Button("Share Exhibit", systemImage: "square.and.arrow.up") { }
+                    Button("Report an Issue", systemImage: "exclamationmark.bubble") { }
+                }
             }
         }
     }
@@ -322,7 +347,9 @@ if #available(iOS 26.0, *) {
 }
 ```
 
-`GlassEffectContainer`, `.glassEffect`, `.buttonStyle(.glass/.glassProminent)`, `backgroundExtensionEffect()`, `ToolbarSpacer`, `.tabBarMinimizeBehavior`, `.tabViewBottomAccessory` are ALL iOS 26.0+ -- every call site above is gated behind `#available(iOS 26.0, *)` with a Materials fallback, never left ungated.
+`GlassEffectContainer`, `.glassEffect`, `.buttonStyle(.glass/.glassProminent)` (parameterized form included), `backgroundExtensionEffect()`, `ToolbarSpacer`, `.tabBarMinimizeBehavior`, `.tabViewBottomAccessory` are ALL iOS 26.0+ -- every call site above is gated behind `#available(iOS 26.0, *)` with a Materials fallback, never left ungated. iOS 27 changed none of those floors.
+
+`.topBarPinnedTrailing` and `ToolbarOverflowMenu` are iOS 27.0 (iOS / iPadOS / Mac Catalyst / visionOS -- not macOS, tvOS or watchOS) and carry their own gate with a real pre-27 path: plain `.topBarTrailing` and an app-drawn ellipsis `Menu`. Keep the two gates separate. Collapsing them into one `#available(iOS 27.0, *)` would strand the glass surface on iOS 26 devices, which is the single most expensive mistake available here.
 
 ## Accessibility contract
 

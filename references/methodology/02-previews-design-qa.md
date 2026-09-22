@@ -17,7 +17,7 @@ Previews only enforce craft when a view is architected to be previewable and eve
 #Preview("Loaded") { FeedView(model: .loaded(.sampleFeed)) }
 ```
 
-`PreviewProvider` still compiles but is superseded -- migrate opportunistically:
+`PreviewProvider` and its family of preview modifiers are deprecated in Xcode 27 -- migrate opportunistically, and write every new preview with `#Preview`:
 
 | `PreviewProvider` | `#Preview` |
 |---|---|
@@ -179,7 +179,7 @@ for size in ["UICTContentSizeCategoryL", "UICTContentSizeCategoryAccessibilityL"
 
 ## Environment Overrides: exercising states previews cannot inject
 
-Get-only accessibility settings (Reduce Motion, Reduce Transparency, Increase Contrast, Differentiate Without Color, Smart Invert) cannot be baked into a `#Preview`; Bold Text is the exception, injected with `.environment(\.legibilityWeight, .bold)`. Exercise them on one of three surfaces instead: (1) the Xcode canvas Variants button, which exposes accessibility overrides without editing code; (2) a RUNNING app's Xcode debug bar > Environment Overrides, toggled live against the simulator/device; (3) Simulator > Settings > Accessibility, or the Simulator Features menu shortcuts. Because these cannot be preview-injected, write the view so a plain `@Environment` READ plus an ordinary `if`/ternary drives the adaptation -- that branch is exercisable via Environment Overrides at runtime and testable by an automated audit; a pattern that reads the flag indirectly or hardcodes the animation cannot be verified at all.
+Xcode 27's canvas adds three overrides that used to need the simulator: a localization override (preview in another language without changing the scheme), a Color Scheme Contrast group (standard vs increased contrast), and a Control Borders group (Button Shapes on or off), plus a Resizable Canvas mode for iOS previews that exercises every width between compact and regular -- the configuration iOS 27's continuous resizing makes real. Use them as the verification step for those settings. Get-only accessibility settings (Reduce Motion, Reduce Transparency, Increase Contrast, Differentiate Without Color, Smart Invert) cannot be baked into a `#Preview`; Bold Text is the exception, injected with `.environment(\.legibilityWeight, .bold)`. Exercise them on one of three surfaces instead: (1) the Xcode canvas Variants button, which exposes accessibility overrides without editing code; (2) a RUNNING app's Xcode debug bar > Environment Overrides, toggled live against the simulator/device; (3) Simulator > Settings > Accessibility, or the Simulator Features menu shortcuts. Because these cannot be preview-injected, write the view so a plain `@Environment` READ plus an ordinary `if`/ternary drives the adaptation -- that branch is exercisable via Environment Overrides at runtime and testable by an automated audit; a pattern that reads the flag indirectly or hardcodes the animation cannot be verified at all.
 
 ## Troubleshooting common preview failures
 

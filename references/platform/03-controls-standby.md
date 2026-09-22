@@ -22,6 +22,7 @@ One `ControlWidget` reaches Control Center, the Lock Screen, and the Action Butt
 | Action needs multi-step input or picking from many options | NO -- controls are glanceable, not a mini-form; use Shortcuts or the app |
 | State rarely checked or changed (account settings) | NO |
 | Feature already has a home-screen widget button doing the same thing | Reuse the SAME `AppIntent` -- add a `ControlWidget` wrapper, don't fork the logic |
+| Media transport (play/pause, skip, scrub) | NO -- a `MediaSession` publishes these to Control Center, the Lock Screen, Apple Watch and CarPlay for you (`NowPlaying`, iOS 27+; `MPRemoteCommandCenter` below it). See `references/platform/01-widgets-live-activities.md#when-to-use-live-activities` |
 
 ## Core APIs
 

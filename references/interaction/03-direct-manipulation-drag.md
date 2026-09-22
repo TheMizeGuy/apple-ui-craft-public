@@ -1,7 +1,7 @@
 # Direct Manipulation & Drag Mechanics
 
 > Owner: `references/interaction/03-direct-manipulation-drag.md` owns **"never animate the follow"** -- the 1:1 tracking discipline, grab-anchor math, rubber-banding at bounds, momentum/throw velocity normalization, snap-to-grid/detent ordering, `@GestureState` reset transactions, and the `accessibilityDragPoint`/`accessibilityDropPoint` VoiceOver bridge for custom drag interactions. `DragGesture` syntax, `@GestureState` basics, `.swipeActions`, and `.draggable`/`.dropDestination` live in `references/animation/05-gesture-driven.md` (cite, don't restate). Which recognizer wins a touch (the gesture arena, `GestureMask`, scroll-vs-drag) is owned by `references/interaction/04-gesture-disambiguation.md`. 44pt targets and WCAG pointer-gesture levels are owned by `references/accessibility/04-motor-interaction.md`.
-> Floors: `DragGesture.Value.velocity` is iOS 17.0+ (`predictedEndTranslation`/`predictedEndLocation` are iOS 13.0+) -- see `references/_scaffolding/version-floor-registry.md#ios-170`. `accessibilityDragPoint`/`accessibilityDropPoint` are iOS 16.0+.
+> Floors: `DragGesture.Value.velocity` is iOS 17.0+ (`predictedEndTranslation`/`predictedEndLocation` are iOS 13.0+) -- see `references/_scaffolding/version-floor-registry.md#ios-170`. `accessibilityDragPoint`/`accessibilityDropPoint` are iOS 16.0+. `UIDragInteraction.allowsPointerDragBeforeLiftDelay` is iOS 27.0+.
 
 A drag either feels welded to the fingertip or it doesn't, and when it doesn't, the cause is almost always the same mistake: **something animated the value the gesture is writing.** Direct manipulation has exactly one non-negotiable law -- the live tracked value is raw and un-animated; every spring in the interaction lives in `.onEnded`, a reset transaction, or an unrelated property, never on the value the finger is driving right now.
 
@@ -146,6 +146,20 @@ func nearestAnchor(to value: CGFloat, in anchors: [CGFloat]) -> CGFloat {
 
 For a regular grid, quantize the projected landing to the cell pitch (`(landing / cell).rounded() * cell`) per axis instead of an anchor list. For multi-detent panels, add a directional-fling override so a decisive flick always advances one detent even from a short drag: `velocity < -800 -> next detent`, mirroring the native sheet's feel. Compose with rubber-banding, not instead of it -- resistance is the live affordance during the drag, snap is the settle after release.
 
+## Drag initiation under a pointer (iOS 27+)
+
+The lift delay is the other half of drag feel, and until iOS 27 touch and pointer shared it. `UIDragInteraction.allowsPointerDragBeforeLiftDelay` (`var allowsPointerDragBeforeLiftDelay: Bool { get set }`, iOS 27.0 / iPadOS 27.0 / Mac Catalyst 27.0 / visionOS 27.0) decouples them, and on iOS it defaults to `true`: a pointer drag now begins as soon as the pointer crosses the movement threshold, with no code. The decision left to you is the opposite one -- in a gesture-rich view, turn it off:
+
+```swift
+// UIKit only -- SwiftUI has no equivalent, so this is a legitimate reason to bridge.
+@available(iOS 27, *)
+func configure(_ interaction: UIDragInteraction) {
+    interaction.allowsPointerDragBeforeLiftDelay = false   // canvas: pointer waits out the lift delay, same as touch
+}
+```
+
+Apple's documented recommendation is `false` wherever a canvas or map hosts both a drag source and secondary gestures such as a pan, so pointer and touch disambiguate identically (the default is `false` on macOS). Below iOS 27 the timings stay coupled; the workaround is a custom `UILongPressGestureRecognizer` with a shorter `minimumPressDuration`, gated on `UITouch.type == .indirectPointer`. On the SwiftUI side, the iOS 27 way to keep a pointer and a finger doing different things is `inputKinds:` at gesture construction (`references/interaction/04-gesture-disambiguation.md#input-kinds-partitioning-by-hardware-ios-27`, OWNER).
+
 ## Returning cleanly: `@GestureState` reset transactions
 
 `@GestureState` auto-resets to its initial value the instant a gesture ends OR is cancelled -- the cancellation safety that makes it correct for transient drag state. The part almost nobody uses: that reset is INSTANT by default, which pops a lifted/stretched effect back with a hard cut. Give the reset its own transaction so it eases home on end AND on interruption:
@@ -196,6 +210,7 @@ Keep regardless of Reduce Motion: haptics (governed by the system Haptics settin
 | Snapping the release point instead of the projected landing | A fast flick can't skip a cell; a gentle nudge over-commits | Project first, snap the PROJECTED landing |
 | `.onEnded { withAnimation { state = 0 } }` on a plain `@State` for a return-to-origin effect | `.onEnded` doesn't fire on cancellation -- the view can strand mid-effect | `@GestureState(resetTransaction:)`/`(reset:)` |
 | A tap-only "+/-" bolted beside a custom drag | Replaces the interaction instead of making the original one reachable | `accessibilityDragPoint`/`DropPoint` + `.accessibilityAction(named:)` pair |
+| A hand-rolled swipe-to-reveal drawer on rows outside a `List`, on a 27 floor | Reinvents `swipeActions` and almost always omits the mutual exclusion that closes the other rows | `swipeActions(…)` on the row + `swipeActionsContainer()` on the container (`references/interaction/06-custom-controls-reorderable.md#swipe-actions-outside-list-ios-27`, OWNER) |
 
 ## Severity guide
 

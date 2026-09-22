@@ -90,7 +90,7 @@ default configuration is the one that always passes. State which were exercised.
 | Bold Text | Metrics shift; fixed-width labels clip |
 | VoiceOver on | Labels, order, focus, announcements |
 | RTL | Leading and trailing violations |
-| iPad, if supported | Split view, or its absence |
+| iPad, if supported | Split view, or its absence -- and arbitrary window sizes, since apps built with the iOS 27.0 SDK resize continuously whatever orientations they declare |
 | Display Zoom | Shifts every width assumption down a device class |
 
 **A review that exercised only the default configuration says so in the report,

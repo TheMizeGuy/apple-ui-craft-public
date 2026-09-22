@@ -107,6 +107,7 @@ Dedup and per-dimension verdicts key on these strings. Use them verbatim.
 | Navigation patterns | apple-ui-reviewer | Yes |
 | Layout and spacing | apple-ui-reviewer | Yes |
 | Micro-interactions | apple-ui-reviewer | Yes |
+| App icon | apple-ui-reviewer | Partly; each appearance and the smallest sizes need their own rendition |
 | Density and economy | apple-ui-reviewer | Yes, with a measurement |
 | Task flow and journey | apple-ui-reviewer | **No** |
 | Information architecture and navigation structure | apple-ui-reviewer | **No** |
@@ -127,7 +128,7 @@ Dedup and per-dimension verdicts key on these strings. Use them verbatim.
 
 ### The dimensions that cannot be judged from one frame
 
-Ten of the twenty-four are decidable only from a SEQUENCE, a CONFIGURATION
+Ten of the twenty-five are decidable only from a SEQUENCE, a CONFIGURATION
 CHANGE, or a MEASUREMENT: two consecutive screens, a back gesture, a relaunch, a
 type-size change, a window resize, an Instruments trace.
 

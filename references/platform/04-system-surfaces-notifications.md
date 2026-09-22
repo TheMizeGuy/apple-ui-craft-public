@@ -1,7 +1,7 @@
 # System Surfaces: Notifications, Sharing, and Polish
 
 > Owner: `references/platform/04-system-surfaces-notifications.md` owns notification authorization/priority/grouping/badging, rich notification content (attachments, categories, content extensions, communication notifications), transient in-app confirmations, alternate app icons + appearances, and launch screens, per the ARCHITECTURE ownership map. It does NOT own `ShareLink`/Spotlight/Quick Actions/context menus/TipKit (owner `references/platform/02-app-intents-system.md`), Dynamic Island presentation (owner `references/platform/01-widgets-live-activities.md`), `ContentUnavailableView`/`redacted` empty-and-loading states (owner `references/patterns/04-loading-empty-error.md`), or `confirmationDialog`/`alert` (owner `references/patterns/05-modality-sheets.md`) -- cite those, don't restate them.
-> Floors: cite `references/_scaffolding/version-floor-registry.md` for anything version-gated. `UNNotificationInterruptionLevel` is iOS 15.0+; `.provisional` is iOS 12.0+; `setBadgeCount` is iOS 16.0+; Communication Notifications require the matching capability.
+> Floors: cite `references/_scaffolding/version-floor-registry.md` for anything version-gated. `UNNotificationInterruptionLevel` is iOS 15.0+; `.provisional` is iOS 12.0+; `setBadgeCount` is iOS 16.0+; `UNMutableNotificationContent.appEntityIdentifiers` is iOS 27.0+; Communication Notifications require the matching capability. A launch screen is mandatory for apps built with the iOS 27.0 SDK.
 
 A notification, a share sheet, an icon, and a launch screen are the four places your app talks to the user before they've opened a single screen -- get any of them wrong and the app feels amateur before the user has judged anything else. The single most common way this goes wrong: cold-prompting for notification permission on first launch, which trains the user to reflexively deny every future system prompt this app ever shows.
 
@@ -147,6 +147,19 @@ func userNotificationCenter(_ c: UNUserNotificationCenter,
 }
 ```
 
+On iOS 27, say what the notification is *about* as well as where it goes. `UNMutableNotificationContent.appEntityIdentifiers` carries App Intents `EntityIdentifier` values, tying the notification to the entities in your app's graph instead of leaving it opaque text with a URL glued on:
+
+```swift
+// `identifiers` are the EntityIdentifier values of the AppEntity instances this
+// notification is about -- the same entities Siri, Spotlight and Shortcuts resolve.
+if #available(iOS 27, *) {
+    content.appEntityIdentifiers = identifiers
+}
+content.userInfo["deep_link"] = order.deepLink   // still the pre-27 path; keep it
+```
+
+It is the only new UserNotifications symbol in the 27 SDK, and its real consequence is a design one: the thing a notification is about should already be an `AppEntity`. A notification-only data path -- content that exists nowhere else in your entity graph -- is now a smell. Below iOS 27 keep carrying your own identifiers in `userInfo` and resolving them on tap.
+
 ## Dynamic Island and Live Activities
 
 Owned by `references/platform/01-widgets-live-activities.md#widget-extension-for-live-activity-views` -- the `DynamicIsland` builder, expanded regions, and `ActivityContent` lifecycle live there. Nothing here duplicates it.
@@ -198,11 +211,15 @@ try await UIApplication.shared.setAlternateIconName("darkIcon")         // nil r
 let current = UIApplication.shared.alternateIconName                    // nil == primary icon showing
 ```
 
-Setup is build-setting driven (Primary/Alternate App Icon Sets in Build Settings), not just an asset catalog. Changing the icon shows a **system confirmation alert** the user can cancel -- treat that as a legitimate decline, not a failure to log. Ship icon switching as an explicit "Icon" section in Settings, previewed before applying -- never as a surprise triggered by in-app events.
+Setup is build-setting driven, not just an asset catalog: `ASSETCATALOG_COMPILER_APPICON_NAME` ("Primary App Icon Set Name"), `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` ("Alternate App Icon Sets"), and `ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS` ("Include All App Icon Assets") to ship them all without naming each. Xcode writes `CFBundleIcons`, `CFBundlePrimaryIcon` and `CFBundleAlternateIcons` from those settings -- Apple says outright not to edit or remove those keys from `Info.plist` by hand. Changing the icon shows a **system confirmation alert** the user can cancel -- treat that as a legitimate decline, not a failure to log. Ship icon switching as an explicit "Icon" section in Settings, previewed before applying -- never as a surprise triggered by in-app events.
 
-iOS 26 app icons have four appearances: **default, dark, clear, tinted**. Keep core visual features consistent across all four -- swapping elements between variants breaks recognizability when the user switches Home Screen appearance; dark should read more subdued than default, clear/tinted more subtle still. Each alternate icon set needs its own four variants -- it does not inherit the primary icon's. Design layers in Icon Composer (bundled with Xcode 26+), which exposes Liquid Glass group-level effects (specular highlights, refraction, translucency) a flat PNG stack cannot express.
+iOS, iPadOS and macOS render **six** icon renditions -- default, dark, clear light, clear dark, tinted light, tinted dark -- from **three** authored appearance annotations: default, dark and mono (the `.icon` schema's enum is exactly `light` | `dark` | `tinted`). The system derives clear and tinted from the mono annotation, so the work is three passes and the verification is six. Keep core visual features consistent across all of them -- swapping elements between variants breaks recognizability when the user switches Home Screen appearance; dark should read more subdued than default, clear and tinted more subtle still. **Each alternate icon is its own Icon Composer `.icon` file with its own dark, clear and tinted variants** -- it inherits nothing from the primary, and the HIG notes every alternate and variant icon is subject to App Review. Artwork craft -- layering, Icon Composer properties, the `.icon` package, export rules and icon review -- is owned by `references/design/14-app-icons.md`.
 
-A launch screen exists to make the app feel fast and ready, never as a branding canvas -- it should be nearly identical to the first screen of the app, with no text (localization breaks it) and no logo unless the logo is a permanent fixture of that first screen. A genuine branded moment belongs at the start of onboarding, not on the launch screen. Restore previous app state on relaunch wherever possible -- see `references/platform/09-scene-lifecycle.md` for restoration mechanics.
+iOS 27 changed nothing about the icon API -- `setAlternateIconName(_:completionHandler:)`, `alternateIconName` and `supportsAlternateIcons` are unchanged. What changed is the asset. Every alternate icon now requires its own Icon Composer file, and Icon Composer 2.0 in Xcode 27 previews two design generations. The sharper one, **design generation 27**, is live on iOS/iPadOS/macOS/watchOS 27 -- Apple's "upcoming 2027 operating systems" is the model-year name for the 27-numbered OSes, shipped 2026-09-14. Refractivity and Inside/Outside specular render there; on generation 26 refraction has no visible effect and the placement choice is ignored, so both are progressive enhancement, not a future bet. One exported icon serves every OS version: preview in both generations and ship the asset that holds up in each -- the HIG now says outright that icon effects can appear differently between system versions, and generation 27 also reduced translucency system-wide, so a shipped icon nobody touched looks different on 27.
+
+A launch screen is mandatory for any app built with the iOS 27.0 SDK or later: the `Info.plist` must carry `UILaunchStoryboardName`, `UILaunchStoryboards`, `UILaunchScreen` or `UILaunchScreens`, and an app without one is rejected once the App Store accepts 27.0-SDK builds. That makes a missing launch screen a submission blocker rather than a polish note.
+
+Since every app now ships one, the only remaining question is whether it earns its half-second. A launch screen exists to make the app feel fast and ready, never as a branding canvas -- it should be nearly identical to the first screen of the app, with no text (localization breaks it) and no logo unless the logo is a permanent fixture of that first screen. A genuine branded moment belongs at the start of onboarding, not on the launch screen. Restore previous app state on relaunch wherever possible -- see `references/platform/09-scene-lifecycle.md` for restoration mechanics, and `references/platform/09-scene-lifecycle.md#document-launch-cards-ios-27` for the document launch card, which is the pre-first-screen surface a document-based app owns on top of the launch screen.
 
 ## Availability + fallbacks
 
@@ -231,17 +248,19 @@ Every transient confirmation you draw needs a matching `AccessibilityNotificatio
 | Inline base64 image in the push payload for a rich notification | APNs 4KB payload limit | Service extension downloads via `mutable-content: 1` |
 | A visual-only "Saved" toast | Invisible to VoiceOver | Pair with `AccessibilityNotification.Announcement` |
 | Alternate icon swap triggered automatically by an in-app event | Surprises the user; Apple discourages coercive icon changes | Explicit, previewed "Icon" setting |
+| No launch screen key in `Info.plist` | Rejected for any build made with the iOS 27.0 SDK or later | Add `UILaunchScreen` (or `UILaunchStoryboardName`) |
 | Logo/branding/text on the launch screen | Breaks localization; feels like a splash ad, not a fast app | Match the real first screen; branding moves to onboarding |
 
 ## Severity guide
 
-CRITICAL: a push carrying sensitive content ships with no Notification Service Extension decryption path, or a notification action mutates data without `.authenticationRequired` from the Lock Screen. HIGH: cold `requestAuthorization` on launch with no priming; `.critical` used without the entitlement (silently no-ops, but signals a design that assumes it works). MEDIUM: `threadIdentifier` missing or per-notification-unique (Notification Center turns into an unscannable list); badge never cleared. LOW: a transient confirmation with no VoiceOver announcement. NIT: alternate icon set shipped with only one appearance variant designed.
+CRITICAL: a push carrying sensitive content ships with no Notification Service Extension decryption path; a notification action mutates data without `.authenticationRequired` from the Lock Screen; or a project targeting the iOS 27.0 SDK ships without a launch-screen key, which the App Store rejects outright. HIGH: cold `requestAuthorization` on launch with no priming; `.critical` used without the entitlement (silently no-ops, but signals a design that assumes it works). MEDIUM: `threadIdentifier` missing or per-notification-unique (Notification Center turns into an unscannable list); badge never cleared; an alternate icon shipped missing one of its own dark, clear or tinted variants -- broken on a Home Screen appearance the user can pick, and itself subject to App Review (an alternate shipped with none of them is HIGH; `references/design/14-app-icons.md#reviewing-an-icon` owns the icon scale). LOW: a transient confirmation with no VoiceOver announcement.
 
 ## See also
 
 - `references/platform/01-widgets-live-activities.md#widget-extension-for-live-activity-views` -- Dynamic Island and Live Activity presentation (owner)
 - `references/platform/02-app-intents-system.md#sharelink` -- `ShareLink`, `SharePreview`, Share Extension (owner)
 - `references/platform/02-app-intents-system.md#spotlight-indexing` -- Core Spotlight and `NSUserActivity` (owner)
+- `references/design/14-app-icons.md` -- app icon craft: concept, layering, Icon Composer properties, the `.icon` package, export and icon review (owner)
 - `references/platform/09-scene-lifecycle.md` -- state restoration on relaunch, referenced from the launch-screen guidance above
 - `references/patterns/05-modality-sheets.md#confirmation-dialogs` -- `confirmationDialog` vs `.alert` (owner)
 - `references/patterns/04-loading-empty-error.md` -- `ContentUnavailableView` and `redacted` loading skeletons (owner)

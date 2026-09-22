@@ -1,7 +1,7 @@
 # SwiftData UI Binding and Performance
 
 > Owner: `references/performance/08-swiftdata-ui.md` owns the `@Query` -> SwiftUI binding contract (initializer families, the `animation:` lever, dynamic search/sort/filter, undo/redo, optimistic edits, migration and preview seeding) AND the performance hazards specific to that binding (main-actor fetch cost, predicate pushdown, N+1 relationship faulting, pagination, animated-diff cost at scale). `@Model`/`ModelContainer`/`ModelContext`/`#Predicate`/`@ModelActor` PERSISTENCE internals are out of scope for this library -- this file is the UI-facing layer only and states inline each container or context call it depends on.
-> Floors: see `references/_scaffolding/version-floor-registry.md`. Baseline iOS 17.0+ for everything except sectioned queries. `#Index` iOS 18+. `@Query(sort:sectionBy:)` / `ResultsSectionCollection` is **iOS 27.0+ Beta, not iOS 26** -- gate `#available(iOS 27, *)` + `// SDK-verify`, and never emit it as a primary shipping example.
+> Floors: see `references/_scaffolding/version-floor-registry.md`. Baseline iOS 17.0+ for everything except the sectioned-query and observer APIs. `#Index` iOS 18+. `@Query(...sectionBy:)` / `Query.sections` / `SectionedResults` / `ResultsSection` / `ResultsObserver` / `HistoryObserver` are **iOS 27.0+, not iOS 26** (all seven platforms at 27.0) -- gate `#available(iOS 27, *)` and ship the grouping fallback beside it. An iOS-27-minimum target drops the fallback.
 
 `@Query` makes a SwiftUI view a live projection of the store: mutate a `@Model`, the bound view re-renders itself, no manual reload, no Combine plumbing. The craft question is getting the MOTION right (declare it once, at the query); the performance question is that `@Query` is `@MainActor @preconcurrency` and runs its fetch SYNCHRONOUSLY on the main actor -- an unbounded query over a large table is a launch/navigation hang hiding behind a one-line property wrapper.
 
@@ -64,19 +64,34 @@ An unbounded `@Query private var rows: [Row]` with no predicate/limit materializ
 
 For a count, never `fetch(...).count` -- `context.fetchCount(descriptor)` is a `SELECT COUNT`, zero objects loaded.
 
-## Sectioned lists -- iOS 27.0+ Beta only, not iOS 26
+## Sectioned lists -- iOS 27.0+, not iOS 26
+
+Sectioning a large SwiftData-backed list used to mean an O(n) `Dictionary(grouping:)` recomputed every time the result set changed. iOS 27 pushes the grouping into the store: every `@Query` macro shape gained a `sectionBy:` overload taking a `KeyPath<Element, String>` or `KeyPath<Element, String?>`, and the query then vends `SectionedResults<Element, String>` instead of `[Element]`.
 
 ```swift
-if #available(iOS 27, *) {
-    // SDK-verify: ResultsSectionCollection name unconfirmed against a live iOS 27 SDK.
-    // macro Query(_:transaction:sectionBy:); var Query.sections: ResultsSectionCollection<Element, String>
-    // (accessed via the underscored storage, e.g. _trips.sections); nil key -> empty-string section.
-} else {
-    // iOS 26 and earlier -- manual grouping, computed in the STORE, never in body.
+@available(iOS 27, *)
+struct TripSectionList: View {
+    // Declare the property AS SectionedResults and read it directly -- the preferred shape.
+    @Query(sort: \Trip.startDate, order: .reverse, sectionBy: \.continent)
+    private var trips: SectionedResults<Trip, String>
+
+    var body: some View {
+        List {
+            ForEach(trips) { section in              // ResultsSection: Identifiable by its title
+                Section(section.title) {
+                    ForEach(section) { trip in TripRow(trip: trip) }
+                }
+            }
+        }
+    }
 }
 ```
 
-`@Query(sort:sectionBy:)` and the paired `ResultsObserver(...sectionBy:...)` require iOS/iPadOS/macOS/tvOS/watchOS/visionOS **27.0+**. Targeting a lower deployment floor and it won't compile -- gate it. Never conflate this with Core Data's `SectionedFetchRequest`, which is a SEPARATE API on iOS 15+; a 12-major-version gap sits between the two, and stating SwiftData sectioning as "iOS 26 new" or as equivalent to `SectionedFetchRequest` is a shipped error, not a style choice.
+`SectionedResults` is a `RandomAccessCollection` of `ResultsSection<Element, SectionTitle>`, and each `ResultsSection` is itself a `RandomAccessCollection` of the models in that section with `title`/`id` of the section-title type -- so both `ForEach`es above are ordinary collection iteration, no adapter. Beyond iteration it offers `sectionTitles`, `contains(sectionTitle:)`, `index(ofSectionTitled:)` and `subscript(sectionTitle:)` for jump-to-section UI.
+
+Two behaviors Apple states explicitly and that are easy to get wrong: section names are always `String`-typed, and with a `KeyPath<Element, String?>` key **`nil` values map to the empty-string section** (so give that section a displayed label rather than rendering a blank header); and `Query.sections` returns an EMPTY collection when the query was not created with a `sectionBy:` parameter -- an empty list with no error is the symptom of a `sectionBy:` you forgot. If the property is declared `[Element]`-typed instead, reach the sections through the underscore-prefix accessor (`_trips.sections`).
+
+Never conflate this with Core Data's `SectionedFetchRequest`, which is a SEPARATE API on iOS 15+; a 12-major-version gap sits between the two, and stating SwiftData sectioning as "iOS 26 new" or as equivalent to `SectionedFetchRequest` is a shipped error, not a style choice.
 
 The iOS-26-safe fallback groups an already-fetched, bounded result in an `@Observable` store -- grouping in `body` is O(n log n) PER FRAME:
 
@@ -89,6 +104,32 @@ The iOS-26-safe fallback groups an already-fetched, bounded result in an `@Obser
 }
 // List { ForEach(grouped.sections, id: \.key) { s in Section(s.key) { ForEach(s.rows) { TripRow(trip: $0) } } } }
 ```
+
+## Live results outside a view -- iOS 27.0+
+
+`@Query` is `@MainActor`, fetches synchronously, and only exists inside a `View`. That is exactly why an unbounded query hangs a launch, and it is why a UIKit diffable data source, a background sync coordinator, or a store type that vends pre-computed values to a view has had no good option. iOS 27 adds `ResultsObserver`, an `@Observable` class that tracks a live result set against a `ModelContext` or a `ModelContainer` with an explicit isolation:
+
+```swift
+@available(iOS 27, *)
+@MainActor @Observable
+final class TripFeed {
+    private let observer: ResultsObserver<Trip, String>
+    var rows: FetchResultsCollection<Trip> { observer.results }
+
+    init(container: ModelContainer) throws {
+        var d = FetchDescriptor<Trip>(predicate: #Predicate { !$0.isArchived },
+                                      sortBy: [SortDescriptor(\.startDate, order: .reverse)])
+        d.fetchLimit = 500
+        d.relationshipKeyPathsForPrefetching = [\.destination]
+        // isolation: defaults to #isolation -- here, the main actor. Pass an actor to observe off-main.
+        observer = try ResultsObserver(fetchDescriptor: d, modelContainer: container)
+    }
+}
+```
+
+Every `@Query` shape has an observer counterpart: `filterBy:sortBy:` or `fetchDescriptor:`, against `modelContext:` or `modelContainer:`, each doubled for `sectionBy:` in `KeyPath<Element, String>` and `KeyPath<Element, String?>` flavors. Sectioned observers expose the same `sections: SectionedResults<Element, SectionTitle>?` the query does, plus `element(at:)` and `indexPath(for:)` -- the two members a `UICollectionViewDiffableDataSource` actually needs, which is the whole point of the type.
+
+`HistoryObserver` is the paired remote-change primitive: built with `init(historyTokens:observedModels:authors:modelContainer:isolation:)`, it monitors a container's stores for remote transactions and bumps `eventCounter` when new history is available -- it replaces polling `fetchHistory` on a timer for CloudKit-backed sync. Below iOS 27 there is no observer family: keep `@Query` in the view plus a `@ModelActor` for background work, and poll history manually.
 
 ## Dynamic query: runtime search, sort, filter
 
@@ -262,7 +303,7 @@ struct SampleTripsModifier: PreviewModifier {
 - Large tables paginate with `fetchLimit`+`fetchOffset` and a bottom sentinel; counts use `fetchCount`, never `fetch().count`.
 - Heavy writes/imports run on a `@ModelActor`, autosave and undo muted, one `save()`.
 - `animation:` on bounded/paged queries only; omitted on large "table" data; `ForEach` ids are the model's stable identity; Reduce Motion collapses the diff to instant.
-- `sectionBy` gated behind `#available(iOS 27, *)`, with the `Dictionary(grouping:)` fallback above covering earlier deployment targets.
+- `sectionBy` gated behind `#available(iOS 27, *)` and declared as `SectionedResults<Element, String>`, with the `Dictionary(grouping:)` fallback above covering earlier deployment targets; an optional section key means an empty-string section that needs a real displayed label.
 - A `SchemaMigrationPlan` exists before any model change ships; previews use an in-memory seeded container; cancelable edits use a child context, never `rollback()` on the shared one.
 
 ## Anti-patterns
@@ -271,7 +312,10 @@ struct SampleTripsModifier: PreviewModifier {
 |---|---|---|
 | `@Query private var rows: [Row]` with no predicate/limit over a large table | Synchronous main-actor fetch = launch/navigation hang | `fetchLimit` + pushed-down `#Predicate` |
 | `@Query(sort:sectionBy:)` at an iOS 26 deployment target | iOS 27.0+ API; won't compile | `#available(iOS 27, *)` + `Dictionary(grouping:)` fallback |
+| Reading `sections` on a query built without `sectionBy:` | Returns an EMPTY collection, no error -- an empty list that looks like a data bug | Add `sectionBy:`, or read the `[Element]` results |
+| Rendering a `KeyPath<Element, String?>` section whose key is `nil` | `nil` maps to the empty-string section -- a blank header | Give the empty-string section an explicit label |
 | Conflating `@Query(sectionBy:)` with Core Data `SectionedFetchRequest` | 12-major-version-different, separate APIs | State each floor explicitly; never equate them |
+| A UIKit diffable data source driven by a `@Query` smuggled out of a host view | `@Query` is `@MainActor`, view-bound, and fetches synchronously | `ResultsObserver` (iOS 27+) with `element(at:)` / `indexPath(for:)` |
 | Row reads `trip.destination.name` with no prefetch | N+1 fault per row on scroll | `relationshipKeyPathsForPrefetching` |
 | `animation:` on the query AND `withAnimation` around the insert | Double-driven, stuttering animation | Declare animation once, at the query |
 | `animation:` on a multi-thousand-row table | O(n) animated diff per merge overruns the frame | Omit `animation:` on large tables |

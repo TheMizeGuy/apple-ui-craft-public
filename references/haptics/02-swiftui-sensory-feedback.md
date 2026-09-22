@@ -53,6 +53,20 @@ When `saveCompleted` changes, the success haptic plays.
 .sensoryFeedback(.pathComplete, trigger: pathFinished)
 ```
 
+## Control-specific press, release and selection feedback (iOS 26+)
+
+iOS 26 added three factories that describe a CONTROL and a moment rather than a physical sensation:
+
+```swift
+static func press(_ feedback: SensoryFeedback.PressFeedback) -> SensoryFeedback        // touch down
+static func release(_ feedback: SensoryFeedback.ReleaseFeedback) -> SensoryFeedback    // touch up
+static func selection(_ feedback: SensoryFeedback.SelectionFeedback) -> SensoryFeedback // value changed
+```
+
+`PressFeedback` names control kinds (`.button`, `.buttonIconOnly`, `.toggle`, `.slider`, `.tab`); `ReleaseFeedback` has exactly one member, `.slider` -- there is no `.release(.button)` -- and a slider that plays `press(.slider)` should also play `release(.slider)`; `SelectionFeedback` covers toggle states and value limits (`.on`, `.off`, `.minimum`, `.maximum`).
+
+**Read the availability before adopting them.** Every member of all three types is documented as playing feedback only on visionOS. They compile on iOS 26 and later and do nothing on an iPhone, so on iOS the press/release/limit vocabulary is still `.impact(...)` and `.selection` from the table above -- `.press(.button)` on a phone is a silent no-op, not a nicer button haptic. Use them on visionOS, where they give the system the semantic information it needs to match the platform's own controls.
+
 ## Conditional feedback
 
 When the haptic depends on the change:
@@ -276,6 +290,9 @@ struct MyView: View {
 | `.impact(weight:intensity:)` | iOS 17, visionOS 26.0 | SwiftUI |
 | `.impact(flexibility:intensity:)` | iOS 17, visionOS 26.0 | SwiftUI |
 | `.start` / `.stop` | iOS 17 (watchOS-primary) | SwiftUI |
+| `.press(_:)` / `.release(_:)` / `.selection(_:)` | iOS 26 to compile, plays on visionOS only | SwiftUI |
+
+iOS 27 changed nothing here. `SensoryFeedback` gained no cases, every `sensoryFeedback(_:trigger:)` overload stays at iOS 17.0, and the UIKit generators are NOT deprecated -- `UIImpactFeedbackGenerator`, `UINotificationFeedbackGenerator` and `UISelectionFeedbackGenerator` remain undeprecated at iOS 10.0, and `UICanvasFeedbackGenerator` at iOS 17.5. Prefer `.sensoryFeedback` because it is declarative and trigger-bound, never because the UIKit path is going away.
 
 ## Common mistakes
 

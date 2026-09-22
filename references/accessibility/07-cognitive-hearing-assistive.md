@@ -1,7 +1,7 @@
 # Cognitive, Hearing, and Assistive-Technology Accessibility
 
 > Owner: `references/accessibility/07-cognitive-hearing-assistive.md` owns cognitive accessibility (AssistiveAccess, plain language, timing), Braille, Voice Control custom vocabulary, Full Keyboard Access, and hearing/audio accessibility (captions, Sound Recognition, mono audio). `references/accessibility/04-motor-interaction.md#switch-control` and `#voice-control` own the motor/physical-input baseline (testing protocol, `accessibilityInputLabels` basics) -- this file adds depth those sections don't cover.
-> Floors: cite `references/_scaffolding/version-floor-registry.md` for anything version-gated. Headline floors stated inline below.
+> Floors: cite `references/_scaffolding/version-floor-registry.md` for anything version-gated. Headline floors stated inline below. iOS 27.0 additions in this file: `MACaptionAppearanceDomain.videoConferencing` (not watchOS) and AVKit's `AVPlaybackUserInterfaceMediaSelectionControllable` (iOS / iPadOS / Mac Catalyst only). `AVMediaCharacteristic.signLanguageInterpretationForAccessibility` is iOS 27.1 and still marked Beta by Apple -- the one symbol here that stays out of shipping code.
 
 Cognitive and hearing accessibility have no single API to flip on -- they are a design discipline plus a handful of SwiftUI/UIKit/C hooks that only work when wired correctly. This file makes an agent able to ship the `AssistiveAccess` scene without mis-gating it, make custom UI reachable by Voice Control/Switch Control/Full Keyboard Access with one interaction contract, keep Braille users from panning cell-by-cell through a wall of prose, and honor a user's caption style and hearing preferences in a custom video player. The single most common defect: conflating the `AssistiveAccess` **scene** (iOS 26) with the `accessibilityAssistiveAccessEnabled` **environment value** (iOS 18) -- they shipped one WWDC apart, with version numbers that jumped because iOS moved to year-based naming.
 
@@ -40,6 +40,8 @@ struct MyApp: App {
     }
 }
 ```
+
+`AssistiveAccess` is a `Scene`, and that is the prerequisite most often missed: a UIKit app still on the app-delegate life cycle cannot adopt it at all. iOS 27 forces the issue -- apps built with the iOS 27, iPadOS 27, Mac Catalyst 27, tvOS 27 or visionOS 27 SDK must adopt the scene-based life cycle or they fail to launch. Migrate the life cycle first, then add the scene.
 
 Apple's design rules for `AssistiveAccessRootView` (WWDC25 session 238): distill the app to one or two core tasks, touch zones well above the 44pt floor, minimize navigation depth (flat single-level lists, no deep `NavigationStack` pushes), prefer system-standard components (`Button`, `Toggle`, `List` already carry correct large-content and high-contrast behavior), and never require a gesture more complex than a single tap. Preview with the `.assistiveAccess` trait passed to `#Preview`.
 
@@ -84,7 +86,7 @@ struct SessionTimeoutModifier: ViewModifier {
 
 - Reduced choice / progressive disclosure lowers cognitive load: prefer a guided sequence over one dense screen with every option visible at once.
 - Keep labels concrete and literal; avoid idiom and jargon in primary actions ("Send," not "Fire off").
-- `.speechSpellsOutCharacters` / `.speechAlwaysIncludesPunctuation` (iOS 15+) fix how codes and acronyms are read aloud.
+- `.speechSpellsOutCharacters` / `.speechAlwaysIncludesPunctuation` (iOS 15+) fix how codes and acronyms are read aloud. On iOS 27 one `AXSpeechAttributeSSML` fragment replaces the whole stack of single-purpose speech attributes, without altering the visible or Braille text (`references/accessibility/01-voiceover-fundamentals.md#speech-control-with-ssml-ios-27`).
 - Confirm destructive or costly actions; make them reversible where possible; keep validation messages specific and adjacent to the field (WCAG 3.3.4 Error Prevention, AA; 3.3.6 Error Prevention (All) is AAA and an enhancement). A two-step confirm beats a hold-timer -- also a motor win.
 - `accessibilityShowsLargeContentViewer()` (iOS 15+) lets a user press-and-hold a small tab/toolbar item to see a large HUD label -- helps users who struggle to read small controls:
 
@@ -113,7 +115,7 @@ struct PhotoCell: View {
 
 `accessibilityLabel("Delete, Invoice 4021")` beats `"Button to permanently delete the invoice numbered 4021 from your account"` -- the verbose label reads fine aloud but wastes an entire braille line. Move supplementary facts to `accessibilityCustomContent` (iOS 15+) at `.default` importance so they render off the primary line and are pulled in on demand via the rotor's "More Content" entry; use `.high` only when the value belongs inline with the label.
 
-Headings (`.accessibilityAddTraits(.isHeader)` or `.accessibilityHeading(.h1)`...`.h6)`, iOS 15+), landmarks, and custom rotors (`references/accessibility/01-voiceover-fundamentals.md#custom-rotor-entries`) let a braille user jump structurally instead of panning cell-by-cell through the whole screen. Hand-styled `Text` that only *looks* like a heading is invisible to the rotor and therefore to structured braille navigation.
+Headings (`.accessibilityAddTraits(.isHeader)` or `.accessibilityHeading(.h1)`...`.h6)`, iOS 15+), landmarks, and custom rotors (`references/accessibility/01-voiceover-fundamentals.md#custom-rotor-entries`) let a braille user jump structurally instead of panning cell-by-cell through the whole screen. Hand-styled `Text` that only *looks* like a heading is invisible to the rotor and therefore to structured braille navigation. On a long-form reading surface, structure is not enough on its own -- separate paragraph elements also need linking so continuous reading does not stop at every one (`references/accessibility/01-voiceover-fundamentals.md#long-form-reading-surfaces`).
 
 Braille Screen Input (BSI) lets a VoiceOver user type braille by tapping the touchscreen with six fingers -- no hardware. It is a rotor-selected input method that feeds the standard text-input system; the app requirement is passive: use a real `TextField`/`TextEditor`/`SecureField` and let the system deliver text. You break BSI (and hardware-braille typing) if you build a custom keystroke-capture control instead of a real text field, reformat the field's text on every keystroke, or steal focus / dismiss the keyboard programmatically mid-entry.
 
@@ -144,6 +146,8 @@ Button { compose() } label: { Image(systemName: "square.and.pencil") }
 ```
 
 "Show Names" overlays each control's resolved name; "Show Numbers" degrades an unlabeled control to "Tap 7" when names are missing or ambiguous; "Show Grid" is the pixel-coordinate last resort. A fully labeled UI keeps users in name mode, the fastest path.
+
+iOS 27's Flexible Item Names loosens the matching -- a user can describe an element in natural language instead of reciting its label -- which raises the cost of a label that disagrees with the visible text and leaves an unnamed icon exactly as broken as before (`references/accessibility/04-motor-interaction.md#flexible-item-names-ios-27`).
 
 ### Switch Control -- scanning and timing (WCAG 2.2.1 tie-in)
 
@@ -191,7 +195,7 @@ There is **no** public API to detect whether **Live Captions** (system-wide real
 
 If you use `VideoPlayer`/`AVPlayerViewController`, the system applies the user's caption style for free -- don't reimplement. If you draw your own caption overlay, read the style from `import MediaAccessibility` (a C framework; iOS 7.0+, tvOS 9.0+, macOS 10.9+, Mac Catalyst 13.0+, visionOS 1.0+ -- **not available on watchOS**).
 
-Almost every getter takes an `MACaptionAppearanceDomain` (`.user` -- the preference you want -- or `.default`) and an `inout MACaptionAppearanceBehavior` out-parameter telling you *why* you got that value: `.useValue` (user explicitly set this, honor it strictly) or `.useContentIfAvailable` (prefer a value baked into the media/content if it has one, else use the returned value as fallback).
+Almost every getter takes an `MACaptionAppearanceDomain` (`.user` -- the preference you want -- `.default`, or `.videoConferencing`, added in iOS 27.0) and an `inout MACaptionAppearanceBehavior` out-parameter telling you *why* you got that value: `.useValue` (user explicitly set this, honor it strictly) or `.useContentIfAvailable` (prefer a value baked into the media/content if it has one, else use the returned value as fallback).
 
 `Copy`-prefixed functions follow Core Foundation ownership: they return `Unmanaged<CGColor>` / `Unmanaged<CTFontDescriptor>` in Swift -- call `.takeRetainedValue()`. There is **no** `MACaptionAppearanceGetForegroundColor`; the Get-family is scalar-only (opacity, display type, relative size). Color and font accessors are always `Copy`-prefixed:
 
@@ -244,6 +248,16 @@ CFNotificationCenterAddObserver(
 
 On **iOS 26.4+**, `AccessibilitySettings.Feature.captionStyles` (Accessibility framework) with `AccessibilitySettings.openSettings(for:)` deep-links the user straight to Subtitles & Captioning style -- prefer it over a raw `UIApplication.openSettingsURLString`.
 
+#### `.videoConferencing`, the third domain (iOS 27)
+
+`MACaptionAppearanceDomain.videoConferencing` (iOS 27.0; not watchOS, where MediaAccessibility is unavailable) joins `.default` and `.user`. An app that draws its own caption overlay in a call or conferencing context reads from that domain instead of reusing the media-playback preference, because a user can now want a different caption style for live conversation than for watching video. Apple's symbol page carries no abstract beyond the case declaration, so that is the whole verified surface -- pass it to the same `MACaptionAppearanceCopy*`/`Get*` functions and do not invent behavior for it.
+
+```swift
+// A conferencing overlay reads its own domain; a video player keeps reading .user.
+let domain: MACaptionAppearanceDomain
+if #available(iOS 27, *) { domain = isInCall ? .videoConferencing : .user } else { domain = .user }
+```
+
 ### Automatic caption track selection
 
 Let `AVPlayer` pick the right legible track itself instead of hand-rolling selection:
@@ -260,6 +274,46 @@ player.setMediaSelectionCriteria(criteria, forMediaCharacteristic: .legible)   /
 ```
 
 When `isClosedCaptioningEnabled` is on, biasing toward the accessibility characteristics selects SDH (captions that describe non-dialog sound) rather than plain translation subtitles.
+
+### Custom playback engines get the system caption menu (iOS 27)
+
+A player built on a custom or non-`AVPlayer` engine used to have no way into the system playback UI, so it hand-rolled a subtitle picker -- and inherited responsibility for its VoiceOver semantics, its localized language names, and honoring the user's caption styling. `AVPlaybackUserInterfaceMediaSelectionControllable` (AVKit, iOS 27.0 / iPadOS 27.0 / Mac Catalyst 27.0 **only** -- not macOS, tvOS, visionOS or watchOS) closes that gap: the engine publishes its audio and legible options and the system renders the menu.
+
+```swift
+import AVKit
+
+@available(iOS 27, *)
+@MainActor @Observable
+final class StreamPlayer: AVPlaybackUserInterfaceMediaSelectionControllable {
+    let engine: CustomPlaybackEngine          // your non-AVPlayer engine
+    init(engine: CustomPlaybackEngine) { self.engine = engine }
+
+    // Six required members: audio, audio description, and legible (subtitle).
+    var audioOptions: [AVPlaybackUserInterfaceMediaSelectionOption] = []
+    var currentAudioOption: AVPlaybackUserInterfaceMediaSelectionOption? {
+        didSet { engine.selectAudioTrack(currentAudioOption?.identifier) }
+    }
+    var audioDescriptionOptions: [AVPlaybackUserInterfaceMediaSelectionOption] = []
+    var currentAudioDescriptionOption: AVPlaybackUserInterfaceMediaSelectionOption? {
+        didSet { engine.selectAudioDescriptionTrack(currentAudioDescriptionOption?.identifier) }
+    }
+    var legibleOptions: [AVPlaybackUserInterfaceMediaSelectionOption] = [
+        .init(displayName: "English (CC)", identifier: "en-cc",
+              language: Locale.Language(identifier: "en"),
+              mediaCharacteristics: [.transcribesSpokenDialogForAccessibility,
+                                     .describesMusicAndSoundForAccessibility])
+    ]
+    var currentLegibleOption: AVPlaybackUserInterfaceMediaSelectionOption? {
+        didSet { engine.selectSubtitleTrack(currentLegibleOption?.identifier) }
+    }
+}
+```
+
+`AVPlaybackUserInterfaceContentMetadata` gained a `subtitle` property and a matching initializer in the same release. On iOS 27 a hand-rolled subtitle picker inside a custom player is a finding with a named replacement; below iOS 27 it remains the only option, and the app owns every accessibility obligation it carries.
+
+A sign-language characteristic is coming but is not here yet: `AVMediaCharacteristic.signLanguageInterpretationForAccessibility` is **iOS 27.1, still marked Beta in Apple's documentation** and absent from the shipping 27.0 SDK. Do not put it in a primary example or ship it ungated. Until it lands, a sign-language track can only be surfaced through app-specific UI.
+
+Apps that author or transcode captions rather than consume them have an iOS 27.0 deprecation to absorb: `AVAssetReaderOutputCaptionAdaptor` (use `AVAssetReader.outputCaptionProvider(for:validationDelegate:)`), `AVAssetWriterInputCaptionAdaptor` (use `AVAssetWriter.inputCaptionReceiver(for:)`), and `AVRenderedCaptionImage.pixelBuffer` (use `readOnlyPixelBuffer`). All three shipped in iOS 18 and were deprecated one release later.
 
 ### Sound Recognition and building your own sound-to-visual feature
 
@@ -302,6 +356,8 @@ Needs `NSMicrophoneUsageDescription`; classification is on-device. Threshold on 
 
 ### What NOT to build
 
+The 27 cycle adds system features that describe or transcribe content the app did not: generated subtitles auto-transcribe spoken audio in video on-device (iPhone, iPad, Mac, Apple TV, Apple Vision Pro), and Accessibility Reader on macOS 27 handles complex layouts, multi-column text, images and tables with summaries and translation. None is a developer API, and none discharges an obligation. Generated subtitles do not replace a real caption track -- they carry no speaker attribution, no non-dialog sound description, no authored timing -- and they are not something the app provides, so they are not a basis for claiming Captions in an Accessibility Nutrition Label: that claim needs captions the app ships for its video, or text transcripts for audio-only content (which Apple says need not be time-synchronized).
+
 Don't try to detect or gate on Live Captions, system Sound Recognition, or MFi hearing-device connection -- no public API, and the OS already handles routing/alerting. Don't pan critical information across stereo channels (lost under Mono Audio). Don't bake caption text into video pixels -- unreadable to braille displays, doesn't scale, blurs. Do: ship real captions, honor `MACaptionAppearance` in custom players, gate autoplay on `isVideoAutoplayEnabled`, and give every meaningful sound a visual twin:
 
 ```swift
@@ -324,7 +380,7 @@ if #available(iOS 26.4, *) {
 }
 ```
 
-`accessibilityAssistiveAccessEnabled` (iOS 18), `accessibilityCustomContent`/`accessibilityHeading` (iOS 15), `focusable(interactions:)`/`onKeyPress` (iOS 17), `accessibilityRespondsToUserInteraction`/`accessibilityInputLabels` (iOS 14), and every `MediaAccessibility`/`UIAccessibility` hearing flag except `isVideoAutoplayEnabled` (iOS 13) sit below the 18/26 deployment floor -- no gating needed on those. Only the `AssistiveAccess` scene (iOS 26.0) and `captionStyles` deep link (iOS 26.4) need `#available`.
+`accessibilityAssistiveAccessEnabled` (iOS 18), `accessibilityCustomContent`/`accessibilityHeading` (iOS 15), `focusable(interactions:)`/`onKeyPress` (iOS 17), `accessibilityRespondsToUserInteraction`/`accessibilityInputLabels` (iOS 14), and every `MediaAccessibility`/`UIAccessibility` hearing flag except `isVideoAutoplayEnabled` (iOS 13) sit below the 18/26 deployment floor -- no gating needed on those. What needs `#available`: the `AssistiveAccess` scene (iOS 26.0), the `captionStyles` deep link (iOS 26.4), and the iOS 27.0 additions -- `MACaptionAppearanceDomain.videoConferencing` and `AVPlaybackUserInterfaceMediaSelectionControllable` (the latter iOS / iPadOS / Mac Catalyst only). `AVMediaCharacteristic.signLanguageInterpretationForAccessibility` is iOS 27.1 and still marked Beta: keep it out of shipping code entirely rather than gating it.
 
 ## Anti-patterns
 
@@ -341,6 +397,10 @@ if #available(iOS 26.4, *) {
 | Custom keystroke-capture control instead of a real text field | Breaks Braille Screen Input and hardware-braille typing | Use `TextField`/`TextEditor`/`SecureField` |
 | Auto-logout / countdown with no extension path | WCAG 2.2.1 violation; hostile to Switch Control users needing many seconds per action | Warn ahead, offer extend, preserve entered data |
 | Injecting Voice Control vocabulary from app code | No such API -- vocabulary is user-side only | Register plausible phrasings via `accessibilityInputLabels` |
+| Adding the `AssistiveAccess` scene to an app-delegate-life-cycle UIKit app | The scene cannot attach; on iOS 27 the app does not launch at all | Migrate to the scene-based life cycle first |
+| Counting system generated subtitles as the app's captions | No attribution, no non-dialog sound, and not something the app provides, so not a basis for a Captions Nutrition Label claim | Ship a real caption track (or transcripts for audio-only content) |
+| Hand-rolled subtitle picker in a custom player on iOS 27 | Loses system caption styling, localized language names and VoiceOver semantics | `AVPlaybackUserInterfaceMediaSelectionControllable` (iOS/iPadOS/Catalyst 27) |
+| `AVMediaCharacteristic.signLanguageInterpretationForAccessibility` in shipping code | iOS 27.1, still marked Beta; absent from the 27.0 SDK | Wait for it to ship; app-specific UI until then |
 
 ## Severity guide
 

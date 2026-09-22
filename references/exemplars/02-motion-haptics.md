@@ -1,8 +1,8 @@
 # Exemplar: Motion + Haptics
 
-> Status: signature-drafted, build-pending (requires Xcode build at iOS 18 + iOS 26 targets).
+> Status: signature-drafted, build-pending (requires Xcode build at iOS 18, iOS 26 and iOS 27 targets).
 > Composes: `references/animation/02-spring-physics.md` (spring presets), `references/animation/05-gesture-driven.md` (velocity handoff, direct manipulation), `references/haptics/02-swiftui-sensory-feedback.md` (`.sensoryFeedback`), `references/accessibility/05-motion-accessibility.md` (Reduce Motion double-gate), `references/interaction/01-fluid-smoothness-interruptible.md` (interruptibility).
-> Floors: `.interactiveSpring(duration:extraBounce:blendDuration:)` and `SensoryFeedback.impact(flexibility:)` are iOS 17.0+; `.navigationTransition(.zoom)`/`matchedTransitionSource` are iOS 18.0+ (not tvOS).
+> Floors: `.interactiveSpring(duration:extraBounce:blendDuration:)` and `SensoryFeedback.impact(flexibility:)` are iOS 17.0+; `.navigationTransition(.zoom)`/`matchedTransitionSource` are iOS 18.0+ (not tvOS). Every component below is deliberately floor-portable: the spring, haptic and gesture APIs it uses are unchanged in iOS 27. Where iOS 27 supersedes a hand-rolled part -- the swipe row and the reorder list -- it is called out inline.
 
 Four components -- a swipe-to-act row, a hold-to-reorder list, a hero zoom transition, and the haptic-coverage discipline that ties them together -- all sharing ONE spring-token vocabulary and ONE semantic haptic layer. The rule that generates every design decision below: per HIG "Playing haptics," the animation and the haptic fired on the SAME event must come from ONE physical metaphor -- never pair a soft bounce with a hard rigid tap.
 
@@ -223,6 +223,8 @@ struct ReorderableList<Item: Identifiable & Equatable, Row: View>: View {
 ```
 
 The four beats: **lift** (animated scale+shadow+zIndex+soft haptic), **follow** (raw 1:1 offset, never animated), **make-way** (neighbors spring into the vacated slot; the dragged row opts out via `.transaction { $0.animation = nil }`), **snap** (settle on release). The compensated offset (`translation − indexShift × slot`) is the fix for the most common shipped reorder bug: without it, the dragged item's layout slot moves as the array reorders mid-drag, so it visibly jumps a full row every time it crosses a boundary.
+
+Read this as the reference implementation of the four beats, and as the code you actually ship below an iOS 27 floor or on tvOS. On a 27 floor, `reorderContainer(for:)` + `reorderable()` is the primary path and hand-rolling this is reinventing a system primitive -- `references/interaction/06-custom-controls-reorderable.md` (OWNER) has the overloads and the `ReorderDifference` you apply yourself. The same split applies to `SwipeToActRow` above: on 27, `swipeActions(…)` plus `swipeActionsContainer()` on the enclosing container supplies the cross-row coordination this component does not attempt.
 
 ### Part C -- hero zoom transition (nav `.zoom` vs in-place `matchedGeometryEffect`)
 

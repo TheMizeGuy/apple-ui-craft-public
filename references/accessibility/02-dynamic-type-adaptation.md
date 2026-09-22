@@ -31,6 +31,8 @@ if typeSize >= .accessibility1 {
 }
 ```
 
+`DynamicTypeSize` (iOS 15+) is the only spelling to write. SwiftUI's `ContentSizeCategory` -- the whole enum, every `accessibility*` case, and `isAccessibilityCategory` -- is soft-deprecated: Apple's documentation marks it deprecated and says to use `DynamicTypeSize` instead, with no compiler break today. The mechanical map is `@Environment(\.sizeCategory)` -> `@Environment(\.dynamicTypeSize)`, `ContentSizeCategory.isAccessibilityCategory` -> `dynamicTypeSize.isAccessibilitySize`, and `.environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)` -> `.dynamicTypeSize(.accessibility5)`. With an iOS 15 floor there is no deployment-target reason left to use the old type. UIKit's `UIContentSizeCategory` is a different type and is NOT deprecated -- `traitCollection.preferredContentSizeCategory.isAccessibilityCategory` stays current in UIKit code.
+
 ## Using system styles
 
 ```swift
@@ -141,6 +143,27 @@ ScrollView {
 }
 ```
 
+## Dynamic Type on tvOS (tvOS 27)
+
+tvOS 27 adds a system-wide text size control -- Settings > Accessibility > Display > Text Size, from Large through Accessibility XXXL -- and it behaves exactly as it does on iOS. A tvOS target is no longer exempt from the Dynamic Type audit.
+
+Nothing new to call: standard SwiftUI and UIKit components scale automatically, and the adaptation patterns above are the same ones a shelf or card layout needs on Apple TV. The failures are the same too, and they are worse on a 10-foot display: hard-coded `.font(.system(size:))`, fixed-height cards, and a column count that never drops.
+
+```swift
+@Environment(\.dynamicTypeSize) private var typeSize
+
+// Same switch as iPhone -- the shelf reflows instead of clipping the titles.
+var body: some View {
+    let shelf = typeSize.isAccessibilitySize
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 24))
+        : AnyLayout(HStackLayout(spacing: 40))
+
+    shelf { ForEach(shows) { ShowCard(show: $0) } }
+}
+```
+
+This also unlocks a claim a TV app could not previously make: App Store Connect's Larger Text criteria now carry a tvOS clause, satisfied by supporting the largest Dynamic Type size or an equivalent size through your own implementation.
+
 ## Common layout breakers
 
 | Issue | Symptom | Fix |
@@ -222,6 +245,10 @@ Always test these sizes:
 
 In simulator: Settings > Developer > Dynamic Type Sizes > select AX5, then test the app.
 
+### The Larger Text claim
+
+Apple's Accessibility Nutrition Label criteria put a number on this: Larger Text may be claimed only if text enlarges to **at least 200%** of the default size (or the system maximum) and users can still complete every common task -- primary functionality, first launch, login, purchase, settings. Relying on Zoom or Hover Text to satisfy it is explicitly forbidden, and so is clamping the app below the accessibility sizes and calling the result supported. Larger Text is claimable on iPhone, iPad, Apple TV (tvOS 27+), Apple Watch and Apple Vision Pro, but not on Mac. The full label contract: `references/accessibility/08-wcag-2-2-mapping.md#app-store-accessibility-nutrition-labels`.
+
 ## Behavior at AX sizes
 
 | What happens | Recommended response |
@@ -247,9 +274,12 @@ In simulator: Settings > Developer > Dynamic Type Sizes > select AX5, then test 
 | Hardcoded VStack spacing | Cramped at AX5 | System spacing or `@ScaledMetric` |
 | Not testing AX sizes | Layout breaks discovered in production | Add AX previews |
 | Clamping Dynamic Type to avoid layout work | Defeats accessibility | Fix the layout |
+| `ContentSizeCategory` / `\.sizeCategory` / `isAccessibilityCategory` in SwiftUI | Soft-deprecated in favor of `DynamicTypeSize` | `\.dynamicTypeSize`, `isAccessibilitySize` (UIKit's `UIContentSizeCategory` is unaffected) |
+| Treating a tvOS target as exempt from Dynamic Type | tvOS 27 has system-wide Larger Text; fixed sizes clip | Same `AnyLayout` / column-count adaptation as iPhone |
 
 ## See also
 
 - `references/accessibility/01-voiceover-fundamentals.md` -- text labels also scale
 - `references/accessibility/03-visual-accessibility.md#reduce-motion` -- contrast and other visual settings
+- `references/accessibility/08-wcag-2-2-mapping.md#app-store-accessibility-nutrition-labels` -- the Larger Text claim criteria
 - `references/design/03-typography-dynamic-type.md` -- typography reference

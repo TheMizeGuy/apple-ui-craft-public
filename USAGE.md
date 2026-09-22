@@ -7,7 +7,7 @@ The complete guide to driving `apple-ui-craft`: what each skill does, how to inv
 
 `apple-ui-craft` is the **craft layer** for iOS UI. It answers "will users love this?" -- not "will Apple accept this?" (that is [`ios-code-review`](https://github.com/TheMizeGuy/ios-code-review)). It designs new SwiftUI, reviews existing UI against the Human Interface Guidelines and Liquid Glass, tunes animation and haptics, audits accessibility, and maps platform integration -- all in the voice of a principal Apple engineer, with every finding backed by a citable reference and verbatim-applicable code.
 
-It targets **iOS 26** (Liquid Glass, `.sensoryFeedback`, `@Observable`, App Intents, Foundation Models) with iOS 27 beta APIs quarantined behind `#available` and an SDK-verify caveat. Availability floors are Context7-verified and centralized in `references/_scaffolding/version-floor-registry.md`.
+It targets **iOS 26 and iOS 27** (Liquid Glass, `.sensoryFeedback`, `@Observable`, App Intents, Foundation Models, and the iOS 27 additions). iOS 27.0 APIs lead where they are the right tool, gated with an iOS 26 fallback; only still-beta point-release symbols (iOS 27.1/27.2) are fenced. Availability floors are Context7-verified and centralized in `references/_scaffolding/version-floor-registry.md`.
 
 
 ## Installation
@@ -154,12 +154,12 @@ Shared dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.
 
 ## The reference library
 
-The plugin's knowledge lives in `references/` -- **93 files** across 13 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, usability, review, exemplars, methodology) plus `_scaffolding/` (14 directories total). See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
+The plugin's knowledge lives in `references/` -- **94 files** across 13 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, usability, review, exemplars, methodology) plus `_scaffolding/` (14 directories total). See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
 
 Two files anchor the whole library:
 
 - **`_scaffolding/version-floor-registry.md`** -- the single source of truth for API availability floors, deprecated APIs, and the PHANTOM list (APIs that do not exist and must never be emitted, e.g. `Glass.thin`/`.thick`, `@Environment(\.tintMode)`). Every reference file cites it rather than restating floors.
-- **`exemplars/`** -- end-to-end worked screens that compose the references. These are labeled **signature-drafted, build-pending**: they are written to compile at iOS 18 + iOS 26 targets but have not been run through Xcode in this repo, so treat them as high-fidelity drafts, not shipped binaries.
+- **`exemplars/`** -- end-to-end worked screens that compose the references. These are labeled **signature-drafted, build-pending**: they are written to compile at iOS 18 through iOS 27 targets but have not been run through Xcode in this repo, so treat them as high-fidelity drafts, not shipped binaries.
 
 
 ## Relationship to `ios-code-review`
@@ -192,7 +192,7 @@ Run both before shipping: one clears the gate, the other earns the delight.
 
 **Do I need GoodMem / serena / Context7?** No. They sharpen retrieval, navigation, and API-currency when present, and the plugin degrades gracefully without them.
 
-**Why does it target iOS 26?** The craft surface (Liquid Glass, sensory feedback, `@Observable`, App Intents, Foundation Models) is iOS-26-era. iOS 27 beta APIs are quarantined behind `#available(iOS 27, *)` and never appear in primary examples. Lower deployment targets are supported via `#available(iOS 26, *)` gates with Material fallbacks.
+**Why iOS 26 and 27?** Liquid Glass and the rest of the modern craft surface (sensory feedback, `@Observable`, App Intents, Foundation Models) arrived by iOS 26, which is still the floor most apps support. iOS 27 (shipped 2026-09-14) adds toolbar overflow, reordering and swipe actions in any container, Siri AI, Swift MetricKit and the `@State` macro. Examples lead with an iOS 27 API where it is the right tool and show the iOS 26 fallback beside it; lower targets use `#available(iOS 26, *)` gates with Material fallbacks. Symbols Apple still labels beta (iOS 27.1/27.2) stay fenced.
 
 **Can it review UIKit?** Yes -- the reviewers read both SwiftUI and UIKit, though recommendations lead with the SwiftUI-native path.
 

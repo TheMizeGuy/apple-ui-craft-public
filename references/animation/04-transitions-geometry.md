@@ -235,6 +235,35 @@ This is the modern equivalent of manual `matchedGeometryEffect` for navigation t
 
 `.navigationTransition(.zoom)` is iOS 18+ (iPadOS/macOS/watchOS/visionOS included) but NOT tvOS -- there it silently falls back to `.automatic` (a plain push/cross-dissolve). `matchedTransitionSource` itself exists on tvOS 18; only the zoom effect degrades. Don't promise a hero zoom on tvOS.
 
+### Cross-fade navigation transition (iOS 27+)
+
+`NavigationTransition.crossFade` (type `CrossFadeNavigationTransition`) is the third first-party option beside the default push and `.zoom`: the destination fades in over the presenting content instead of sliding or zooming. Reach for it when there is no source element worth zooming from and a slide would imply a hierarchy the flow does not have -- a full-bleed media viewer, an interstitial. Floors: iOS / iPadOS / Mac Catalyst / tvOS / visionOS / watchOS 27.0, and **not macOS**, so a shared modifier needs a platform branch.
+
+Its most valuable use is accessibility. `accessibilityPrefersCrossFadeTransitions` (iOS 26.4+, below) is the user telling you to replace sliding and zooming navigation with cross-fades, and `.crossFade` is now the first-party thing to switch TO -- no hand-rolled `.opacity` transition, no duplicated navigation hierarchy. `AnyNavigationTransition` (iOS 27.0, all platforms including macOS) type-erases the choice so one call site serves both branches:
+
+```swift
+@available(iOS 27, *)
+struct MediaDestination: View {
+    @Environment(\.accessibilityPrefersCrossFadeTransitions) private var prefersCrossFade
+    let item: MediaItem
+    let namespace: Namespace.ID
+
+    private var transition: AnyNavigationTransition {
+        prefersCrossFade ? AnyNavigationTransition(.crossFade)
+                         : AnyNavigationTransition(.zoom(sourceID: item.id, in: namespace))
+    }
+
+    var body: some View {
+        MediaViewer(item)
+            .navigationTransition(transition)
+    }
+}
+```
+
+Below iOS 27, branch the `.navigationTransition(_:)` call itself in an `if`/`else` over the two concrete transitions, or gate the presentation path and let the destination arrive with `.transition(.opacity)`. `accessibilityPrefersCrossFadeTransitions` is not a substitute for the base Reduce Motion gate on everything else on this page -- the contract for routing every animation through one `Animation?` accessor is owned by `references/accessibility/05-motion-accessibility.md#accessibility-contract`.
+
+One open bug worth knowing: a `fullScreenCover` carrying `.navigationTransition(_:)` with a `@FocusState` set in `.onAppear` shows a two-step keyboard animation. Set focus after the transition settles if that combination bites.
+
 ## ContentTransition
 
 Animates content WITHIN a single view when it changes (vs `transition` for view insertion/removal).
@@ -355,7 +384,7 @@ Nothing above is system-auto-gated. Auto-gating covers only Glass specular highl
 |---|---|
 | Slide / push / scale transition | `.opacity` crossfade (shown above) |
 | `matchedGeometryEffect` hero | Crossfade between the two states -- don't share geometry |
-| `.navigationTransition(.zoom)` hero | Crossfade the underlying content; the system spring itself isn't swappable, so gate the presentation path, not the modifier |
+| `.navigationTransition(.zoom)` hero | iOS 27+: swap the transition itself for `.crossFade` via `AnyNavigationTransition`. Below 27 the system spring isn't swappable, so gate the presentation path, not the modifier |
 | `.scrollTransition` / `.visualEffect` parallax | Opacity-only or identity (shown above) |
 | `.contentTransition(.numericText())` | `.contentTransition(.identity)` (shown above) |
 
@@ -380,7 +409,7 @@ if reduceMotion {
 
 ### accessibilityPrefersCrossFadeTransitions (iOS 26.4+) -- a separate, stricter preference
 
-`accessibilityPrefersCrossFadeTransitions` sits under Settings > Accessibility > Motion > Reduce Motion but is its OWN sub-toggle. It reads `true` when EITHER base Reduce Motion OR the cross-fade sub-toggle is on, and specifically means "replace sliding navigation/push transitions with cross-fades" -- read this (not `accessibilityReduceMotion`) to decide whether a custom `NavigationStack` push animation should become `.opacity`. It is the one writable accessibility environment member (`{ get set }`), so it is `#Preview`-injectable. Below iOS 26.4, read the UIKit equivalent instead: `UIAccessibility.prefersCrossFadeTransitions` (iOS 14+), observing `UIAccessibility.prefersCrossFadeTransitionsStatusDidChange`.
+`accessibilityPrefersCrossFadeTransitions` sits under Settings > Accessibility > Motion > Reduce Motion but is its OWN sub-toggle. It reads `true` when EITHER base Reduce Motion OR the cross-fade sub-toggle is on, and specifically means "replace sliding navigation/push transitions with cross-fades" -- read this (not `accessibilityReduceMotion`) to decide whether a custom `NavigationStack` push animation should become `.opacity`. It is the one writable accessibility environment member (`{ get set }`), so it is `#Preview`-injectable. Below iOS 26.4, read the UIKit equivalent instead: `UIAccessibility.prefersCrossFadeTransitions` (iOS 14+), observing `UIAccessibility.prefersCrossFadeTransitionsStatusDidChange`. On iOS 27 the thing to switch to is `.navigationTransition(.crossFade)` rather than a hand-rolled opacity transition -- see "Cross-fade navigation transition (iOS 27+)" above.
 
 Full substitution catalog and the `Animation?`/`nil` double-gate mechanics live in `references/accessibility/05-motion-accessibility.md` (OWNER) -- this section covers only what's specific to transitions and geometry.
 

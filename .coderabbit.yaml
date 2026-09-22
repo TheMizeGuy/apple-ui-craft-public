@@ -82,8 +82,14 @@ reviews:
       `references/_scaffolding/version-floor-registry.md` and nowhere else. An
       iOS-26-only API shown at a lower deployment floor needs
       `#available(iOS 26, *)` plus a real fallback (never "left as an
-      exercise"); iOS-27 symbols need `#available(iOS 27, *)` plus a
-      `// SDK-verify` comment and must stay out of primary examples. Never emit
+      exercise"). iOS 27.0 shipped 2026-09-14: an iOS 27 API may be the
+      primary example, gated `#available(iOS 27, *)` with a real iOS 26
+      fallback when the example implies an older floor. Toolchain-only
+      changes (the `@State` macro, `ContentBuilder`, item/error alerts) need
+      Xcode 27, not `#available`. Only symbols Apple still labels beta
+      (iOS 27.1/27.2) carry a `// beta: verify against the installed SDK`
+      comment and stay out of primary examples. Never write "deprecated in
+      27.2": DocC stamps soft deprecations with the newest SDK. Never emit
       an API on the registry's PHANTOM list.
 
     - Reduce Motion double-gate: gate BOTH `withAnimation(` and

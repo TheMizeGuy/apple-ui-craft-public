@@ -1,9 +1,15 @@
 # Onboarding and TipKit
 
-> Owner: `references/patterns/03-onboarding-tipkit.md` owns first-run architecture, the welcome/What's New surface, TipKit contextual teaching, and the GENERAL cross-permission priming pattern (the soft-ask-before-the-system-prompt architecture, the which/when decision matrix, Location/Camera/Contacts/Photos/ATT specifics). The notification-permission INSTANCE of priming -- including `.provisional` and denial recovery -- is owned by `references/patterns/07-feedback-reviews-notifications.md#notification-permission-earn-the-prompt`; this file states the pattern once and points there for its most common single application. Deferred account creation is owned by `references/patterns/09-auth-account.md`. Settings deep-linking mechanics are owned by `references/patterns/06-settings.md#deep-linking-to-system-settings`.
-> Floors: TipKit and `ContentUnavailableView` are iOS 17.0+ (`references/_scaffolding/version-floor-registry.md#ios-170`); `TipGroup` is iOS 18.0+ (`#ios-180`).
+> Owner: `references/patterns/03-onboarding-tipkit.md` owns first-run architecture, the launch-screen boundary, the welcome/What's New surface, TipKit contextual teaching, age assurance and guardian consent (`DeclaredAgeRange`, PermissionKit), and the GENERAL cross-permission priming pattern (the soft-ask-before-the-system-prompt architecture, the which/when decision matrix, Location/Camera/Contacts/Photos/ATT specifics). The notification-permission INSTANCE of priming -- including `.provisional` and denial recovery -- is owned by `references/patterns/07-feedback-reviews-notifications.md#notification-permission-earn-the-prompt`; this file states the pattern once and points there for its most common single application. Deferred account creation is owned by `references/patterns/09-auth-account.md`. Settings deep-linking mechanics are owned by `references/patterns/06-settings.md#deep-linking-to-system-settings`.
+> Floors: TipKit and `ContentUnavailableView` are iOS 17.0+ (`references/_scaffolding/version-floor-registry.md#ios-170`); `TipGroup` is iOS 18.0+ (`#ios-180`). TipKit is unchanged in iOS 27; the age-assurance and launch-screen floors are tabled under Floors at a glance below and in `references/_scaffolding/version-floor-registry.md`.
 
 Apple's guidance on onboarding is blunt: get people to real content as fast as possible. The worst first run is a marketing carousel the user swipes through to reach the app; the best is nearly invisible -- usable immediately, with teaching deferred to the moment a feature becomes relevant. Three mechanisms do this job and they are NOT interchangeable: a one-time welcome flow (state, not content), TipKit (in-context feature discovery), and permission priming (protecting a one-shot system dialog with a reversible custom screen).
+
+## The launch screen is not the first onboarding screen
+
+Apps built with the iOS 27.0 SDK or later **must** declare a launch screen: the `Info.plist` needs one of `UILaunchStoryboardName`, `UILaunchStoryboards`, `UILaunchScreen` or `UILaunchScreens`, and an app without one is rejected once the App Store accepts 27.0-SDK builds. The scene-based life cycle is mandatory in the same builds -- an app without it fails to launch at all.
+
+That makes the HIG's launch boundary enforceable rather than advisory. The launch screen resembles the first real screen of the app, carries no text, no logo and no splash branding, and exists to make the launch feel instant. It is not a slide, not a brand moment, and not step zero of the welcome flow. An app that quietly dropped the key to ship a custom animated splash now has to put it back, and the splash it was hiding belongs in the first real screen or nowhere.
 
 ## Onboarding architecture
 
@@ -193,11 +199,63 @@ manager.requestAlwaysAuthorization()
 
 **Contacts** has a limited-access tier (iOS 18+) and a picker path that needs no permission at all -- reserve the full `CNContactStore.requestAccess(for:)` for features that genuinely need the whole address book (find-friends matching), and prime hardest before it since full-book access is the most sensitive contacts ask. **Photo library**: `PhotosPicker` returns user-selected images with zero permission prompt -- the selection IS the consent; only request `PHPhotoLibrary` authorization for programmatic access beyond what the user hands you.
 
-**Tracking (ATT)** is the strictest of the six: the dialog is silently dropped unless the app is `.active`, so fire it after a short delay once foregrounded, never during launch or a transition animation; check `trackingAuthorizationStatus == .notDetermined` before every call, since a second call after any decision is a no-op; and reading `ASIdentifierManager.shared().advertisingIdentifier` before authorization returns an all-zero UUID. Gating a feature or offering a reward for allowing tracking is Guideline 5.1.1(iv) and an automatic rejection.
+**Tracking (ATT)** is the strictest of the six: the dialog is silently dropped unless the app is `.active`, so fire it after a short delay once foregrounded, never during launch or a transition animation; check `trackingAuthorizationStatus == .notDetermined` before every call, since a second call after any decision is a no-op; and reading `ASIdentifierManager.shared().advertisingIdentifier` before authorization returns an all-zero UUID. Gating a feature or offering a reward for allowing tracking is Guideline 5.1.1(iv) and an automatic rejection. An expanded ATT prompt -- `requestTrackingAuthorization(usingExpandedInterface:additionalInformationAction:completionHandler:)` with a Markdown purpose string in `NSUserTrackingMarkdownUsageDescription` -- is in iOS 27.2 developer beta as of 2026-09-22 and must stay out of shipping code (`// beta: verify against the installed SDK` if you prototype it). The priming guidance above is unchanged; write the purpose string well either way.
+
+## Age assurance and parental consent
+
+Age gating is a compliance requirement in several jurisdictions and a first-run surface in its own right. Apple's answer is not a birthdate form -- it is the **DeclaredAgeRange** framework (iOS 26.0+, with additions at 26.2, 26.4 and 26.5; requires the `com.apple.developer.declared-age-range` entitlement), which returns a privacy-preserving *range* rather than a date:
+
+```swift
+@Environment(\.requestAgeRange) private var requestAgeRange
+
+private func establishAgeRange(using service: AgeRangeService) async throws {
+    // 1. Ask the region first (requiredRegulatoryFeatures, iOS 26.4+).
+    //    An empty set means this region demands nothing -- skip the whole flow.
+    let required = try await service.requiredRegulatoryFeatures
+    guard !required.isEmpty else { return }
+
+    // 2. Ask for the narrowest gate the feature needs -- usually one threshold, not three.
+    switch try await requestAgeRange(ageGates: 18) {
+    case .sharing(let range):
+        applyAgeGating(range)                                // reads lowerBound/upperBound
+        hideRestrictedFeatures(range.activeParentalControls) // hide, don't show-then-refuse
+    case .declinedSharing:
+        enterReducedExperience()                             // a designed state, never a dead end
+    @unknown default:
+        enterReducedExperience()
+    }
+}
+```
+
+Four craft rules follow from that shape: call `requiredRegulatoryFeatures` first and skip the flow entirely where the region does not demand it, rather than age-gating everyone; ask for the narrowest threshold (`callAsFunction(ageGates:_:_:)` takes up to three, and most features need one); treat `.declinedSharing` as a designed state with a usable reduced experience; and read `activeParentalControls` so a restricted feature is hidden rather than offered and then refused. `AgeRange` also carries an `ageRangeDeclaration` describing how the age was established. `AppStore.ageRatingCode` (`Int?`, iOS 26.2+) reads the rating the current storefront actually enforces, which differs by region -- read it instead of hard-coding one. Below iOS 26 there is no API, and Apple's guidance is not to collect birthdates where one exists.
+
+When an app changes in a way a guardian must approve, **PermissionKit** (iOS 26.0+) carries the consent. iOS 27 adds an explicit flow selector and a returned result:
+
+```swift
+if #available(iOS 27, *) {
+    // The await returns only once the chosen flow has run to its end.
+    let result = try await askCenter.askSignificantChangePermission(
+        for: question,                       // PermissionQuestion<SignificantAppUpdateTopic>
+        permissionFlow: flow,                // .acknowledgmentAlert / .approveInPerson / .askToApprove
+        in: viewController)
+    switch result {
+    case .approveInPerson(let approved):     // a guardian decided on this device
+        if approved { unlock() } else { keepRestricted() }
+    case .askToApprove(let didSend):         // the request is out; render a pending state
+        if didSend { showPendingApprovalState() }
+    case .cancel:
+        break                                // NOT an error -- do not alert
+    @unknown default:
+        break
+    }
+}
+```
+
+The three flows are visually and procedurally different, so the surrounding UI has to branch: `.approveInPerson` blocks until a guardian acts on this device, `.askToApprove` sends a request and needs a real pending state, `.acknowledgmentAlert` is a one-shot notice. `PermissionResult.cancel` is not a failure -- alerting on it repeats the "cancel is not an error" auth bug in a higher-stakes flow. On iOS 26.2-26.x use `AskCenter.ask(_:in:)` with the same question type (no flow selection, no result), or `DeclaredAgeRange`'s `showSignificantUpdateAcknowledgment(in:updateDescription:)` on 26.4+. `SignificantAppUpdateTopic` itself is iOS 26.2.
 
 ## Accessibility contract
 
-Onboarding sheets and covers inherit Liquid Glass materials on iOS 26 -- keep welcome surfaces on standard `Material` backgrounds and let the system provide the glass; don't hand-roll a blur behind a welcome card. Any animated welcome sequence must honor `.accessibilityReduceMotion` (the page-advance gate above) and `.accessibilityReduceTransparency`. `.accessibilityElement(children: .combine)` on each feature row is mandatory so VoiceOver reads "title, description" as one element instead of stopping on the decorative symbol -- the symbol itself needs `.accessibilityHidden(true)`, or its auto-derived name ("star") leaks into the merged utterance. Every priming-screen button, including "Not Now," meets the 44pt minimum from `references/accessibility/04-motor-interaction.md#touch-targets`.
+Onboarding sheets and covers inherit Liquid Glass materials on iOS 26 and later -- keep welcome surfaces on standard `Material` backgrounds and let the system provide the glass; don't hand-roll a blur behind a welcome card. Any animated welcome sequence must honor `.accessibilityReduceMotion` (the page-advance gate above) and `.accessibilityReduceTransparency`. `.accessibilityElement(children: .combine)` on each feature row is mandatory so VoiceOver reads "title, description" as one element instead of stopping on the decorative symbol -- the symbol itself needs `.accessibilityHidden(true)`, or its auto-derived name ("star") leaks into the merged utterance. Every priming-screen button, including "Not Now," meets the 44pt minimum from `references/accessibility/04-motor-interaction.md#touch-targets`.
 
 ## Anti-patterns
 
@@ -212,6 +270,23 @@ Onboarding sheets and covers inherit Liquid Glass materials on iOS 26 -- keep we
 | Re-showing a system permission prompt after denial | It's a silent no-op | Deep-link to Settings |
 | Gating a feature or offering a reward for allowing tracking | App Review rejection (5.1.1(iv)) | Never gate or incentivize any declinable permission |
 | Requesting Always-location cold, before When-In-Use | The system silently downgrades the request | Escalate only after When-In-Use is granted |
+| A splash/branding screen shipped as the launch screen | The launch screen is required from the 27.0 SDK and must resemble the first real screen -- no text, no logo | Declare the key; put branding in the first real screen or drop it |
+| A birthdate form for age gating on iOS 26+ | Collects a date Apple's API deliberately avoids collecting | `DeclaredAgeRange`, narrowest gate, after `requiredRegulatoryFeatures` |
+| Age-gating everyone regardless of region | `requiredRegulatoryFeatures` tells you where it is demanded | Skip the flow where the set is empty |
+| `.declinedSharing` treated as a dead end | A declined age share is a choice, not a failure | A usable reduced experience |
+| `PermissionResult.cancel` surfaced as an error | Cancel is a decision; alerting on it punishes a guardian mid-flow | Return to the prior state silently |
+
+## Floors at a glance
+
+| Surface | Floor |
+|---|---|
+| Launch screen `Info.plist` key, scene life cycle | Required in apps built with the iOS 27.0 SDK (any deployment target) |
+| `DeclaredAgeRange` | iOS 26.0; `requiredRegulatoryFeatures`/`showSignificantUpdateAcknowledgment` 26.4; `AgeRangeDeclaration.confirmed` 26.5 -- no iOS 27 additions |
+| `AppStore.ageRatingCode` | iOS 26.2 |
+| PermissionKit `AskCenter.ask(_:in:)` | iOS 26.0 (`SignificantAppUpdateTopic` 26.2) |
+| `askSignificantChangePermission(for:permissionFlow:in:)`, `PermissionFlow`, `PermissionResult` | iOS 27.0 |
+| Expanded ATT prompt + `NSUserTrackingMarkdownUsageDescription` | iOS 27.2 developer beta -- not shippable |
+| TipKit, `requestReview`, `ContentUnavailableView` | Unchanged in iOS 27 |
 
 ## Severity guide
 

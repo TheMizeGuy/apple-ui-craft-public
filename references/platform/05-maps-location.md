@@ -1,7 +1,7 @@
 # Maps and Location UI
 
 > Owner: `references/platform/05-maps-location.md` owns SwiftUI `Map` content composition, camera control, search/selection/Look Around interaction, and Core Location authorization UX, per the ARCHITECTURE ownership map. Sheet presentation for place detail is a usage example here, not owned here -- cite `references/patterns/05-modality-sheets.md`. Smart Invert itself is owned by `references/accessibility/03-visual-accessibility.md#smart-invert`; this file only states the one map-specific application.
-> Floors: SwiftUI `Map` and its content builder are iOS 17.0+ (`import MapKit`, replacing the deprecated iOS 14 `Map(coordinateRegion:)`). `mapItemDetailSelectionAccessory(_:)` and keyframe camera animation are iOS 18.0+. Liquid Glass control styling is automatic at iOS 26.0+ per `references/_scaffolding/version-floor-registry.md#ios-26x`.
+> Floors: SwiftUI `Map` and its content builder are iOS 17.0+ (`import MapKit`, replacing the deprecated iOS 14 `Map(coordinateRegion:)`). `mapItemDetailSelectionAccessory(_:)` and keyframe camera animation are iOS 18.0+. Liquid Glass control styling is automatic at iOS 26.0+ per `references/_scaffolding/version-floor-registry.md#ios-26x`. The eleven new `MKPointOfInterestCategory` values and `CLLocationManager.headingBody` are iOS 27.0+, and `headingOrientation` is deprecated at 27.0; the other MapKit and Core Location surfaces listed below are soft-deprecated rather than version-deprecated.
 
 A map earns its place in an app only when it is the fastest way to answer "where," "how far," and "how do I get there" -- everything in this file exists to keep the map itself clean (few controls, decluttered pins, a style tuned to be a backdrop) while your data does the talking. The single most common way this goes wrong: never asking the OS to grant location, or asking on cold launch before the user has any reason to say yes.
 
@@ -185,6 +185,21 @@ Map(position: $position) { /* content */ }
 
 `.mapControlVisibility(.hidden)` goes edge-to-edge behind your own chrome (a bottom sheet UI); if you take that route you OWN recenter and orientation reset, styled to match with `.glassEffect()` grouped inside a `GlassEffectContainer` (owner `references/design/02-liquid-glass.md#glass-buttons`) so your custom map chrome reads as one glass surface alongside MapKit's own controls. `PointOfInterestCategories` filters system POIs (`.all`, `.excludingAll`, `.including([...])`, `.excluding([...])`) -- filtering to relevant categories is what separates a focused map from clutter.
 
+iOS 27 adds eleven `MKPointOfInterestCategory` values, weighted toward travel and the outdoors: `airportTerminal`, `automotiveDealership`, `commercialVehicleDealership`, `informationBooth`, `motorbikeDealership`, `picnicArea`, `rangerStation`, `restArea`, `scenicView`, `ticketOffice`, `visitorCenter`. They are the only new MapKit symbols in the 27 SDK, and they turn `.excludingAll` from the only honest decluttering answer into a fallback -- a road-trip or trails app can now keep exactly the places it is about:
+
+```swift
+private var relevantPOIs: PointOfInterestCategories {
+    var categories: [MKPointOfInterestCategory] = [.gasStation, .park, .campground]
+    if #available(iOS 27, *) { categories += [.restArea, .scenicView, .picnicArea, .visitorCenter] }
+    return .including(categories)
+}
+
+Map(position: $position) { /* content */ }
+    .mapStyle(.standard(emphasis: .muted, pointsOfInterest: relevantPOIs))
+```
+
+Build the array at runtime like this rather than gating the whole `.mapStyle` call; below iOS 27 the map keeps the categories it always had.
+
 SwiftUI's `Map` does not auto-cluster `Marker`/`Annotation` the way `MKMapView` does via `clusteringIdentifier`. Above roughly 200-300 pins, either grid-cluster manually on `.onMapCameraChange(frequency: .onEnd)`, or drop to `MKMapView` via `UIViewRepresentable` for Apple's built-in decluttering at thousands of annotations.
 
 ## Accessibility: accessibilityIgnoresInvertColors
@@ -195,6 +210,33 @@ Smart Invert is owned by `references/accessibility/03-visual-accessibility.md#sm
 Map(position: $position) { /* content */ }
     .accessibilityIgnoresInvertColors()   // exempt the map from Smart Invert; default true when applied
 ```
+
+## Legacy surfaces to migrate off
+
+Each replacement is available well below this file's floor, so none of these migrations needs an availability branch.
+
+| Superseded | Status | Replacement |
+|---|---|---|
+| `MKMapView.mapType` / `pointOfInterestFilter` / `showsBuildings` / `showsTraffic`, `MKMapSnapshotter.Options` equivalents | Soft-deprecated in Apple's documentation | `preferredConfiguration` with `MKStandardMapConfiguration` / `MKHybridMapConfiguration` / `MKImageryMapConfiguration` (iOS 16+) |
+| `MKMapCamera.altitude` | Soft-deprecated in Apple's documentation | `centerCoordinateDistance` |
+| `CLPlacemark` in full, plus `CLCircularRegion` / `CLBeaconRegion` and `CLLocationManager.startMonitoring(for:)` / `stopMonitoring(for:)` / `requestState(for:)` | Soft-deprecated in Apple's documentation | `MKMapItem` / `MKAddress` for address text; `CLMonitor` (iOS 17+) for geofencing |
+| `CLLocationManager.headingOrientation` | Deprecated at iOS 27.0 | `headingBody` |
+
+Soft-deprecated means prefer the replacement in new code; existing call sites still compile and do not warn. Only `headingOrientation` carries a hard iOS 27.0 deprecation.
+
+The `preferredConfiguration` migration is a craft upgrade, not just a rename: POI filtering, traffic and elevation stop being four independent toggles on the view and become one configuration object you can build, name and reuse. And `CLGeocoder` + `CLPlacemark` should stop being the way an address label gets rendered -- the `MKMapItem` path is the one this file's selection accessories already use.
+
+Heading is the one iOS 27.0 location-UX change worth acting on now. It stops being expressed as a device interface orientation and becomes a reference body:
+
+```swift
+if #available(iOS 27, *) {
+    manager.headingBody = headingReference      // the any CLBodyIdentifiable heading is measured against
+} else {
+    manager.headingOrientation = .portrait
+}
+```
+
+That fixes a real bug class: a compass arrow driven by `headingOrientation` points wrong whenever the scene's orientation and the device's differ, which resizable iPad scenes and iPhone Mirroring make routine rather than exotic. Core Location also gains `CLActivityType.maritime` and `CLLocationUpdate.LiveConfiguration.maritime` at 27.0 for on-water positioning.
 
 ## Availability + fallbacks
 
@@ -223,6 +265,9 @@ VoiceOver reads `Marker`/`Annotation` labels from the title you supply -- give e
 | `.onMapCameraChange(frequency: .continuous)` driving a network fetch | Fires every frame | `.onEnd` for a "search this area" affordance |
 | Showing a Look Around card when `scene == nil` | Reads as a broken image, not absent coverage | Conditionally render only on a resolved scene |
 | Blocking "find nearby" on precise-location upgrade | Reduced accuracy is fine for most map use cases | Request the one-time full-accuracy upgrade only when truly needed |
+| `CLGeocoder` + `CLPlacemark` to render an address label | `CLPlacemark` is soft-deprecated; the address path moved to MapKit | `MKMapItem` / `MKAddress`, the same path the selection accessories use |
+| Setting `mapType`/`showsTraffic` directly on `MKMapView` | Soft-deprecated; four toggles that should be one object | `preferredConfiguration` with an `MKStandardMapConfiguration` (iOS 16+) |
+| A compass arrow driven by `headingOrientation` | Deprecated at 27.0, and points wrong when the scene's orientation differs from the device's | `headingBody` behind `#available(iOS 27, *)` |
 
 ## Severity guide
 

@@ -1,8 +1,8 @@
 # Exemplar: Accessibility-First Screen
 
-> Status: signature-drafted, build-pending (requires Xcode build at iOS 18 + iOS 26 targets).
+> Status: signature-drafted, build-pending (requires Xcode build at iOS 18 + iOS 26 + iOS 27 targets).
 > Composes: `references/accessibility/01-voiceover-fundamentals.md` (rotors, custom actions), `references/accessibility/02-dynamic-type-adaptation.md` (Dynamic Type scale), `references/accessibility/03-visual-accessibility.md` (Increased Contrast, color independence), `references/accessibility/04-motor-interaction.md` (44pt targets, WCAG citations), `references/design/08-adaptive-layout-ipad.md` (`ViewThatFits` reflow), `references/haptics/02-swiftui-sensory-feedback.md`.
-> Floors: `@AccessibilityFocusState`/`.accessibilityFocused` iOS 15.0+; `.accessibilityRepresentation`/`.accessibilityChildren` iOS 15.0+; `.accessibilityAdjustableAction` iOS 15.0+; `performAccessibilityAudit(for:)` filter overload current on XCTest.
+> Floors: `@AccessibilityFocusState`/`.accessibilityFocused` iOS 15.0+; `.accessibilityRepresentation`/`.accessibilityChildren` iOS 15.0+; `.accessibilityAdjustableAction` iOS 15.0+; `performAccessibilityAudit(for:)` filter overload current on XCTest; `.pickerStyle(.tabs)` iOS 27.0+ with an iOS 26 fallback shown inline.
 
 An alerts inbox -- the canonical screen that needs every accessibility surface at once: one curated VoiceOver stop per row, Dynamic Type reflow via `ViewThatFits`, programmatic focus movement after an action, custom-control semantics borrowed from native controls, and an XCTest audit harness. This file is the composed target; each technique's full treatment lives in the accessibility reference files it draws from.
 
@@ -127,13 +127,39 @@ final class AlertsModel {
 
 struct AccessibleAlertsScreen: View {
     @State private var model = AlertsModel()
+    @State private var scope: Scope = .all
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    enum Scope: String, CaseIterable {
+        case all, unread, flagged
+        var label: String { rawValue.capitalized }
+    }
+    private var visibleItems: [AlertItem] {
+        switch scope { case .all: model.items; case .unread: model.unread; case .flagged: model.flagged }
+    }
+
+    // The scope control NAVIGATES between views of the inbox -- it does not select a value.
+    // `.tabs` is what makes VoiceOver say so; `.segmented` announces value selection.
+    private var scopePicker: some View {
+        Picker("Scope", selection: $scope) {
+            ForEach(Scope.allCases, id: \.self) { Text($0.label).tag($0) }
+        }
+    }
+    @ViewBuilder private var scopeControl: some View {
+        if #available(iOS 27, *) {
+            scopePicker.pickerStyle(.tabs)           // iOS 27.0+ (not watchOS)
+        } else {
+            scopePicker.pickerStyle(.segmented)      // iOS 26: supply the semantics by hand
+                .accessibilityElement(children: .contain)
+                .accessibilityAddTraits(.isTabBar)   // iOS 17+
+        }
+    }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(model.items) { item in
+                    ForEach(visibleItems) { item in
                         AlertRow(item: item,
                             onOpen: { model.markRead(item) },
                             onToggleFlag: { model.toggleFlag(item) },
@@ -141,7 +167,12 @@ struct AccessibleAlertsScreen: View {
                             onArchive: { withAnimation(reduceMotion ? nil : .spring(duration: 0.35, bounce: 0.2)) { model.archive(item) } },
                             onAdjustPriority: { delta in model.adjustPriority(item, by: delta) })
                     }
-                } header: { AlertsSummaryHeader(unreadCount: model.unreadCount) }
+                } header: {
+                    VStack(alignment: .leading, spacing: 10) {
+                        AlertsSummaryHeader(unreadCount: model.unreadCount)
+                        scopeControl
+                    }
+                }
             }
             .listStyle(.plain)
             .navigationTitle("Alerts")
@@ -359,7 +390,9 @@ func test_screenPassesAudit() throws {
 
 ## Availability + fallbacks
 
-`.accessibilityRepresentation`, `.accessibilityChildren`, `@AccessibilityFocusState`, and `.accessibilityAdjustableAction` are all iOS 15.0+ -- no gate needed at this file's iOS 18+ floor. `AccessibilityNotification.Announcement(_:).post()` (iOS 17+) has a pre-17 fallback of `UIAccessibility.post(notification: .announcement, argument:)`.
+`.accessibilityRepresentation`, `.accessibilityChildren`, `@AccessibilityFocusState`, and `.accessibilityAdjustableAction` are all iOS 15.0+ -- no gate needed at this file's iOS 18+ floor. `AccessibilityNotification.Announcement(_:).post()` (iOS 17+) has a pre-17 fallback of `UIAccessibility.post(notification: .announcement, argument:)`. `.pickerStyle(.tabs)` is the one iOS 27 API here, and it carries its iOS 26 fallback inline -- an iOS-27-minimum target deletes the `else` branch.
+
+Every modifier above is the modern spelling on purpose. The iOS 13-era `accessibility(label:)` / `accessibility(hint:)` family and SwiftUI's `ContentSizeCategory` are both soft-deprecated in Apple's documentation in favor of `accessibilityLabel(_:)` and `DynamicTypeSize`; this file uses `\.dynamicTypeSize` and `typeSize.isAccessibilitySize` throughout, and `#Preview` rather than the `PreviewProvider` family that Xcode 27 deprecates.
 
 ## Accessibility contract
 
@@ -375,6 +408,7 @@ This IS the accessibility contract file -- every technique above is the primary 
 | Hand-rolled headings via styled `Text` with no `.isHeader` trait | Invisible to the rotor's "Headings" mode | `.accessibilityAddTraits(.isHeader)` on every hand-built heading |
 | A rotor's `entries:` closure re-sorting/filtering inline | Re-runs the sort/filter on every body invalidation, even with VoiceOver off | Hoist the derived collection to a stored property |
 | `.environment(\.accessibilityReduceMotion, true)` in a `#Preview` | Get-only `KeyPath` -- compile error | A `Bool?` override parameter as the testable seam |
+| `.pickerStyle(.segmented)` for the scope control | VoiceOver announces navigation as value selection | `.pickerStyle(.tabs)` (iOS 27); `.segmented` + `.isTabBar` below it |
 
 ## Severity guide
 

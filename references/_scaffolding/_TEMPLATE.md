@@ -27,7 +27,7 @@ if #available(iOS 26, *) {
 }
 ```
 
-iOS-27 beta symbols: fence behind `#available(iOS 27, *)` with a `// SDK-verify` comment; never in the primary example.
+iOS 27.0 symbols are current: use one as the primary example when it is the right tool, gated `#available(iOS 27, *)` with a real iOS 26 fallback beside it. Only symbols Apple still labels beta (the iOS 27.1 iPhone Duo surface) carry `// beta: verify against the installed SDK` and stay out of the primary example.
 
 ## Accessibility contract
 

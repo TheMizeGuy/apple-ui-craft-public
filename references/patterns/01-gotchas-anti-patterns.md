@@ -1,6 +1,6 @@
 # Gotchas and Anti-Patterns
 
-> Owner: `references/patterns/01-gotchas-anti-patterns.md` owns six recurring, ship-breaking traps that don't belong to any single API surface: the `#Preview` environment-key injectability gotcha, the Reduce Motion double-gate mechanism, animating shadow opacity instead of radius, a `Timer`/`TimelineView` left running behind a `.sheet`, the symbol-effect Reduce Motion fallback, and the Reduce Transparency opaque-fallback rule. Every other row below is a pointer to its real owner -- read this file for the failure mode, follow the link for the full contract.
+> Owner: `references/patterns/01-gotchas-anti-patterns.md` owns six recurring, ship-breaking traps that don't belong to any single API surface -- the `#Preview` environment-key injectability gotcha, the Reduce Motion double-gate mechanism, animating shadow opacity instead of radius, a `Timer`/`TimelineView` left running behind a `.sheet`, the symbol-effect Reduce Motion fallback, and the Reduce Transparency opaque-fallback rule -- plus the Xcode 27 rebuild checklist, the cross-cutting set of changes that fire on a recompile alone. Every other row below is a pointer to its real owner -- read this file for the failure mode, follow the link for the full contract.
 > Floors: see `references/_scaffolding/version-floor-registry.md` for every version cited below; nothing in this file introduces a new floor.
 
 Most entries here shipped to a device before they were caught -- unit tests, source review, and Xcode's canvas all stayed green while the bug was live; the two compile-time traps below (the `#Preview` get-only-key injection and the `.identity`-on-`Animation` mistake) are instead caught at build, not runtime. The common thread for the runtime bugs: SwiftUI's compile-time guarantees say nothing about runtime environment values, system-auto-gating scope, or off-screen render cost, so those categories are structurally invisible to static review. Grep for the anti-pattern, don't trust "it compiled."
@@ -154,6 +154,45 @@ TimelineView(.animation(minimumInterval: 0.05, paused: visibleAnimatedCount == 0
 
 An un-canceled `Timer.publish(...).autoconnect()` on ordinary `.onDisappear`/`scenePhase` transitions is a related but distinct bug, owned by `references/animation/03-advanced-animators.md#repeating-keyframe-animations`; this entry is specifically about the sheet-presentation blind spot in that cancellation logic.
 
+## The Xcode 27 rebuild checklist
+
+**Symptom**: an app that shipped fine is rebuilt with Xcode 27, no source changed, and something regresses -- or the build is rejected outright.
+
+**Root cause**: a set of iOS 27 changes key on the SDK the app is *built with*, not its deployment target. Nothing in the diff shows them, so they are structurally invisible to source review and to a test suite that never changes either.
+
+Two of them are this file's to state in full.
+
+**A launch screen is mandatory.** An app built with the iOS 27.0 SDK must carry one of `UILaunchStoryboardName`, `UILaunchStoryboards`, `UILaunchScreen` or `UILaunchScreens` in its `Info.plist`, and is rejected without one once the App Store accepts 27.0-SDK builds. The scene-based life cycle is required in the same builds, and an app missing it fails to launch at all. An app that quietly dropped the key years ago to ship a custom splash finds out at submission. `references/patterns/03-onboarding-tipkit.md#the-launch-screen-is-not-the-first-onboarding-screen` owns what the screen may contain.
+
+**`UIApplication.canOpenURL(_:)` is deprecated at iOS 27.0.** Apple's replacement is not another check -- it is to attempt the open and handle the failure. That retires the "show this row only if the other app is installed" pattern wholesale:
+
+```swift
+// WRONG -- deprecated, and silently false whenever a scheme is missing from
+// LSApplicationQueriesSchemes, which ships as a row that never appears
+if UIApplication.shared.canOpenURL(partnerURL) { PartnerRow() }
+
+// RIGHT -- the affordance is always present; the miss is a designed state
+Button("Open in Partner App") {
+    openURL(partnerURL) { accepted in
+        if !accepted { linkFailure = .appNotInstalled }
+    }
+}
+```
+
+Universal links remove the question entirely, since an uninstalled target falls through to the web.
+
+The rest of the rebuild set belongs to other owners; check each one on the first Xcode 27 build:
+
+| Change on rebuild | What breaks | Owner |
+|---|---|---|
+| `TabView` enforces that its selection is a visible tab | A selection restored from `@SceneStorage`/`@AppStorage`, or left on a conditionally hidden tab, can crash | `references/design/07-navigation-patterns.md` |
+| `controlSize`, `buttonSizing`, `buttonRepeatBehavior`, `menuIndicatorVisibility`, `ButtonBorderShape` reset inside sheets and popovers | Sheet controls silently revert to default sizing | `references/patterns/05-modality-sheets.md#chrome` |
+| Selectable `Text` gets the system selection UI | A custom tap/drag gesture on that `Text` is lost to the selection handles | `references/patterns/02-forms-data-entry.md#text-entry` |
+| Presented view controllers inherit traits through the superview chain | A size-class override injected by a custom `UIPresentationController` can be bypassed | `references/patterns/05-modality-sheets.md#uikit-presentation-traits-built-with-the-270-sdk` |
+| `UISearchController` center placement puts the scope bar inline | Long or numerous scope titles truncate on the search row | `references/design/07-navigation-patterns.md` |
+| `AsyncImage` caches over HTTP by default | A hand-rolled cache layer may now double-cache | `references/patterns/04-loading-empty-error.md#loading` |
+| iPad continuous resizability, no longer gated by declared orientations | Every iPad layout must survive arbitrary window sizes | `references/usability/05-adaptive-review-method.md` |
+
 ## Anti-patterns
 
 | Wrong | Why it fails | Right |
@@ -189,7 +228,7 @@ Every gotcha above that touches motion or transparency is developer-owned unless
 
 ## Severity guide
 
-- **CRITICAL**: a Reduce Motion or Reduce Transparency gap that ships (WCAG 2.3.3 vestibular violation, or a hand-rolled surface that ignores the user's transparency setting).
+- **CRITICAL**: a Reduce Motion or Reduce Transparency gap that ships (WCAG 2.3.3 vestibular violation, or a hand-rolled surface that ignores the user's transparency setting), a missing launch-screen key on a 27.0-SDK build (rejection), or a `TabView` whose selection can land on a hidden tab (crash).
 - **HIGH**: a compile-time trap that blocks the fix entirely (`.identity` on `Animation`, get-only key injection) or a `.combine` misuse that silently drops VoiceOver content.
 - **MEDIUM**: a performance anti-pattern with a measurable hitch (shadow radius animation, `.animation` on a scroll container, a `Timer` running behind a sheet).
 - **LOW**: a craft/consistency gap a sibling-triage pass would catch before it reaches review.

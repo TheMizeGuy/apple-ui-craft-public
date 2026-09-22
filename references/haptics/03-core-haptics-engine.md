@@ -8,6 +8,8 @@ For custom haptic patterns beyond the built-in feedback types. Use Core Haptics 
 
 For most apps, the built-in `.sensoryFeedback` and `UIFeedbackGenerator` are sufficient. Reach for Core Haptics only for distinctive haptic experiences (games, music apps, productivity tools with rich feedback).
 
+No Core Haptics symbol carries an iOS 27 floor and nothing in this framework was deprecated in iOS 27 -- the API surface below is current as written. The one iOS 27 change that touches this file is a launch requirement, not a haptics API: see "When to start/stop".
+
 ## CHHapticEngine
 
 The gateway to the haptic server. Create, configure, start, manage lifecycle.
@@ -56,6 +58,8 @@ final class HapticEngineManager {
 ### When to start/stop
 
 Drive the engine lifecycle from `\.scenePhase`, not UIKit's `applicationDidEnterBackground`/`applicationWillEnterForeground` -- those app-delegate callbacks have no place in a SwiftUI-first haptics file and don't fire for scene-based multiwindow apps the way a single-delegate mental model implies.
+
+As of iOS 27 this is no longer a preference. Apple's "Transitioning to the UIKit scene-based life cycle" carries an Important callout: adopting the scene-based life cycle is required, and apps built with the iOS 27 / iPadOS 27 / Mac Catalyst 27 / tvOS 27 / visionOS 27 SDKs that have not adopted it FAIL TO LAUNCH. A pure-SwiftUI `@main App` already satisfies it; the risk is a UIKit-hosted app with a delegate-only bootstrap or an `Info.plist` carried forward without a populated `UIApplicationSceneManifest`. Before auditing the engine lifecycle in a UIKit-hosted codebase, check that manifest -- an engine that starts correctly in a process that cannot launch is not a finding worth writing. `\.scenePhase` mechanics: `references/platform/09-scene-lifecycle.md` (OWNER).
 
 ```swift
 struct ContentView: View {

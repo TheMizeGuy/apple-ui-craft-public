@@ -11,7 +11,7 @@ A ProMotion-smooth image feed: `@Observable` field-granular invalidation, a deco
 - **`List`, not `ScrollView`+`LazyVStack`, for an unbounded feed.** `List` is `UICollectionView`-backed and RECYCLES off-screen rows -- memory stays proportional to the visible window. `LazyVStack` lazily *creates* rows but never frees them; a long feed grows memory monotonically with scroll distance.
 - **`@Observable`, field-granular.** A row re-evaluates only when a property it actually read in `body` changes. Legacy `ObservableObject`+`@Published` fires `objectWillChange` for every mutation -- every row re-renders on any unrelated model change.
 - **The row is a value sink.** The parent passes plain, pre-computed values (title, an already-formatted subtitle, `isFavorite: Bool`) -- never the whole store. `DateFormatter`/regex/`filter` inside a row's `body` costs tens-hundreds of µs × rows × redraws -- a visible scroll hitch.
-- **`AsyncImage` is the wrong default for cells.** It caches only compressed HTTP bytes (`URLCache`) and re-decodes on the MAIN actor on every reappearance -- full detail in `references/performance/02-scroll-list-performance.md`. A row-owned downsampled cache is the fix (below).
+- **`AsyncImage` is the wrong default for cells, and iOS 27 does not change that.** State the reason precisely, because half of it moved: below iOS 27 `AsyncImage` applies no HTTP caching at all, and from iOS 27 it caches downloaded bytes per the server's HTTP headers, with `asyncImageURLSession(_:)` available to inject your own `URLSession`/`URLCache` for a whole subtree and `AsyncImage(request:scale:)` for per-image cache policy. What never changes is the DECODE side: it decodes at source resolution, never downsamples, and does so on the main actor, so a 12MP Display P3 asset is ~97 MB resident in an 80x80 cell however perfectly it was cached. The cell finding on iOS 27 is a decode/memory finding, not a network one -- full detail in `references/performance/02-scroll-list-performance.md#asyncimage-caching-and-session-control----ios-27`. A row-owned downsampled cache is the fix (below).
 
 ## Core APIs
 
@@ -127,6 +127,8 @@ struct PhotoFeedView: View {
 ```
 
 `pixelSize` is in **pixels** (points × `displayScale`), because ImageIO downsampling works in pixels -- a 56pt cell on a 3× screen wants a 168px thumbnail; decoding smaller blurs, larger wastes memory. `store.favorites.contains(...)` is read by the PARENT, never inside the row body -- reading it in the row would make every row observe the whole `favorites` set and re-render on an unrelated toggle.
+
+Two iOS 27 / Xcode 27 notes on this code. `@State private var store = PhotoFeedStore()` is free on an Xcode 27 build: `@State` is a macro there and the default expression is evaluated once for the view's lifetime rather than on every re-instantiation, so no `@StateObject` or injection workaround is needed (`references/performance/04-state-architecture.md#state-is-a-macro-when-you-build-with-xcode-27`). And `PhotoRow`'s hand-written `==` compares only the app's own value types, which is deliberate: from iOS 27 SwiftUI consults retroactive `Equatable` conformances of SwiftUI types when comparing values, so a `==` that leaned on one behaves differently after the recompile. This one does not, and that is why its hitch budget survives the SDK change unchanged.
 
 ### Part B -- `ThumbnailLoader`: coalescing actor, size-aware cache, off-main downsample
 
@@ -251,7 +253,7 @@ Reading the console tokens: **`@self`** -- the view VALUE changed (an input diff
 
 Instruments checklist (device, Release build, ProMotion hardware; frame budget 16.67ms/frame at 60Hz, **8.33ms/frame at 120Hz**):
 
-1. **Animation Hitches** -- watch Hitch Time Ratio (target < 5ms hitch per 1s of scroll). Splits Commit (main-thread layout/update -- `body` cost, `AnyView` rebuilds, whole-`@Observable` reads land here) from Render (GPU -- off-screen passes, blending, oversized textures).
+1. **Animation Hitches** -- watch Hitch Time Ratio (target < 5ms hitch per 1s of scroll). Splits Commit (main-thread layout/update -- `body` cost, `AnyView` rebuilds, whole-`@Observable` reads land here) from Render (GPU -- off-screen passes, blending, oversized textures). That remains the LOCAL target; the instrument supports visionOS 27.0+ as well from Instruments 27. The FIELD number is no longer the same series: Xcode 27's Organizer Hitches metric tracks hitch time across all animated interactions -- scrolling, transitions, other continuous motion -- and MetricKit's `HitchTimeMetric` is per-app animation hitch time, not scroll-scoped. Do not compare a local scroll-only measurement against an iOS 27 field number, or a pre-27 field number against a post-27 one.
 2. **SwiftUI** template (iOS 17+) -- View Body count/duration; a row `body` firing far more than rows realized = an invalidation bug, jump back to `_printChanges()`.
 3. **Time Profiler** -- sample during a fast fling. Main-thread frames dominated by `CGImageSourceCreateThumbnail…`/`UIImage` decode/`DateFormatter` = compute that must move off the render path.
 4. **Allocations** -- scroll a long feed top-to-bottom; flat = `List` recycling working; monotonic climb = a `LazyVStack` retaining every realized row (expected there -- a red flag if you meant `List`). Confirm `NSCache` isn't unbounded (`totalCostLimit` set).
@@ -263,7 +265,7 @@ Instruments checklist (device, Release build, ProMotion hardware; frame budget 1
 
 | Wrong | Why it fails | Right |
 |---|---|---|
-| `AsyncImage` as the default cell image | Caches only compressed bytes, re-decodes on main every reappearance, no downsampling | `ThumbnailLoader` actor: cached, coalesced, off-main, downsampled |
+| `AsyncImage` as the default cell image | Decodes at source resolution on the main actor with no downsampling -- iOS 27's HTTP caching fixes the download, never the decode | `ThumbnailLoader` actor: cached, coalesced, off-main, downsampled |
 | `class ImageCache` with a bare `NSCache<NSURL, UIImage>` | No in-flight coalescing (a fling fires N redundant decodes); key omits size | `actor` + `inFlight` map + `(url, pixelSize)` key |
 | `LazyVStack` for an unbounded feed | Never frees off-screen rows -- memory grows monotonically with scroll distance | `List` (recycles) for unbounded data; `LazyVStack` only for bounded/windowed |
 | `.task { await ImageCache.shared.prefetch(...) }` on a row, labeled "prefetching" | `.task`/`.onAppear` fire once the row is ALREADY on-screen and laid out -- no lead time | Warm the cache for the next data window when a page loads, or drop to `UICollectionView.prefetchItemsAt` |

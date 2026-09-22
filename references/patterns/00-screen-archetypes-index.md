@@ -3,7 +3,7 @@
 > Owner: this file owns the archetype-to-reference routing map only. It introduces no new API guidance -- every cell links to the file that owns the real content. Read this first when starting a new screen; read the linked file(s) for the actual contract.
 > Floors: none introduced here. Every floor citation lives in the linked file.
 
-Twelve screen shapes cover nearly every iOS/iPadOS screen a craft review will encounter. This file maps each to the reference file(s) that build it and the core APIs involved -- it is a router, not a tutorial. Most real screens compose two or three archetypes: a paywall is a *form* wrapped in a *loading/error* shell, reached through an *auth* gate. Read every linked file a screen touches, not just the nearest single match.
+Fourteen screen shapes cover nearly every iOS/iPadOS screen a craft review will encounter. This file maps each to the reference file(s) that build it and the core APIs involved -- it is a router, not a tutorial. Most real screens compose two or three archetypes: a paywall is a *form* wrapped in a *loading/error* shell, reached through an *auth* gate. Read every linked file a screen touches, not just the nearest single match.
 
 ## The map
 
@@ -21,6 +21,8 @@ Twelve screen shapes cover nearly every iOS/iPadOS screen a craft review will en
 | **Media player** | `references/design/11-media-content.md` (OWNER) | `VideoPlayer`/AVKit, Picture in Picture, `.accessibilityIgnoresInvertColors` |
 | **Map / location** | `references/platform/05-maps-location.md` (OWNER) | `Map`, `MapCameraPosition`, `references/accessibility/04-motor-interaction.md#native-voiceover-bridge-apis` |
 | **Profile / account detail** | `references/patterns/06-settings.md#account-section-placement`, `references/patterns/02-forms-data-entry.md#structure` | `LabeledContent` read-only rows, edit-mode push into a `Form` |
+| **Seat / license management** | `references/patterns/08-paywall-storekit-applepay.md#seat-based-purchases-group-purchases-and-volume-purchasing` (merchandising half), `references/patterns/06-settings.md#account-section-placement` (management half) | No system view -- seat-count control, invitation share sheet, revoke/resend list; App Store Server API group endpoints behind it |
+| **Age gate / guardian consent** | `references/patterns/03-onboarding-tipkit.md#age-assurance-and-parental-consent` (OWNER), `references/patterns/09-auth-account.md` | `DeclaredAgeRange` (`@Environment(\.requestAgeRange)`, `requiredRegulatoryFeatures`), PermissionKit `askSignificantChangePermission(for:permissionFlow:in:)`, `AppStore.ageRatingCode` |
 
 ## Cross-cutting layers every archetype inherits
 
@@ -38,6 +40,8 @@ No row above is exempt from these -- consult them regardless of which archetype 
 - **Dashboard vs. feed**: a **dashboard** aggregates independent, differently-typed sections that can each fail on their own (`references/patterns/04-loading-empty-error.md`'s partial-failure model). A **feed** is one homogeneous, ever-scrolling list.
 - **Settings vs. profile**: **settings** rows are `Toggle`/`Picker`/navigation into preference sub-screens (`references/patterns/06-settings.md#row-vocabulary`). A **profile** page is read-mostly `LabeledContent` with an edit affordance that pushes into a **form**.
 - **Onboarding vs. permission priming**: onboarding is the one-time first-run FLOW; permission priming is a narrower soft-ask pattern that can fire during onboarding OR years later at point-of-need. Both live in `references/patterns/03-onboarding-tipkit.md`, in separate sections.
+- **Permission priming vs. age gate**: priming protects a one-shot system permission dialog. An **age gate** is a regulatory check that may not need to run at all -- `requiredRegulatoryFeatures` decides that per region -- and its declined path is a reduced experience, not a denied capability.
+- **Paywall vs. seat management**: buying seats is merchandising and belongs on the **paywall**. Administering them -- who holds one, revoke, resend -- is an account screen, and shipping both in the purchase flow is how a seat list ends up somewhere nobody returns to.
 
 ## Modal layer (not its own archetype)
 

@@ -2,6 +2,8 @@
 
 Apple's typography system is engineered, not decorative. Every text style maps to a specific use, scales with Dynamic Type, and integrates with SF Symbols and the system layout grid.
 
+iOS 27 added nothing here. A sweep of the SwiftUI SDK found no 27.0 additions for fonts, text styles, or Dynamic Type, and the HIG Typography page carries no 2026 change-log entry. The ramp still tops out at `.largeTitle` with 11 styles on iOS (`.extraLargeTitle` / `.extraLargeTitle2` remain visionOS-only), and every recommendation below is current as written. A "new in iOS 27" text style is a hallucination.
+
 ## System text styles
 
 These are the only text sizes you should use unless you have a specific reason. They all scale with Dynamic Type automatically.

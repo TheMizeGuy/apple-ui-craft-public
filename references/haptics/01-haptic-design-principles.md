@@ -137,6 +137,10 @@ Intensity 0.0 to 1.0.
 
 For `.start`/`.stop` (real, watchOS-primary) and the complete `SensoryFeedback` surface, see `references/haptics/02-swiftui-sensory-feedback.md#built-in-feedback-types` -- that file is the owner.
 
+### What iOS 27 changed here: nothing
+
+Apple shipped no iOS 27 change to haptics. `SensoryFeedback` gained no cases, Core Haptics gained no symbols, the UIKit feedback generators are neither deprecated nor extended, and the HIG's "Playing haptics" page has not been revised since the Apple Pencil Pro update in 2024. The vocabulary and placement matrix above are current; an iOS 27 audit should spend its time on gestures, reorder and drag instead. The one newer API in this area, the `.press(_:)`/`.release(_:)`/`.selection(_:)` family added in iOS 26, plays feedback on visionOS only -- see `references/haptics/02-swiftui-sensory-feedback.md#control-specific-press-release-and-selection-feedback-ios-26` before reaching for it on iPhone.
+
 ## Anti-patterns
 
 | Anti-pattern | Problem | Fix |

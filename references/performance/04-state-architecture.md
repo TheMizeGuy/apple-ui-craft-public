@@ -1,7 +1,7 @@
 # State Architecture
 
 > Owner: `references/performance/04-state-architecture.md` owns property-wrapper ownership rules (`@State`/`@Binding`/`@Bindable`/`@Environment`), `@Observable` runtime semantics (tracking granularity, `@ObservationIgnored`, derived state), `@Entry`/custom `EnvironmentValues`, view identity and `.task(id:)` lifecycle, `ViewModifier`/`PreferenceKey`, and the diagnostic link between mis-modeled state and the animation/layout bugs other files chase. `references/performance/01-swiftui-rendering.md` owns the re-render COST case for `@Observable` over `ObservableObject` (body-evaluation, `Equatable` views) -- this file owns which wrapper to reach for and why a given scope produces a given bug; the two are complementary, not duplicative.
-> Floors: see `references/_scaffolding/version-floor-registry.md`. Headline floors: `@Observable` iOS 17+, `@Entry` iOS 18+ (Xcode 16 to compile; back-deploys to iOS 13).
+> Floors: see `references/_scaffolding/version-floor-registry.md`. Headline floors: `@Observable` iOS 17+, `@Entry` iOS 18+ (Xcode 16 to compile; back-deploys to iOS 13). `@State` is a Swift macro when you build with Xcode 27 and the `State` property wrapper when you build with Xcode 26 or earlier -- a TOOLCHAIN gate, not a deployment floor; Apple states the new behavior back-deploys to iOS 17 aligned OSes.
 
 Most bugs a reviewer files as "animation" or "layout" are state bugs wearing a visual costume: a transition that snaps instead of morphs, a badge that shows a stale count, a toggle that silently stops writing back. The fix in every one of these cases lives in *how state is owned, scoped, derived, and identified* -- not in the modifier the symptom appears on. This file is the decision layer underneath every other reference: read it before reaching for a spring curve or a transition to fix something that "just doesn't animate right."
 
@@ -10,7 +10,7 @@ Most bugs a reviewer files as "animation" or "layout" are state bugs wearing a v
 | Scenario | Wrapper | Notes |
 |---|---|---|
 | View owns a value type (`Int`, `String`, struct) | `@State` | Always `private` |
-| View owns an `@Observable` reference type | `@State private var model = Model()` | Replaces `@StateObject`. SwiftUI holds the storage, so the instance survives re-renders |
+| View owns an `@Observable` reference type | `@State private var model = Model()` | Replaces `@StateObject`. SwiftUI holds the storage, so the instance survives re-renders. Built with Xcode 27, `Model()` is evaluated once for the view's lifetime |
 | Read-only reference passed from a parent | Plain `let`/`var`, no wrapper | Observation auto-tracks which properties `body` reads -- no wrapper needed to read |
 | Two-way binding to a **value type** owned elsewhere | `@Binding` | Never for reference types -- a `@Binding` to a class property is a code smell |
 | Two-way binding to one **property** of an `@Observable` object (`$object.property`) | `@Bindable` | Declared at the point of use, not required at the call site |
@@ -43,6 +43,42 @@ final class FeedModel {
 
 For why per-property tracking is faster than `ObservableObject`'s whole-object invalidation, see `references/performance/01-swiftui-rendering.md#observable-vs-observedobject`.
 
+### Bridging @Observable into a non-SwiftUI surface
+
+A SwiftUI view never calls the observation API by hand -- SwiftUI arms and re-arms it for you. The hand-rolled case is a bridge: a UIKit view controller, a Metal renderer, a `CADisplayLink`-driven surface that has to re-render when one property of an `@Observable` model changes. On iOS 17 that meant `withObservationTracking(_:onChange:)` and the re-arm dance -- calling it again from inside its own `onChange` to keep observing, one notification at a time, with a window between them where changes are missed.
+
+iOS 27 / Swift 6.4 (SE-0506) removes the dance:
+
+```swift
+// Returns a ~Copyable Token. Options: .willSet, .didSet, .deinit.
+func withContinuousObservation(
+    options: ObservationTracking.Options,
+    apply: @escaping @isolated(any) @Sendable (borrowing ObservationTracking.Event) -> Void
+) -> ObservationTracking.Token
+```
+
+```swift
+@MainActor
+final class WaveformRenderer {
+    private let model: AudioModel
+    // ~Copyable; held for the surface's lifetime. Releasing the renderer drops the token,
+    // which unregisters the observation -- no deinit, no re-arming after each change.
+    private let token: ObservationTracking.Token
+
+    init(model: AudioModel) {
+        self.model = model
+        token = withContinuousObservation(options: [.didSet]) { [weak self, model] event in
+            _ = model.level                  // this read is what establishes the tracked set
+            // Event.matches(_:) takes a PartialKeyPath -- filter to the one property you draw.
+            guard event.matches(\AudioModel.level) else { return }
+            Task { @MainActor in self?.setNeedsRedraw() }
+        }
+    }
+}
+```
+
+The `apply` closure tracks exactly the properties it reads -- a closure that only inspects the `Event` observes nothing -- and `cancel()` is `consuming`, so it can only be called on a token you own outright (a local), never from a class `deinit`. `Event.kind` distinguishes `.initial` / `.willSet` / `.didSet` / `.deinit`, and `matches(_:)` is the non-SwiftUI equivalent of field-granular invalidation -- without it, a bridge redraws on every property of the model. The shipped name is `withContinuousObservation`, not the proposal's `withContinuousObservationTracking`. Below iOS 27, keep `withObservationTracking(_:onChange:)` (iOS 17+) with the re-arm, or `Observations` (iOS 26+) for an async sequence of transactional changes.
+
 ## @State ownership and the initialization trap
 
 `@State`'s initial value is used ONCE, when the view first acquires identity -- it is NOT re-applied when a parent passes a new value on a later render:
@@ -60,7 +96,24 @@ struct Badge: View {
 }
 ```
 
-Rule: never seed `@State` from a value that can change upstream and expect it to track. Read the parameter directly. If you genuinely need local editable state seeded from a parameter, reset it deliberately -- `.id(count)` to rebuild the view, or `.onChange(of: count) { _, new in displayed = new }`.
+Rule: never seed `@State` from a value that can change upstream and expect it to track. Read the parameter directly. If you genuinely need local editable state seeded from a parameter, reset it deliberately -- `.id(count)` to rebuild the view, or `.onChange(of: count) { _, new in displayed = new }`. Apple's own guidance is blunter: declare state `private` precisely to prevent setting it in an initializer, "which can conflict with the storage management that SwiftUI provides."
+
+## @State is a macro when you build with Xcode 27
+
+Build with Xcode 27 and the `@State` attribute resolves to a Swift macro rather than the `State<Value>` property-wrapper struct. Apple, on the macro: "A `State()` property instantiates its default value the first time SwiftUI instantiates the view." Under the property wrapper, `@State private var model = Model()` evaluated `Model()` every time the view struct re-instantiated -- many times over a view's lifetime -- and the initializer's cost was paid and thrown away on each one.
+
+That retires the most-repeated SwiftUI performance finding there is. `@State private var model = SomeObservableClass()` is no longer an allocation bug to flag; on an Xcode 27 build it is the **recommended** shape for a view-owned `@Observable` view model, and the `@StateObject`-or-inject-it workaround exists only to serve Xcode 26 and earlier toolchains. Nothing needs gating: this is a toolchain behavior, not an `#available` one, and Apple states it back-deploys to iOS 17 aligned OSes.
+
+What replaces that finding is a short list of source breaks Apple documents, all of which are genuine review material on an Xcode 27 migration:
+
+| Break | Fix |
+|---|---|
+| A `@State` property with a declaration-site initial value that is ALSO assigned in `init` no longer compiles | Declare the type with no initial value and assign only in `init` -- or drop the `init` assignment |
+| The macro suppresses the compiler-synthesized private memberwise `init` when every stored member is private | Extensions that called it must assign members explicitly |
+| Generic-argument inference is less flexible than the wrapper's | Write the property's type explicitly |
+| Composing `@State` with another property wrapper or macro is unsupported | Restructure so `@State` is the only attribute on the declaration |
+
+The initialization trap above is unchanged by any of this: a `@State` seeded from an upstream parameter is still set once and stale forever after. The macro changes how often the default EXPRESSION runs, not when the stored value is adopted.
 
 ## @Binding vs @Bindable
 
@@ -115,6 +168,8 @@ extension EnvironmentValues {
 
 `@Entry` also covers `Transaction`, `ContainerValues`, and `FocusedValues` extensions with the same syntax. A hand-rolled `EnvironmentKey` struct in a codebase built with Xcode 16+ is a LOW/MEDIUM cleanup, not a defect.
 
+**Keep `@Entry` defaults inert.** Against the iOS 27 SDK the macro warns when a default value is a class instance or a closure, and the warning is pointing at a real defect on both counts: a shared reference-type default invalidates every reader of the key when the instance changes, and a closure default captures state the author did not intend to share. The `analytics: AnalyticsClient = .live` line above is fine only because `AnalyticsClient` is a struct of function values that the app never mutates -- if it were a class, the live object belongs in a `@State`-owned `@Observable` injected with `.environment(instance)` and read with `@Environment(AnalyticsClient.self)`, not smuggled in as an environment default. Below iOS 27 there is no warning; apply the rule by hand.
+
 | Form | Reads | Injected with |
 |---|---|---|
 | `@Environment(\.keyPath)` | A value in `EnvironmentValues` (system or your `@Entry`) | `.environment(\.keyPath, value)` |
@@ -145,8 +200,8 @@ EntityEditor(entity: entity).id(entity.id)   // new entity.id -> fresh editor, c
 `.task(id:)` ties async work to BOTH the view's lifetime and a value:
 
 ```swift
-// iOS 17+ for `id:`. `name:`, `file:`, and `line:` are iOS 26.4+ and no-ops before it
-// (`references/performance/06-concurrency-ui.md` owns the .task floors).
+// iOS 15.0+ for the whole overload -- `id:`, `name:`, `file:` and `line:` all back-deploy. The iOS 26.4 gate is on
+// the separate executorPreference: overload (`references/performance/06-concurrency-ui.md` owns the .task floors).
 nonisolated func task<T: Equatable>(
     id: T, name: String? = nil, priority: TaskPriority = .userInitiated,
     file: String = #fileID, line: Int = #line,
@@ -183,6 +238,8 @@ Whenever `id` changes (compared via `Equatable`), SwiftUI cancels the in-flight 
 | Cleanup that MUST run on disappear | `.onDisappear` (not guaranteed on app termination) |
 
 `.onAppear` fires every time a view re-appears (navigating back); don't treat it as "load once ever." See `references/performance/06-concurrency-ui.md#task-and-taskid` for the full `.task` cancellation semantics.
+
+**Inside a lazy stack, neither `@State` nor `.onAppear` means what it does elsewhere.** A `LazyVStack`/`LazyHStack` prefetches by running `body` evaluation and layout BEFORE a subview appears, so `.onAppear`-based setup happens late and is thrown away when the prefetched view is discarded without ever appearing -- a row's per-render setup belongs in its initializer. And `@State` on a scrolled-off row is eventually DISCARDED: anything that must survive a scroll-out (an expanded/collapsed flag, an in-progress edit, a selection) belongs in the model or in a binding owned by the parent, not in row-local `@State`. `List` recycles rather than merely discarding, so the same rule applies there for a different reason. See `references/performance/02-scroll-list-performance.md#lazy-stacks-vs-list` for the container-level consequences.
 
 ## ViewModifier and PreferenceKey
 
@@ -264,6 +321,10 @@ Any property SwiftUI binds to directly needs its side-effect logic in `didSet` o
 | `NavigationRouter` declared `@State` on the `App` struct | Shared across every window/scene | `@State` inside `WindowGroup` content |
 | `ForEach(items, id: \.self)` on non-stable elements, or `.id(UUID())` in body | Destroys and recreates every update; kills transitions and `@State` | Stable `Identifiable.id` |
 | `onChange(of: id) { Task { load() } }` | No cancellation -- a stale slow response can overwrite a fresh one | `.task(id: id) { ... }` |
+| `@Entry var client: SomeClass = .shared` | A reference-type environment default is shared mutable state and over-invalidates every reader; the iOS 27 SDK warns on it | Keep `@Entry` defaults to value types; inject live objects with `.environment(instance)` |
+| Row-local `@State` holding something that must survive a scroll-out | A lazy stack discards state on scrolled-off subviews | Own it in the model or a parent binding |
+| `.onAppear` doing a row's setup inside a lazy stack | Prefetching evaluates and lays out before appearance, so the setup lands late or is discarded | Do it in the row's initializer |
+| Flagging `@State private var model = ExpensiveModel()` as an allocation bug on an Xcode 27 build | The macro evaluates the default once for the view's lifetime -- this is now the recommended shape | Flag it only for Xcode 26 and earlier toolchains |
 
 ## See also
 

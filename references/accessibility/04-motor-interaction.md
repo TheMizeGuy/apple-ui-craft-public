@@ -80,6 +80,14 @@ Button("Save changes") { }
     .accessibilityInputLabels(["Save changes", "Save", "Confirm"])
 ```
 
+### Flexible Item Names (iOS 27)
+
+Voice Control on iPhone and iPad no longer matches only literal onscreen labels: with Flexible Item Names a user can describe an element naturally -- "tap the blue send arrow" -- instead of memorizing its exact text. There is no developer API, and the audit changes emphasis rather than mechanism.
+
+- `accessibilityInputLabels` still matters -- it is how you register the phrasings a user is most likely to say.
+- The higher-value finding is now **disagreement**: the visible label and the accessibility label describe different things, so the natural-language match resolves to something other than what the user is looking at. `references/accessibility/08-wcag-2-2-mapping.md` files this as 2.5.3 Label in Name.
+- A control that is visually identifiable but semantically unnamed -- a bare icon with no meaningful label anywhere -- is still broken, because there is nothing for the system to match a description against.
+
 ### Show Voice Control labels
 
 User can say "Show names" to see overlay labels on every element. Test with this enabled.
@@ -157,6 +165,30 @@ FileIcon(filename: filename)
 DropZoneView()
     .accessibilityDropPoint(.center, description: Text("Drop into \(folderName)"))
 ```
+
+### The activation point has to track the value
+
+`accessibilityActivationPoint(_:)` decides where VoiceOver's double-tap actually lands. On a static control the default center is right; on a custom slider, dial, or scrubber it is not, and a fixed activation point sends every double-tap to the middle of the track regardless of where the value sits.
+
+```swift
+CustomSlider(value: $level)
+    .accessibilityValue("\(Int(level * 100)) percent")
+    .accessibilityAdjustableAction { direction in
+        switch direction {
+        case .increment: level = min(level + 0.05, 1)
+        case .decrement: level = max(level - 0.05, 0)
+        @unknown default: break
+        }
+    }
+    // Follows the thumb, so the double-tap hits the control the user is actually on.
+    .accessibilityActivationPoint(UnitPoint(x: level, y: 0.5))   // UnitPoint, not CGPoint: a fraction of the track
+```
+
+The companion failure is an announcement storm: posting `AccessibilityNotification.Announcement` on every gesture update floods VoiceOver. Post on a settled value only, and only when it changed. Full four-part contract for custom controls: `references/accessibility/01-voiceover-fundamentals.md#custom-controls-purpose-value-actions-feedback`.
+
+### Custom gestures on selectable text
+
+In apps built with the iOS 27.0 SDK, a `Text` with `.textSelection(.enabled)` carries the system text-selection UI and its gestures, where it previously offered selection only through a callout menu. A custom tap or drag attached to that `Text` now contends with system selection and can be silently swallowed. Attach it with `.highPriorityGesture(_:)` when yours must win -- and check first whether it should, because selection is what most users reaching for long-form text actually want.
 
 ## Keyboard shortcuts (iPad and Mac)
 
@@ -288,9 +320,13 @@ Button("Delete") {
 | Edge swipe only navigation | Inaccessible for one-hand users | Always have back button |
 | Small text fields | Hard to tap | Field height >= 44pt |
 | Submit button at far edge | Awkward reach for one-hand | Multiple submit affordances |
+| Custom slider with a fixed activation point | VoiceOver's double-tap lands away from the current value | `.accessibilityActivationPoint` tracking the value |
+| Visible label and accessibility label describe different things | Voice Control resolves the user's description to the wrong control | Accessibility label CONTAINS the visible text (WCAG 2.5.3) |
+| Custom gesture on a selectable `Text` | System text selection eats it under the iOS 27 SDK | `.highPriorityGesture(_:)`, or drop the custom gesture |
 
 ## See also
 
 - `references/accessibility/01-voiceover-fundamentals.md` -- VoiceOver accessibility
+- `references/accessibility/01-voiceover-fundamentals.md#custom-controls-purpose-value-actions-feedback` -- the four-part contract a custom control has to answer
 - `references/accessibility/02-dynamic-type-adaptation.md#the-12-sizes` -- text scaling
 - `references/accessibility/03-visual-accessibility.md#reduce-motion` -- color, motion, contrast

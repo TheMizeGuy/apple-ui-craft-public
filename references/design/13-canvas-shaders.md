@@ -1,7 +1,7 @@
 # Canvas, Metal Shaders & Custom Drawing
 
 > Owner: this file owns `Canvas`/`GraphicsContext` immediate-mode drawing, `TimelineView`-driven animation of that drawing, and writing/profiling Metal shaders via `.colorEffect`/`.layerEffect`/`.distortionEffect`. `references/design/12-text-rendering.md` owns using a `Shader` to fill `Text` and everything `TextRenderer`-shaped. `references/performance/01-swiftui-rendering.md` owns `.drawingGroup()` and the general render-cost model this file's escalation ladder ends at.
-> Floors: cite `references/_scaffolding/version-floor-registry.md`. `Canvas` is iOS 15.0+ (incl. watchOS 8). The three shader modifiers are iOS 17.0+/macOS 14.0+ with **no watchOS row** -- shaders do not exist on watchOS; `Canvas` is the fallback there. `Shader.compile(as:)` pre-warming is iOS 18.0+/macOS 15.0+.
+> Floors: cite `references/_scaffolding/version-floor-registry.md`. `Canvas` is iOS 15.0+ (incl. watchOS 8). The three shader modifiers are iOS 17.0+/macOS 14.0+ with **no watchOS row** -- shaders do not exist on watchOS; `Canvas` is the fallback there. `Shader.compile(as:)` pre-warming is iOS 18.0+/macOS 15.0+. iOS 27 added no `Canvas`, `GraphicsContext` or `Shader` API -- every floor here is current, and the only 27-era change is a compile-time one (`@ContentBuilder`, below).
 
 `Canvas` and Metal shader modifiers are the escalation path past what SwiftUI's native view modifiers can express -- particle systems, waveforms, custom gauges, ripples, holographic foil, dissolve transitions. Both are GPU-cheap per pixel but not free, and both bypass parts of the accessibility tree by default: this is a deliberate performance-and-accessibility decision, not decoration to sprinkle everywhere.
 
@@ -24,6 +24,8 @@ init(
 // + a symbols: variant taking a `@ViewBuilder symbols: () -> Symbols` closure for resolving real SwiftUI
 // views (the iOS 27 SDK re-declares that builder as `@ContentBuilder`; the call site is unchanged)
 ```
+
+`ContentBuilder` is a `typealias` for `ViewBuilder`, so it reports the SwiftUI 1.0 floor (iOS 13.0 / macOS 10.15 / watchOS 6.0) and carries **no runtime availability at all**. Apple positions it as "the unified replacement for type-specific builders like `ToolbarContentBuilder` and `CommandsBuilder`," and the 27 SDK re-declares existing signatures with it -- `Canvas.init(opaque:colorMode:rendersAsynchronously:renderer:symbols:)` among them. Two corrections follow: wrapping a call site in `#available(iOS 27, *)` because a parameter is now `@ContentBuilder` is a mis-gate, and `ToolbarContentBuilder`/`CommandsBuilder` are not deprecated, so existing code needs no migration. The only real requirement is building with Xcode 27.
 
 `opaque: true` can improve performance, but drawing non-opaque content into an opaque canvas is undefined -- only set it if you fully cover the surface. `rendersAsynchronously: true` presents off the main thread; the renderer closure must not touch main-actor state when it's set. Both the `init` and the `renderer` closure are `nonisolated`/`@escaping`: under Swift 6 strict concurrency, everything the closure captures must be `Sendable`. Capturing a mutable `@Observable`/class model or `@State` and mutating it inside the renderer is a data-race error -- compute in `body`, capture the value snapshot.
 

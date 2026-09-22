@@ -4,7 +4,7 @@ Beyond text size, users have other visual needs: high contrast, reduced motion, 
 
 ## Color contrast
 
-WCAG 2.1 AA requires:
+WCAG 2.2 AA requires (the contrast criteria are unchanged from 2.1):
 
 | Use case | Minimum contrast |
 |---|---|
@@ -133,7 +133,7 @@ Very little is auto-gated. Do not assume more than this list:
 | Default (unmodified) `NavigationStack` push/pop | Unchanged -- still slides, see below |
 | Default (unmodified) sheet presentation | Unchanged -- still uses its standard transition, see below |
 
-**The common claim "sheet and push transitions auto-crossfade under Reduce Motion" is false.** A bare `NavigationStack` push under `accessibilityReduceMotion` alone still slides. Crossfade for navigation and modal presentation is governed by a SEPARATE, writable setting -- Settings > Accessibility > Motion > **Prefer Cross-Fade Transitions** (`accessibilityPrefersCrossFadeTransitions`, iOS 26.4+, `{ get set }`). Read that key if your UI needs to detect the user's cross-fade preference; reading `accessibilityReduceMotion` alone tells you nothing about it.
+**The common claim "sheet and push transitions auto-crossfade under Reduce Motion" is false.** A bare `NavigationStack` push under `accessibilityReduceMotion` alone still slides. Crossfade for navigation and modal presentation is governed by a SEPARATE, writable setting -- Settings > Accessibility > Motion > **Prefer Cross-Fade Transitions** (`accessibilityPrefersCrossFadeTransitions`, iOS 26.4+, `{ get set }`). Read that key if your UI needs to detect the user's cross-fade preference; reading `accessibilityReduceMotion` alone tells you nothing about it. iOS 27 supplies the transition that preference asks for -- `NavigationTransition.crossFade`, fed through `.navigationTransition(_:)`; `references/accessibility/05-motion-accessibility.md#accessibilitypreferscrossfadetransitions-ios-264` owns the gate.
 
 ### What you must gate yourself
 
@@ -292,7 +292,11 @@ Not every accessibility environment key can be set with `.environment(_:_:)` in 
 | `accessibilityPlayAnimatedImages` | `layoutDirection` |
 | | `accessibilityPrefersCrossFadeTransitions` (iOS 26.4+) |
 
-`legibilityWeight` is writable -- inject it in `#Preview` to test Bold Text without changing the Simulator setting. To preview a get-only state (Reduce Motion, Reduce Transparency, contrast), toggle the setting on the Simulator or device itself.
+`legibilityWeight` is writable -- inject it in `#Preview` to test Bold Text without changing the Simulator setting. To preview a get-only state (Reduce Motion, Reduce Transparency, contrast), toggle the setting on the Simulator or device itself, or use the canvas overrides below.
+
+### Xcode 27 canvas overrides
+
+The canvas overrides picker gained two groups that cover settings which were previously Simulator-only chores: **Color Scheme Contrast** (standard or increased) and **Control Borders** (shown or hidden, the preview equivalent of Button Shapes). Both flip the live preview without touching device settings, which makes "verify under Increase Contrast" and "verify under Button Shapes" a canvas toggle rather than a settings trip. The same picker also previews a different localization (`references/accessibility/06-localization-rtl.md#testing-localization-and-rtl`). `PreviewProvider` and its modifier family are deprecated in Xcode 27 -- `#Preview` is the only correct spelling.
 
 ## Testing visual accessibility
 
@@ -305,7 +309,7 @@ Settings > Accessibility > Display & Text Size:
 - Enable Bold Text
 - Try each color filter
 
-Test your app with each. Many real users have multiple of these enabled.
+Test your app with each. Many real users have multiple of these enabled. Increase Contrast and Button Shapes have a faster loop in Xcode 27's canvas overrides (above); the rest still need the Simulator or a device.
 
 ## Common mistakes
 

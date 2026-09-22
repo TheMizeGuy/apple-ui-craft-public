@@ -1,13 +1,13 @@
 # Drag, Drop, and Data Transfer
 
 > Owner: `references/patterns/10-drag-drop.md` owns `Transferable`-based drag & drop (`.draggable`/`.dropDestination`), multi-item drag containers, copy/paste (`.copyable`/`.pasteDestination`), and the lower-level `.onDrag`/`.onDrop`/`NSItemProvider` escape hatch. Reordering a `List` or grid by drag is owned by `references/interaction/06-custom-controls-reorderable.md` -- this file states only the built-in `List` baseline and points there for the full system. Reduce Motion for any custom hover animation is owned by `references/accessibility/05-motion-accessibility.md`.
-> Floors: see `references/_scaffolding/version-floor-registry.md#ios-160` for the `Transferable`/`.draggable`/`.dropDestination` baseline; the `dragContainer` multi-item family is iOS 26.0+ and called out inline below.
+> Floors: see `references/_scaffolding/version-floor-registry.md#ios-160` for the `Transferable`/`.draggable`/`.dropDestination` baseline. The multi-item drag-container MODIFIERS (`dragContainer`, `dragContainerSelection`, `dragConfiguration`, `dropConfiguration`, `onDragSessionUpdated`, the container-namespace `draggable` overloads) are iOS 27.0 / iPadOS 27.0 / Mac Catalyst 27.0 / visionOS 27.0 -- macOS got them a release earlier at 26.0 -- while the supporting TYPES (`DragConfiguration`, `DropConfiguration`, `DragSession`, `DropSession`, `DragSession.Phase`) are iOS 26.0. Gate on the modifier, never on the type.
 
-Getting drag & drop to feel Apple-native on iOS 26 is mostly about deferring to the system's Liquid Glass lift-and-set-down motion and hitting the HIG affordance cues -- not custom animation. The system renders the lift, the drop snap-back, and (on iOS 26) the drag preview's material; your job is wiring `Transferable`, targeted feedback, and an accessible alternative to every drag action.
+Getting drag & drop to feel Apple-native is mostly about deferring to the system's Liquid Glass lift-and-set-down motion and hitting the HIG affordance cues -- not custom animation. The system renders the lift, the drop snap-back, and (from iOS 26) the drag preview's material; your job is wiring `Transferable`, targeted feedback, and an accessible alternative to every drag action. The HIG's "Drag and drop" page was not revised for iOS 27; what changed is the API surface below, not the design guidance.
 
 ## The Apple way
 
-On iOS 26 a lifted drag preview automatically gets the Liquid Glass treatment -- a specular-highlight rim, a soft ambient shadow, a slight scale-up. Do NOT fake this with a custom shadow/scale on the preview; supply a compact `preview` closure and let the system render the material. Drop set-down is animated by the system too; on rejection the item snaps back automatically -- never hand-animate the return.
+From iOS 26 a lifted drag preview automatically gets the Liquid Glass treatment -- a specular-highlight rim, a soft ambient shadow, a slight scale-up. Do NOT fake this with a custom shadow/scale on the preview; supply a compact `preview` closure and let the system render the material. Drop set-down is animated by the system too; on rejection the item snaps back automatically -- never hand-animate the return.
 
 HIG affordance checklist -- the difference between "feels off" and "feels native":
 
@@ -22,9 +22,11 @@ HIG affordance checklist -- the difference between "feels off" and "feels native
 | Need | Use |
 |---|---|
 | Single item, type-safe | `.draggable(item)` + `.dropDestination(for:)` |
-| Multi-select drag from a collection (iOS 26+) | `dragContainer` + `.draggable` + `dragContainerSelection` |
+| Multi-select drag from a collection (iOS 27+) | `dragContainer` + `.draggable` + `dragContainerSelection` |
 | Reorder a `List` | `ForEach.onMove` + `EditButton` -- OS owns removal (see `interaction/06`) |
-| Reorder a grid | manual `.draggable` + `.dropDestination` -- OS gives you no built-in path (see `interaction/06`) |
+| Reorder a grid or stack (iOS 27+) | `reorderContainer(for:)` + `reorderable()` (see `interaction/06`) |
+| Reorder a grid below iOS 27, or on tvOS | manual `.draggable` + `.dropDestination` (see `interaction/06`) |
+| Swipe actions on rows outside a `List` (iOS 27+) | `swipeActions(…)` + `swipeActionsContainer()` on the container (see `interaction/06`) |
 | Heterogeneous, lazy, or progress-reporting drops | `.onDrag`/`.onDrop` + `NSItemProvider` |
 | Clipboard on focused content | `.copyable` / `.cuttable` / `.pasteDestination` |
 | Explicit, no-prompt paste | `PasteButton` |
@@ -121,13 +123,15 @@ extension UTType {
 
 `FileRepresentation` (not shown) is preferred over `DataRepresentation` for large payloads -- it streams a file URL instead of loading everything into memory. A custom `exportedAs:` UTI must ALSO be declared in Info.plist under Exported Type Identifiers with a `UTTypeConformsTo`; without it, cross-app drops silently fail to match, with no error surfaced. Always ship at least one low-fidelity `String`/`URL` proxy representation so a drop into another app (Notes, Messages, a search field) still yields something usable -- a destination that speaks only your private UTI is a dead end everywhere else.
 
-## Multi-item drag containers (iOS 26+)
+## Multi-item drag containers (iOS 27+)
 
-Before iOS 26, multi-select drag meant hand-assembling an `NSItemProvider` in `.onDrag`. `dragContainer` lets one gesture carry a whole selection out of a `ForEach`/grid:
+Before iOS 27, multi-select drag on iOS meant hand-assembling an `NSItemProvider` in `.onDrag`. `dragContainer` lets one gesture carry a whole selection out of a `ForEach`/grid:
 
 ```swift
-// iOS 26.0+ / iPadOS 26.0+ / macOS 26.0+ / visionOS 26.0+.
-// On iOS 16-18 the only multi-item path is manual .onDrag + NSItemProvider (below).
+// Modifiers: iOS 27.0+ / iPadOS 27.0+ / Mac Catalyst 27.0+ / visionOS 27.0+ / macOS 26.0+.
+// The types they take (DragConfiguration, DropConfiguration, DragSession, DropSession) are iOS 26.0+ --
+// you can construct a DragConfiguration on iOS 26 and still be unable to apply it, so gate the MODIFIER.
+// On iOS 16-26 the only multi-item path is manual .onDrag + NSItemProvider (below).
 struct FruitGrid: View {
     @State private var fruits: [Fruit]
     @State private var selection: [Fruit.ID] = []
@@ -146,22 +150,27 @@ struct FruitGrid: View {
 }
 ```
 
-Return an empty collection from the payload closure to cancel the drag. `dragPreviewsFormation` chooses how stacked previews arrange: `.pile` (default, cards collapse with a count badge), `.list`, or `.stack` -- pick `.stack` for photos, `.list` for text rows. `DragConfiguration` declares allowed operations separately for in-app vs. cross-app:
+Return an empty collection from the payload closure to cancel the drag. `DragConfiguration` declares allowed operations separately for in-app vs. cross-app, and it is applied by its OWN modifier -- there is no `draggable(configuration:_:)` overload:
 
 ```swift
 CardView(card)
-    .draggable(configuration: DragConfiguration(
+    .draggable(card)
+    .dragConfiguration(DragConfiguration(
         operationsWithinApp: .init(allowMove: true, allowDelete: true),
-        operationsOutsideApp: .init(allowMove: true, allowDelete: false)),
-        card)
+        operationsOutsideApp: .init(allowMove: true, allowDelete: false)))
     .onDragSessionUpdated { session in
-        if case .ended(_, let operation) = session.phase, operation == .move || operation == .delete {
-            for id in session.draggedItemIDs(type: UUID.self) { removeCard(id: id) }
+        // Phase.ended carries exactly ONE associated value: case ended(DropOperation).
+        if case .ended(let operation) = session.phase, operation == .move || operation == .delete {
+            for id in session.draggedItemIDs(for: UUID.self) { removeCard(id: id) }
         }
     }
 ```
 
-The DROP destination inserts; the SOURCE removes on `.move`/`.delete` via `onDragSessionUpdated` -- keep that separation clean. For a pure same-app reorder, prefer `List` + `onMove` (below) over this family entirely.
+`DragSession.Phase` is `initial` / `active` / `ending(DropOperation)` / `ended(DropOperation)` / `dataTransferCompleted`, and the item-ID accessor is labelled `for:` (`draggedItemIDs(for:)`, iOS 26.0). Binding two values against `.ended` or calling `draggedItemIDs(type:)` are both compile errors, and both are common because the shapes read plausibly.
+
+The DROP destination inserts; the SOURCE removes on `.move`/`.delete` via `onDragSessionUpdated` -- keep that separation clean. For a pure same-app reorder, prefer `reorderContainer` + `reorderable()` on a 27 floor, or `List` + `onMove` (below), over this family entirely; inside a `dropDestination` action on a reorderable container, `DropSession.reorderDestination(for:in:)` (iOS 27.0, not watchOS/tvOS) returns the insertion point the system is already showing, so a custom drop handler never computes an index that disagrees with the visible make-way gap.
+
+`DragDropPreviewsFormation` (`.pile`, `.stack`, `.list`, `.none`, `.default`) and its `dragPreviewsFormation(_:)`/`dropPreviewsFormation(_:)` modifiers arrange stacked multi-item previews, but Apple's sources disagree on where they run: every DocC symbol page lists **macOS 26.0 and no other platform**, while WWDC26 session 271 teaches them alongside `dragContainer` for iOS 27. Do not state an iOS floor for this API until it is checked against the installed SDK. On iOS, take the system's default multi-item stacking and customize only the single-item lift preview, via `contentShape(.dragPreview, _)` and `draggable(_:preview:)`.
 
 ## Reordering (pointer)
 
@@ -175,7 +184,11 @@ List {
 .toolbar { EditButton() }
 ```
 
-The full reorder system -- grid/`LazyVGrid` manual reordering, spring-loading, and the accessible custom-action alternative -- is owned by `references/interaction/06-custom-controls-reorderable.md`; this section states only the `List` baseline this file's drag mechanics build on.
+On an iOS 27 floor, `reorderContainer(for:)` + `reorderable()` extends the same built-in treatment to `LazyVGrid`, stacks and custom layouts, and composes with this file's drag family: put `.dropDestination` AFTER `.reorderContainer` so the container owns internal reorder and the destination owns external drops. The full reorder system -- the four `reorderContainer` overloads, the `ReorderDifference` you apply yourself, grid/`LazyVGrid` manual reordering below 27, spring-loading, and the accessible custom-action alternative -- is owned by `references/interaction/06-custom-controls-reorderable.md`; this section states only the `List` baseline this file's drag mechanics build on.
+
+Xcode 27 runs drag, drop and drag-to-reorder inside SwiftUI Previews in the Simulator, so drag behavior is checkable without a device build; trackpad scroll/pinch/rotate also drive standard UIKit components in Device Hub. Review guidance that told the reader to skip verifying drag in Previews is out of date on that toolchain.
+
+Through iOS 26, pointer-initiated drags on iPad and Mac Catalyst waited out the touch lift delay. UIKit's `UIDragInteraction.allowsPointerDragBeforeLiftDelay` (iOS 27.0, iPadOS 27.0, Mac Catalyst 27.0, visionOS 27.0) splits the two timings and defaults to `true` on iOS, so a pointer drag now begins as soon as the pointer crosses the movement threshold. Set it to `false` in a gesture-rich canvas or map where a secondary pan shares the view, so pointer and touch disambiguate the same way. SwiftUI has no equivalent, so that case is a legitimate reason to drop to a `UIViewRepresentable`; below iOS 27 the workaround is a custom `UILongPressGestureRecognizer` with a shorter `minimumPressDuration` gated on `UITouch.type == .indirectPointer`.
 
 ## Copy, cut, paste
 
@@ -243,7 +256,7 @@ A custom cross-app UTI needs an Exported (owner) or Imported (consumer) Type Ide
 | Mac Catalyst / macOS | Full inter-app drag, Finder, Dock |
 | Cross-device | Not via drag -- Universal Clipboard or AirDrop |
 
-Prefer `.draggable`/`.dropDestination(for:)` unless you genuinely need this layer -- they're less code, type-safe, and get the Liquid Glass preview and iOS 26 drag-container features automatically.
+Prefer `.draggable`/`.dropDestination(for:)` unless you genuinely need this layer -- they're less code, type-safe, and get the Liquid Glass preview and the drag-container family automatically.
 
 ## Accessibility contract
 
@@ -265,14 +278,17 @@ These VoiceOver-native drag/drop points make the ORIGINAL gesture accessible; th
 |---|---|---|
 | Custom shadow/scale baked onto a drag preview | Stacks on top of the system's Liquid Glass lift treatment -- doubled, non-native look | Supply a compact `preview` closure, let the system render the lift |
 | `.dropDestination` with no `isTargeted:` hover feedback | User gets no signal the drop will land -- the #1 reported "feels off" bug | Always wire `isTargeted:` to a tinted fill + border + snappy scale |
-| Declaring `dragContainer`/`DragConfiguration` at an iOS 16-18 floor | Doesn't exist below iOS 26 -- won't compile | Manual `.onDrag` + `NSItemProvider` on pre-26 targets |
+| Gating the drag-container family on the TYPE's floor (`DragConfiguration`, iOS 26) instead of the MODIFIER's (`dragContainer`/`dragConfiguration`, iOS 27 on iOS) | The type compiles at 26 and the modifier does not -- the gate passes and the build still fails | `#available(iOS 27, *)` around the modifiers; manual `.onDrag` + `NSItemProvider` below that |
+| `.draggable(configuration:_:)` | No such overload -- `DragConfiguration` has its own modifier | `.draggable(item)` plus `.dragConfiguration(_:)` |
+| `if case .ended(_, let op) = session.phase` / `draggedItemIDs(type:)` | `Phase.ended` carries ONE associated value and the label is `for:` -- both are compile errors | `if case .ended(let op)` and `draggedItemIDs(for:)` |
+| Stating an iOS floor for `dragPreviewsFormation` | DocC documents it on macOS 26.0 only; WWDC26 says iOS 27 -- unresolved | Accept the system's default stacking on iOS; customize the single-item lift preview instead |
 | A private `Transferable` UTI with no `String`/`URL` proxy fallback | Drop into any other app (Notes, Safari, a search field) yields nothing | Always include a low-fidelity `ProxyRepresentation` |
 | Reading `UIPasteboard` content on `onAppear` to "check for a link" | Triggers the privacy banner / prompt on every launch | `PasteButton`, or detection-only `hasURLs` |
 | Drag as the ONLY way to reorder or transfer | Inaccessible to VoiceOver/Switch/Voice Control | Pair with `EditButton` reorder mode or an explicit menu action |
 
 ## Severity guide
 
-CRITICAL: drag is the sole path to a required action with no accessible alternative (WCAG 2.5.7 violation). HIGH: `dragContainer`/`DragConfiguration` shipped at a floor below iOS 26 (compile error), or a cross-app UTI missing its Info.plist declaration (silent no-match, hard to diagnose). MEDIUM: no `isTargeted` hover feedback, or a hand-animated snap-back duplicating what the system already provides. LOW: pasteboard read on launch triggering an avoidable privacy banner.
+CRITICAL: drag is the sole path to a required action with no accessible alternative (WCAG 2.5.7 violation). HIGH: a drag-container MODIFIER (`dragContainer`, `dragContainerSelection`, `dragConfiguration`, `dropConfiguration`, `onDragSessionUpdated`) shipped at a floor below iOS 27, a fabricated signature (`draggable(configuration:)`, two-value `.ended`, `draggedItemIDs(type:)`), or a cross-app UTI missing its Info.plist declaration (silent no-match, hard to diagnose). MEDIUM: no `isTargeted` hover feedback, or a hand-animated snap-back duplicating what the system already provides. LOW: pasteboard read on launch triggering an avoidable privacy banner.
 
 ## See also
 

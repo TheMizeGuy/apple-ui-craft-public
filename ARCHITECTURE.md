@@ -25,9 +25,9 @@ apple-ui-craft/
 │   ├── apple-ui-architect.md          greenfield design + production SwiftUI
 │   ├── apple-ui-reviewer.md           HIG + visual + Liquid Glass audit
 │   ├── animation-haptics-engineer.md  motion + interaction/feel + tactile feedback
-│   ├── accessibility-engineer.md      VoiceOver, Dynamic Type, motion, localization, full a11y
+│   ├── accessibility-engineer.md      VoiceOver, Dynamic Type, motion, localization, full a11y, Nutrition Label readiness
 │   ├── performance-engineer.md        SwiftUI perf, rendering, scroll, state, launch, memory
-│   ├── platform-engineer.md           platform + cross-platform integration
+│   ├── platform-engineer.md           platform + cross-platform integration (incl. Siri AI via App Intents)
 │   └── craft-team-lead.md             orchestrator for craft-ios-ui multi-pass
 └── references/                  (14 directories -- self-contained knowledge files)
     ├── _scaffolding/
@@ -47,7 +47,8 @@ apple-ui-craft/
     │   ├── 10-content-and-writing.md        microcopy, content design (P2)
     │   ├── 11-media-content.md              VideoPlayer, PhotosPicker, HDR, PiP, text-over-image scrims
     │   ├── 12-text-rendering.md             TextRenderer, Text.Layout, DrawingOptions (P2)
-    │   └── 13-canvas-shaders.md             Canvas, Metal shaders in SwiftUI (P2)
+    │   ├── 13-canvas-shaders.md             Canvas, Metal shaders in SwiftUI (P2)
+    │   └── 14-app-icons.md                  OWNER: app icon craft -- concept, layers, appearances, Icon Composer package, icon review
     ├── animation/
     │   ├── 01-animation-fundamentals.md     implicit vs explicit, timing curves, cost table
     │   ├── 02-spring-physics.md             parameter guide, presets, settling, feel
@@ -78,7 +79,7 @@ apple-ui-craft/
     │   ├── 07-cognitive-hearing-assistive.md  AssistiveAccess, captions, Live Captions (P2)
     │   └── 08-wcag-2-2-mapping.md          OWNER: every WCAG 2.2 A/AA criterion -> iOS mechanism + owning reference
     ├── patterns/                            (true HIG UX flows)
-    │   ├── 00-screen-archetypes-index.md    map: ~12 archetypes -> files + APIs
+    │   ├── 00-screen-archetypes-index.md    map: 14 archetypes -> files + APIs
     │   ├── 01-gotchas-anti-patterns.md      OWNER: #Preview env-key gotcha, RM double-gate idiom
     │   ├── 02-forms-data-entry.md           Form, TextField, focus, validation
     │   ├── 03-onboarding-tipkit.md          TipKit, permission priming, first-run
@@ -160,7 +161,7 @@ ci/                               (0.3.1 -- the verdict gate a reviewed repo run
 
 Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship the core; P2 files add depth. Exemplars are labeled "signature-drafted, build-pending" (no Xcode build in this repo). Some P2 files (design/12-13, methodology, carplay, cognitive/hearing) are depth-pass additions.
 
-**Reference inventory (93 files, ~23,500 lines):** design 13, patterns 11, platform 9, performance 8, accessibility 8, animation 7, interaction 6, cross-platform 6, usability 5, exemplars 5, haptics 4, methodology 4, review 4, `_scaffolding` 3. That is 13 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
+**Reference inventory (94 files):** design 14, patterns 11, platform 9, performance 8, accessibility 8, animation 7, interaction 6, cross-platform 6, usability 5, exemplars 5, haptics 4, methodology 4, review 4, `_scaffolding` 3. That is 13 content domains plus `_scaffolding`. Regenerate with `for d in references/*/; do echo "$d $(find "$d" -name '*.md' | wc -l)"; done`.
 
 ## Agent <-> skill mapping
 
@@ -186,7 +187,7 @@ Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appe
 | `animation-haptics-engineer` | animation/* (all), interaction/* (all), haptics/* (all), accessibility/05, **review/01-02**. Owns interaction/ + haptics/ |
 | `accessibility-engineer` | accessibility/* (all, and **08-wcag-2-2-mapping.md is the audit checklist**), design/03-04, design/06, patterns/01, **review/01-02**, **usability/01-05** (the structural WCAG criteria: 3.3.x, 3.2.3, and the Dynamic Type analogues of 1.4.4/1.4.10). Owns accessibility/ |
 | `performance-engineer` | performance/* (all), animation/01, interaction/01, **review/01-02**. Owns performance/ |
-| `platform-engineer` | platform/* (all), cross-platform/* (all), design/07, patterns/03 + patterns/10 (TipKit, drag-drop surfaces in its matrix), **review/01-02**, **usability/01** (integrations are entry points into flows). Owns platform/ + cross-platform/ |
+| `platform-engineer` | platform/* (all), cross-platform/* (all), design/07, design/14 (the artwork side of alternate icons), patterns/03 + patterns/10 (TipKit, drag-drop surfaces in its matrix), **review/01-02**, **usability/01** (integrations are entry points into flows). Owns platform/ + cross-platform/ |
 | `craft-team-lead` | Routes only; reads **review/01** deeply, because merge and dedup key on its dimension registry and field names. All other references reachable through the specialists above -- zero orphans |
 
 `references/review/` is read by every agent: `01-finding-format.md` is the single source of truth for the finding template, severity scale, confidence enum, and dimension registry, and `02-evidence-pipeline.md` is the single source of truth for review modes and the geometry evidence rule. An agent that restates either is a bug in that agent file, since the merge gate follows only one copy.
@@ -204,7 +205,7 @@ Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appe
 8. **Apple-native or nothing.** Every suggestion makes the app feel MORE first-party.
 9. **Springs over curves.** Default recommendation is spring animation unless there's a specific reason for timing curves.
 10. **Haptics are intentional.** Never recommend haptics as decoration.
-11. **Availability discipline.** Floors come from `_scaffolding/version-floor-registry.md`; iOS-26-only APIs gate `#available(iOS 26,*)` + Material fallback; iOS-27 symbols carry `// SDK-verify` and stay out of primary examples; never emit a PHANTOM API.
+11. **Availability discipline.** Floors come from `_scaffolding/version-floor-registry.md`; iOS-26-only APIs gate `#available(iOS 26,*)` + Material fallback; iOS 27.0 symbols are current and may lead an example, gated `#available(iOS 27, *)` with an iOS 26 fallback when the target is lower; toolchain-only changes (the `@State` macro, `ContentBuilder`, item/error alerts) need Xcode 27 but no gate; only still-beta symbols (iOS 27.1/27.2) carry a verify marker and stay out of primary examples; never emit a PHANTOM API.
 12. **Reduce Motion double-gate.** Gate both `withAnimation(` and `.animation(_:value:)` via an `Animation?`/nil accessor; looping symbol/Phase/Keyframe effects are gated manually. Owner: `accessibility/05`.
 
 ## Severity scale (shared by all agents)

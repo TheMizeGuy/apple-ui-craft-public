@@ -62,7 +62,7 @@ Every finding in the merged report carries four parts: a severity tag, a `file:l
 
 > **HIGH -- Favorite toggle gives no tactile confirmation** -- `RecipeCard.swift:31-36`
 >
-> The heart animates visually but fires no haptic, so the action feels weightless -- and the hard-coded `easeInOut` fights the toggle's snap. Pair the state change with `.sensoryFeedback` and let the default spring carry the motion. Reference: `references/haptics/02-swiftui-sensory-feedback.md#toggle`.
+> The heart animates visually but fires no haptic, so the action feels weightless -- and the hard-coded `easeInOut` fights the toggle's snap. Pair the state change with `.sensoryFeedback`, let a spring carry the motion, and route it through the Reduce Motion accessor like every other animation in the app. Reference: `references/haptics/02-swiftui-sensory-feedback.md#toggle`; gate: `references/accessibility/05-motion-accessibility.md#accessibility-contract`.
 
 ```swift
 // current
@@ -71,11 +71,14 @@ Button { isFavorite.toggle() } label: {
 }
 .animation(.easeInOut(duration: 0.3), value: isFavorite)
 
-// suggested
+// suggested -- AppMotion is the project's Animation? accessor (accessibility/05)
+@Environment(\.accessibilityReduceMotion) private var reduceMotion
+
 Button { isFavorite.toggle() } label: {
     Image(systemName: isFavorite ? "heart.fill" : "heart")
+        .contentTransition(.symbolEffect(.replace))
 }
-.animation(.spring, value: isFavorite)
+.animation(AppMotion.standard(reduceMotion), value: isFavorite)
 .sensoryFeedback(.impact(weight: .light), trigger: isFavorite)
 ```
 

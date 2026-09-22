@@ -1,7 +1,7 @@
 # Swift Charts and Data Visualization
 
 > Owner: `references/design/09-swift-charts.md` owns Swift Charts mark selection, axes/scale/legend configuration, chart interactivity, and the `Chart3D` family, per the ARCHITECTURE ownership map. Semantic color and CVD-safe palettes are owned by `references/design/04-color-system.md`; cite it, don't restate.
-> Floors: base marks (`BarMark`/`LineMark`/`AreaMark`/`PointMark`/`RuleMark`/`RectangleMark`) are iOS 16.0+; `SectorMark` and declarative selection are iOS 17.0+; vectorized/function plots are iOS 18.0+; the `Chart3D` family is iOS 26.0+. See `references/_scaffolding/version-floor-registry.md#ios-26x` for the exact `Chart3DCameraProjection` platform list.
+> Floors: base marks (`BarMark`/`LineMark`/`AreaMark`/`PointMark`/`RuleMark`/`RectangleMark`) are iOS 16.0+; `SectorMark` and declarative selection are iOS 17.0+; vectorized/function plots are iOS 18.0+; the `Chart3D` family is iOS 26.0+. See `references/_scaffolding/version-floor-registry.md#ios-26x` for the exact `Chart3DCameraProjection` platform list. Swift Charts gained **nothing** in iOS 27 -- the framework's last update was June 2025 (`Chart3D`, `SurfacePlot`) and the HIG's Charting data page carries no 2026 change-log entry. Every floor above is current; a "new in iOS 27" chart API is a hallucination.
 
 Swift Charts turns a data question into an accessible, VoiceOver-navigable, Dynamic-Type-aware visualization with a declarative mark API -- the same `import Charts` framework backs 2D and 3D. The most common failure isn't a wrong mark, it's reaching for a chart when a labeled number reads faster, or reaching for `Canvas` when `Chart` would have given accessibility for free.
 

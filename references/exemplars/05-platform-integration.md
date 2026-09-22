@@ -1,8 +1,8 @@
 # Exemplar: Widget + Live Activity + Control Center Integration
 
-> Status: signature-drafted, build-pending (requires Xcode build at iOS 18 + iOS 26 targets). Parts B and C compile at iOS 26.0+ as written -- three iOS-26 call sites, listed under Availability + fallbacks; at an iOS 18 floor gate or drop them.
+> Status: signature-drafted, build-pending (requires an Xcode build at an iOS 18 target). Every call site in Parts A-E compiles at iOS 18.0; only `ControlWidget`/`ControlCenter` need an availability branch, and only below iOS 18.
 > Composes: `references/platform/01-widgets-live-activities.md` (widget/Live Activity fundamentals), `references/platform/02-app-intents-system.md` (`AppIntent` design), `references/platform/03-controls-standby.md` (`ControlWidget` fundamentals).
-> Floors: `WidgetConfigurationIntent`/interactive `Button`/`Toggle` iOS 17.0+; `ControlWidget` iOS 18.0+; `SetValueIntent`, `LiveActivityIntent` iOS 17.2+; `supplementalActivityFamilies`/`widgetAccentedRenderingMode` iOS 26.0+.
+> Floors: `WidgetConfigurationIntent`/interactive `Button`/`Toggle` iOS 17.0+; `ControlWidget` iOS 18.0+; `SetValueIntent`, `LiveActivityIntent` iOS 17.2+; `supplementalActivityFamilies(_:)`, `\.activityFamily` and `Image.widgetAccentedRenderingMode(_:)` iOS 18.0+ (NOT 26); `\.isDynamicIslandLimitedInWidth` iOS 27.0+.
 
 A home-screen widget, a lock-screen accessory, a Live Activity with Dynamic Island, and a Control Center control that ALL drive the same feature through the SAME `AppIntent` layer, registered in ONE `WidgetBundle`. The #1 shipping mistake this exemplar exists to prevent: duplicating the toggle/action logic per surface -- they drift the moment one is edited without the others.
 
@@ -124,7 +124,6 @@ struct FocusStatusWidget: Widget {
         .configurationDisplayName("Focus")
         .description("Toggle focus and see time remaining.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular, .accessoryInline])
-        .widgetAccentedRenderingMode(.accented)   // iOS 26.0+ ONLY: gate or drop at a lower floor (see Availability + fallbacks)
     }
 }
 
@@ -140,7 +139,9 @@ struct FocusWidgetView: View {
             Gauge(value: 0.4) { Image(systemName: "moon.fill") }.gaugeStyle(.accessoryCircularCapacity)
         case .accessoryRectangular:
             HStack {
-                Image(systemName: "moon.fill").widgetAccentable()   // iOS 18: lift into the accent-tinted layer
+                Image(systemName: "moon.fill")
+                    .widgetAccentedRenderingMode(.accented)   // iOS 18.0+, an Image modifier -- not a WidgetConfiguration one
+                    .widgetAccentable()                       // lift into the accent-tinted layer
                 if entry.isActive { Text(entry.sessionEnd, style: .timer).font(.headline.monospacedDigit()) }
                 else { Text("Focus off") }
             }
@@ -199,14 +200,14 @@ struct FocusLiveActivity: Widget {
             .keylineTint(.indigo)
             .widgetURL(URL(string: "focusapp://session"))
         }
-        // iOS 26.0+ ONLY: extra layouts for Apple Watch Smart Stack / CarPlay; gate or drop at a lower floor.
+        // iOS 18.0+ -- the extra layout the watchOS Smart Stack renders. Ungated on purpose.
         .supplementalActivityFamilies([.small, .medium])
     }
 }
 
 struct FocusLockScreenView: View {
     let context: ActivityViewContext<FocusAttributes>
-    @Environment(\.activityFamily) private var family   // iOS 26: .small (watch) | .medium | unset (phone)
+    @Environment(\.activityFamily) private var family   // iOS 18+: .small (watch) | .medium | unset (phone)
 
     var body: some View {
         switch family {
@@ -357,7 +358,37 @@ if #available(iOS 18.0, *) {
 // WidgetBundle below iOS 18; widget + Live Activity surfaces are unaffected.
 ```
 
-`supplementalActivityFamilies`/`\.activityFamily`/`widgetAccentedRenderingMode` are iOS 26.0+ -- gate the `.small` family branch and the rendering-mode modifier behind `#available(iOS 26.0, *)`; the phone-only Lock Screen/Dynamic Island layouts above already work unmodified back to iOS 17.2 for the Live Activity, iOS 17.0 for the widget.
+`supplementalActivityFamilies(_:)`, `\.activityFamily` and `widgetAccentedRenderingMode(_:)` are **iOS 18.0+**, so none of them is gated above; note that `widgetAccentedRenderingMode(_:)` is an `Image` modifier, applied inside the widget view, never on the `WidgetConfiguration`. Wrapping them in `#available(iOS 26.0, *)` over-gates by eight major versions and denies the Apple Watch Smart Stack layout and the accented rendering to every user on iOS 18 through 25 -- a real, invisible regression, not a cautious default.
+
+What genuinely arrived at iOS 26 needs no code at all: Live Activities forward automatically from iPhone to the Mac menu bar and to CarPlay. There is nothing to adopt and nothing to gate.
+
+The one iOS 27 addition worth writing here is the landscape Dynamic Island. `compactTrailing` above holds a fixed-width timer, which is exactly what clips when the pill is width-constrained:
+
+```swift
+} compactTrailing: {
+    if #available(iOS 27, *) {
+        FocusCompactTrailing(end: context.state.sessionEnd)
+    } else {
+        Text(context.state.sessionEnd, style: .timer).font(.caption2.monospacedDigit()).frame(width: 44)
+    }
+}
+
+@available(iOS 27, *)
+private struct FocusCompactTrailing: View {
+    let end: Date
+    @Environment(\.isDynamicIslandLimitedInWidth) private var isLimited
+
+    var body: some View {
+        if isLimited {
+            Image(systemName: "moon.fill").foregroundStyle(.indigo)
+        } else {
+            Text(end, style: .timer).font(.caption2.monospacedDigit()).frame(width: 44)
+        }
+    }
+}
+```
+
+The phone Lock Screen and Dynamic Island layouts otherwise work unmodified back to iOS 17.2 for the Live Activity and iOS 17.0 for the widget.
 
 ## Accessibility contract
 
@@ -374,10 +405,12 @@ Every widget/control/Live Activity surface renders through system chrome that is
 | "~4 updates/min" treated as a hard Live Activity cap in code comments/docs | No fixed per-minute cap exists -- it's a system-managed throttled budget | Budget for the payload cap (4KB) and duration limits (~8h active / ~12h total), not an invented rate |
 | Missing `.containerBackground(_:for: .widget)` | Runtime-blank widget, not merely unstyled | Always supply it, iOS 17+ |
 | `Toggle(isOn:intent:)` with no explicit `.toggleStyle(.button)` in a widget | May not render as expected in widget context | Set the style explicitly |
+| `#available(iOS 26.0, *)` around `supplementalActivityFamilies`/`activityFamily`/`widgetAccentedRenderingMode` | All three are iOS 18.0+; the gate silently denies the Watch and accented renderings to iOS 18-25 | Ship them ungated at any floor of iOS 18 or above |
+| A fixed-width timer in `compactTrailing` with no landscape branch | Clipped when iOS 27 renders the compact view in landscape | Branch on `\.isDynamicIslandLimitedInWidth` |
 
 ## Severity guide
 
-CRITICAL: `openAppWhenRun` shipped on iOS 26 (deprecated path, may silently regress). HIGH: duplicated per-surface toggle logic that has already drifted between widget and control. MEDIUM: missing `.containerBackground` (blank widget) or a Live Activity `LiveActivityIntent` swapped for a plain `AppIntent`. LOW: reading `pushToken` once instead of observing `pushTokenUpdates`. HIGH: an ungated iOS-26 API (`supplementalActivityFamilies`, `activityFamily`, `widgetAccentedRenderingMode`) shipped at a stated sub-26 floor -- a compile failure on the real deployment target, graded as exemplar 01 grades it.
+CRITICAL: `openAppWhenRun` shipped on iOS 26 (deprecated path, may silently regress). HIGH: duplicated per-surface toggle logic that has already drifted between widget and control. MEDIUM: missing `.containerBackground` (blank widget) or a Live Activity `LiveActivityIntent` swapped for a plain `AppIntent`. LOW: reading `pushToken` once instead of observing `pushTokenUpdates`. HIGH: those same three APIs (`supplementalActivityFamilies`, `activityFamily`, `widgetAccentedRenderingMode`) gated behind `#available(iOS 26.0, *)` -- they are iOS 18.0+, and the gate strips the Apple Watch and accented renderings from every user below 26 with nothing in the build to show for it. MEDIUM: a compact Dynamic Island view with no `\.isDynamicIslandLimitedInWidth` branch on an iOS 27 floor.
 
 ## See also
 

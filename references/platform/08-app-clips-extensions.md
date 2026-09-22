@@ -1,7 +1,7 @@
 # App Clips and App Extensions
 
 > Owner: `references/platform/08-app-clips-extensions.md` owns App Clip UI (card, invocation, size budget, ephemeral experience, upgrade-to-full-app) and app-extension UI craft (Share/Action extensions, custom keyboards, Safari Web Extensions, Notification Content Extensions). `references/performance/03-launch-memory-instruments.md` (Memory: `phys_footprint`, jetsam, and images) owns the extension process-memory ceiling numbers this file cites, not restates. `references/platform/04-system-surfaces-notifications.md#rich-notifications-attachments-categories-content-extension-communication` owns general notification design; this file owns the Notification Content Extension's own view-controller implementation. `references/patterns/08-paywall-storekit-applepay.md` owns the Apple Pay button API this file only invokes.
-> Floors: mostly pre-iOS-26 UIKit/PassKit/ExtensionKit APIs -- cite `references/_scaffolding/version-floor-registry.md` per API; Liquid Glass inheritance is `#ios-26x`.
+> Floors: mostly pre-iOS-26 UIKit/PassKit/ExtensionKit APIs -- cite `references/_scaffolding/version-floor-registry.md` per API; Liquid Glass inheritance is `#ios-26x`. On Demand Resources and `NSBundleResourceRequest` are deprecated at iOS 27.0 (use Background Assets); Media Sharing Extensions are iOS 27.0.
 
 App Clips and app extensions all run **outside your main app's process**, embedded in someone else's flow -- Safari, Photos, the lock screen, a physical scan. That shared reality dictates a shared craft discipline: one focused task, inherited system chrome, a finite lifecycle, and no assumption of durable state or a shared process with the containing app.
 
@@ -16,7 +16,7 @@ App Clips and app extensions all run **outside your main app's process**, embedd
 
 | You want to... | Surface | UI framework |
 |---|---|---|
-| Let a stranger complete one task without installing | **App Clip** | SwiftUI/UIKit, under 50 MB |
+| Let a stranger complete one task without installing | **App Clip** | SwiftUI/UIKit, under the size ceiling below |
 | Send content out to your service from any app | **Share extension** | `SLComposeServiceViewController` or SwiftUI |
 | Transform or act on content in place, maybe return it | **Action extension** | UIKit/SwiftUI, or UI-less |
 | Replace typing system-wide | **Custom keyboard** | `UIInputViewController` |
@@ -24,6 +24,7 @@ App Clips and app extensions all run **outside your main app's process**, embedd
 | Silently block content in Safari | **Content Blocker** | JSON rules, no UI |
 | Custom expanded-notification UI | **Notification Content Extension** | `UIViewController` + `UNNotificationContentExtension` |
 | Modify a push before delivery (decrypt, attach media) | **Notification Service Extension** | no UI |
+| Add a media sharing protocol system-wide | **Media Sharing Extension** (iOS 27) | `MediaDeviceExtension`, `MediaSharingExtensions` entitlement |
 | Home/lock-screen glanceable content | **Widget** | `references/platform/01-widgets-live-activities.md` |
 
 If the interaction needs more than one focused screen, deep-link into the full app instead of building a bigger extension.
@@ -73,12 +74,18 @@ do {
 
 ## Ephemeral experience and size budget
 
-| Invocation type | Uncompressed budget |
-|---|---|
-| Physical (App Clip Code, NFC, QR) | 15 MB |
-| Digital (Safari banner, Messages, Maps, App Store, links) | 50 MB (iOS 17+) |
+Apple's current guidance: on devices running iOS 17 and later, the uncompressed App Clip binary can be up to **100 MB** in size -- but only when all four of these hold:
 
-Design to the 15 MB physical ceiling if any physical invocation exists -- the same binary serves both. Prefer SF Symbols over bundled images (free, scale with Dynamic Type, adapt to Liquid Glass tinting), gate heavy SDKs with `#if !APPCLIP`, and defer imagery over the network after the first frame:
+| Condition for the 100 MB ceiling |
+|---|
+| The App Clip supports only digital invocations |
+| It does not support physical invocations |
+| It is used where a reliable connection is likely |
+| It does not support iOS 16 or earlier |
+
+Miss any one and the applicable ceiling is tighter, so read Apple's current figure for your configuration rather than carrying an old number forward. Since iOS 26 there is one exception worth knowing: the App Clip demo link App Store Connect generates uses the 100 MB limit *and* supports physical invocations from App Clip Codes, NFC tags and QR codes.
+
+The craft rule is unchanged and is what actually matters: design to the tightest ceiling that applies to any invocation you ship, because the same binary serves all of them. Prefer SF Symbols over bundled images (free, scale with Dynamic Type, adapt to Liquid Glass tinting), gate heavy SDKs with `#if !APPCLIP`, and defer imagery over the network after the first frame:
 
 ```swift
 AsyncImage(url: item.imageURL) { image in
@@ -87,6 +94,8 @@ AsyncImage(url: item.imageURL) { image in
     RoundedRectangle(cornerRadius: 12).fill(.quaternary)
 }
 ```
+
+Deferred *bundled* assets go through **Background Assets**. On Demand Resources and `NSBundleResourceRequest` are deprecated at iOS 27.0 -- the iOS 27 and Xcode 27 release notes both say so outright, and the App Clips documentation already routes additional-asset downloads through Background Assets. ODR still functions while deprecated, but any advice that reaches for a resource tag to stay under the launch-size budget is now pointing at the wrong mechanism.
 
 The user has no account and no history -- every wall between the scan and the outcome loses people. No onboarding, no tour. Defer or eliminate sign-in: **Sign in with Apple** (`references/patterns/09-auth-account.md#sign-in-with-apple-label-style-placement`) is the only acceptable account step, and only when genuinely required. Use the native payment and identity buttons -- `PayWithApplePayButton` (`references/patterns/08-paywall-storekit-applepay.md#paywithapplepaybutton-swiftui-module-passkit-ios-160`) is one-tap, requires no typed credentials, and is exactly what App Clips are optimized for; a custom credit-card form is slow, untrusted, and often over the size budget. Pre-fill from the invocation URL; one primary action per screen; show the merchant name, exact item, and price before the commit action -- the user has zero relationship with you, so transparency substitutes for trust.
 
@@ -184,6 +193,12 @@ func didReceive(_ notification: UNNotification) {
 
 Handle in-place `UNNotificationAction` taps and return a `UNNotificationContentExtensionResponseOption` (`.dismissAndForwardAction`, `.doNotDismiss`, `.dismiss`) so the user can act without opening the app. Let the *service* extension do heavy lifting -- attachment downloads belong pre-delivery; the content extension renders already-local assets fast and never blocks on a network fetch. Glanceable, fixed frame: one image/map, one line of context, up to a couple of actions -- everything must read in half a second, since the user is often on the lock screen. See `references/platform/04-system-surfaces-notifications.md#rich-notifications-attachments-categories-content-extension-communication` for the broader notification-design picture this extension slots into.
 
+## Media Sharing Extensions (iOS 27)
+
+iOS 27 adds a genuinely new extension point, which is rare. The release notes describe it as new frameworks that "allow you to add media sharing protocols through extension at the system level and enable media apps to use these extensions through a common API framework," with a `MediaSharingExtensions` entitlement and a `MediaDeviceExtension` framework.
+
+Keep the claim exactly that size. No symbol reference pages are published yet, so the framework and entitlement names are all that is assertable and no code should be written against it. What it belongs on today is the map of what an app can extend: if your app speaks a media-sharing protocol the system does not, this is the first supported place to put it rather than a private integration.
+
 ## Accessibility contract
 
 Custom-drawn surfaces (keyboards, notification content extensions, hand-rolled App Clip screens) carry no accessibility for free -- add `accessibilityLabel`/traits explicitly. Every extension and App Clip screen uses semantic colors (`Color(.systemBackground)`, `.primary`) and Dynamic Type (`.font(.body)`) everywhere, since the UI appears over arbitrary host apps, wallpapers, and color schemes -- never hardcode a light background or a fixed point size. None of these surfaces ship looping symbol/Phase/Keyframe animation in the corpus reviewed here; if one is added, gate it manually per `references/patterns/01-gotchas-anti-patterns.md#looping-symbol-effects-are-never-auto-gated` -- the system never auto-gates a looping effect.
@@ -201,6 +216,7 @@ Custom-drawn surfaces (keyboards, notification content extensions, hand-rolled A
 | Ephemeral notifications used for promos | Rejection, user removes the clip | Task-completion follow-ups only |
 | Forgetting `completeRequest`/`cancelRequest` | Sheet hangs, process leaks | Exactly one terminal call on every path out |
 | No globe / next-keyboard key | Automatic rejection, user trapped | Honor `needsInputModeSwitchKey` + `handleInputModeList` |
+| On Demand Resources / `NSBundleResourceRequest` to defer App Clip assets | Deprecated at iOS 27.0 | Background Assets |
 | Downloading media inside a notification content extension | Slow or blank expanded view | Fetch in the service extension, pre-delivery |
 | No setup onboarding in the containing app | Users cannot find how to enable the extension | Illustrated guide + link to Settings |
 
@@ -209,7 +225,7 @@ Custom-drawn surfaces (keyboards, notification content extensions, hand-rolled A
 - **CRITICAL**: an extension that never calls a terminal lifecycle method (stranded host sheet, leaked process), or an App Clip that blows the size budget for its invocation type.
 - **HIGH**: a login/payment wall before the App Clip's single task, a missing globe key on a custom keyboard, or `SKOverlay` presented before task completion.
 - **MEDIUM**: hand-rolled translucency that misses Liquid Glass, or accessibility labels missing on a fully custom-drawn surface (keyboard keys, notification content extension controls).
-- **LOW**: an extension icon/UI mismatched to its declared `NSExtensionActivationRule` types, or a missed opportunity to use a native payment/identity button over a custom form.
+- **LOW**: an extension icon/UI mismatched to its declared `NSExtensionActivationRule` types, a missed opportunity to use a native payment/identity button over a custom form, or deferred assets still routed through On Demand Resources rather than Background Assets.
 
 ## See also
 

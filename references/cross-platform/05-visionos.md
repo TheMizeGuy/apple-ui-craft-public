@@ -1,7 +1,7 @@
 # visionOS Spatial Craft
 
 > Owner: `references/cross-platform/05-visionos.md` owns visionOS spatial UI -- scene types (windows/volumes/immersive spaces), `glassBackgroundEffect(in:displayMode:)`, ornaments, gaze+pinch hover/gesture input, z-axis layout, and `RealityView` UI attachments -- per the ARCHITECTURE ownership map. `references/design/02-liquid-glass.md` owns the cross-platform `glassEffect()`/`Glass` material and points here for the visionOS delta. `references/interaction/03-direct-manipulation-drag.md` owns general drag semantics; this file covers only spatial/3D-entity gestures.
-> Floors: `glassBackgroundEffect(in:displayMode:)` = **visionOS 1.0+** (`.automatic` display mode = visionOS 2.4+); visionOS does **not** get `glassEffect()` -- see `references/_scaffolding/version-floor-registry.md#not-ios-the-1-mis-gate-class`. Object Manipulation API and 90 Hz hand tracking = visionOS 26. `RealityView` `@Observable` entities and `breakthroughEffect(_:)` = visionOS 26. `perspectiveRotationEffect(_:axis:anchor:perspective:)` is Apple's recommended replacement for `rotation3DEffect` on this platform (M17).
+> Floors: `glassBackgroundEffect(in:displayMode:)` = **visionOS 1.0+** (`.automatic` display mode = visionOS 2.4+); visionOS still does **not** get `glassEffect(_:in:)` in visionOS 27 -- its availability list runs iOS/iPadOS/Mac Catalyst/macOS/tvOS/watchOS 26.0 and stops there. See `references/_scaffolding/version-floor-registry.md#not-ios-the-1-mis-gate-class`. Object Manipulation API and 90 Hz hand tracking = visionOS 26. `RealityView` `@Observable` entities and `breakthroughEffect(_:)` = visionOS 26. `WidgetFamily.accessoryCircular` / `.accessoryRectangular` = visionOS 27.0 (system families arrived at visionOS 26.0). `perspectiveRotationEffect(_:axis:anchor:perspective:)` is Apple's recommended replacement for `rotation3DEffect` on this platform (M17).
 
 An unmodified iPhone/iPad app runs on visionOS automatically in a flat 2D Compatibility Mode window -- that is the floor, not the goal. The single biggest tell separating "it launches" from "it feels native" is hover: every custom tappable view needs `.hoverEffect()` because the system never tells your process where the user is looking, only that a pinch landed. The second biggest tell is treating 2D shadow tricks as depth instead of real z.
 
@@ -67,6 +67,8 @@ ZStack {
 ```
 
 `displayMode: .automatic` (visionOS 2.4+) lets the system decide when to show/hide the material contextually; earlier floors pass an explicit `.always`/`.never`. Because visionOS glass has thickness, most attachment and ornament content wants its own `.glassBackgroundEffect()` even when it's nested inside a window that already has one -- treat each floating slab as its own material surface, not an inherited one.
+
+**visionOS 27 did not merge the two glass stories, and the split is not an oversight to modernise away.** `glassEffect(_:in:)` gained no visionOS availability in the 27 SDK, and `glassBackgroundEffect(in:displayMode:)` remains the visionOS material at its original visionOS 1.0 floor. A review that recommends `glassEffect` on a visionOS target is wrong in 27 exactly as it was in 26. visionOS 27 shipped no new SwiftUI spatial, ornament, volume or window API at all -- its substance is RealityKit and tooling (projective textures, cloth simulation, custom reverb meshes, Gaussian splatting, physical-space lighting) plus system-level changes. The one genuinely new UI-craft surface is widgets.
 
 ## Ornaments -- floating UI outside window bounds
 
@@ -167,9 +169,34 @@ RealityView { content, attachments in
 
 `breakthroughEffect(_:)` (visionOS 26, `.subtle`/stronger) lets an attachment "break through" occluding 3D content so a persistent control overlay stays legible in a busy scene. visionOS 26 RealityKit entities are `@Observable` -- reading `entity.position` inside a SwiftUI view body auto-updates it, no manual glue.
 
+## Widgets: the accessory families arrive (visionOS 27)
+
+visionOS 26 brought the system widget families to the platform; visionOS 27 adds `WidgetFamily.accessoryCircular` and `.accessoryRectangular`. `accessoryInline` and `accessoryCorner` remain unavailable here.
+
+```swift
+struct SessionWidget: Widget {
+    private static var families: [WidgetFamily] {
+        var families: [WidgetFamily] = [.systemSmall, .systemMedium]         // visionOS 26.0
+        if #available(visionOS 27, *) { families += [.accessoryCircular, .accessoryRectangular] }
+        return families
+    }
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "session", provider: Provider()) { entry in
+            SessionView(entry: entry)
+        }
+        .supportedFamilies(Self.families)
+    }
+}
+```
+
+This is the cheapest cross-platform reach on the platform: an accessory layout already built for the iOS Lock Screen or the watch Smart Stack has a visionOS destination with no new layout work. It is not free, though -- accessory widgets render tinted, low-chroma and glanceable, so verify the visionOS rendering rather than assuming full-colour Lock Screen art transfers. WidgetKit fundamentals stay with `references/platform/01-widgets-live-activities.md`; the accessory-family layout rules are shared with `references/cross-platform/02-watchos.md`.
+
 ## Adapting an existing iOS/iPadOS app
 
 Compatibility (automatic, flat 2D) → Optimized (glass + hover + depth on controls) → Designed for Spatial (volumes, ornaments, 3D) → Full Spatial (immersive, hand tracking, world anchoring). Concrete checklist to move up a rung: delete opaque backgrounds so system glass shows through; add `.hoverEffect()` to every bespoke tappable view; bump hit targets to 60x60 pt; replace `.shadow()` elevation with real z; avoid pure-white large fills (headset glare); lift persistent controls into a platform-branched `.ornament`; add the visionOS destination and gate spatial code with `#if os(visionOS)`. Test glass legibility and glare on real hardware -- the Simulator does not surface either.
+
+Embedded web content has one visionOS-only capability worth knowing about: website immersive environments (`WebPage.ImmersiveEnvironment`, opted into with `WebPage.Configuration.allowsImmersiveEnvironments` and routed through `onWebViewImmersiveEnvironmentRequest(shouldAllow:present:dismiss:)`) are **visionOS 27.0 only** -- not iOS, iPadOS or macOS. `references/platform/07-webview-web-content.md` owns the `WebView`/`WebPage` API; this is the first `WebPage` capability that exists on exactly one platform, so a shared codebase gates it by platform, not by version alone.
 
 ## Availability + fallbacks
 
@@ -199,11 +226,12 @@ None of this file's hover/lift motion is system-auto-gated for CUSTOM closures -
 | Entity renders but ignores input | Missing `InputTargetComponent` + `CollisionComponent` | Both are mandatory for gesture hit-testing |
 | Attachment positions treated as points | Off-by-1000 bug -- RealityKit space is meters | `0.25` = 25 cm, not 25 pt |
 | Shipping an `.ornament` on iOS | Renders nowhere | Platform-branch spatial-only affordances |
+| `glassEffect(_:in:)` reached for on a visionOS target | Still has no visionOS availability in visionOS 27 -- it is the iOS/macOS material | `glassBackgroundEffect(in:displayMode:)` on an explicit `ZStack` |
 | Pure-white full-bleed backgrounds | Glare in the headset | Vibrant, saturated system colors |
 
 ## Severity guide
 
-CRITICAL: a pinch-targetable custom view with no `.hoverEffect()` or hit-test components -- functionally broken/invisible input. HIGH: `.shadow()`-faked elevation, or `glassBackgroundEffect()` misapplied inside `overlay`/`background`. MEDIUM: attachment positions off by orders of magnitude (points vs. meters), or a gaze target under 60x60 pt. LOW: an unhedged claim about an SDK-unverified visionOS 26 selector. NIT: `.lift` applied to a tiny chrome control where `.highlight` reads correctly.
+CRITICAL: a pinch-targetable custom view with no `.hoverEffect()` or hit-test components -- functionally broken/invisible input. HIGH: `.shadow()`-faked elevation, `glassBackgroundEffect()` misapplied inside `overlay`/`background`, or `glassEffect(_:in:)` recommended or shipped on a visionOS target. MEDIUM: attachment positions off by orders of magnitude (points vs. meters), or a gaze target under 60x60 pt. LOW: `WebPage.ImmersiveEnvironment` gated by version alone in a shared codebase rather than by platform. NIT: `.lift` applied to a tiny chrome control where `.highlight` reads correctly.
 
 ## See also
 
@@ -213,3 +241,5 @@ CRITICAL: a pinch-targetable custom view with no `.hoverEffect()` or hit-test co
 - `references/accessibility/05-motion-accessibility.md` -- the Reduce Motion double-gate (owner)
 - `references/accessibility/04-motor-interaction.md#touch-targets` -- the 44pt baseline this file's 60pt gaze-target floor extends
 - `references/cross-platform/01-ipados-multiplatform.md#pointer-and-hover` -- contrast with iPad's touch-hardware hover model
+- `references/platform/01-widgets-live-activities.md` -- WidgetKit fundamentals behind the visionOS 27 accessory families (owner)
+- `references/platform/07-webview-web-content.md` -- `WebView`/`WebPage`, including the visionOS-27-only immersive-environment request (owner)

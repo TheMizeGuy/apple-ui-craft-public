@@ -1,7 +1,7 @@
 # Reduce Motion and Symbol-Effect Gating
 
 > Owner: `references/accessibility/05-motion-accessibility.md` owns the Reduce Motion double-gate contract, the full motion-substitution catalog, and looping-effect gating (symbol effects, `PhaseAnimator`, `KeyframeAnimator`) for every reference file in this plugin. Every animation/interaction/design file that touches motion points here for the deep contract -- this file states it once.
-> Floors: cite `references/_scaffolding/version-floor-registry.md#ios-26x` for version-gated members. Stated inline: `accessibilityPrefersCrossFadeTransitions` = iOS 26.4+ (the one writable accessibility environment member).
+> Floors: cite `references/_scaffolding/version-floor-registry.md#ios-26x` for version-gated members. Stated inline: `accessibilityPrefersCrossFadeTransitions` = iOS 26.4+ (the one writable accessibility environment member); `NavigationTransition.crossFade` / `CrossFadeNavigationTransition` = iOS 27.0+ on every platform except macOS, `AnyNavigationTransition` = iOS 27.0+ including macOS.
 
 Reduce Motion does not mean "no animation" -- it means no vestibular-trigger motion: large-field slides, zoom-from-a-point, continuous rotation, spring overshoot, parallax, particle loops. The system auto-gates almost nothing; nearly every animation, transition, and looping effect in a SwiftUI app is the developer's responsibility to gate, and the single most common failure is gating one call site (`withAnimation`) while a sibling `.animation(_:value:)` on the same property keeps animating.
 
@@ -126,6 +126,7 @@ Every gate below reads `@Environment(\.accessibilityReduceMotion) private var re
 | Continuous rotation / spin loop | Static state, or a single non-repeating cue -- rotational motion is the strongest nausea inducer |
 | `.contentTransition(.numericText())` | `.contentTransition(.identity)` -- rolling digits are vestibular motion |
 | Particle / confetti / decorative loop | Don't render it at all -- simplest correct answer |
+| Custom `.navigationTransition(_:)` on a push or sheet | `AnyNavigationTransition(.crossFade)` (iOS 27+), gated on `accessibilityPrefersCrossFadeTransitions`, not on bare Reduce Motion -- below |
 
 ```swift
 // matchedGeometryEffect crossfade fallback -- the same if/else in both branches. A
@@ -154,7 +155,7 @@ The vestibular system (inner ear) senses acceleration; a screen reporting large 
 | LOW | Opacity crossfade | No spatial displacement, no depth cue -- the preferred substitute |
 | KEEP | Direct-manipulation 1:1 finger tracking | User causes and controls it |
 
-Maps to WCAG 2.1: **2.3.3 Animation from Interactions (AAA)** -- interaction-triggered motion must be suppressible unless essential (honoring `accessibilityReduceMotion` satisfies this); **2.2.2 Pause, Stop, Hide (A)** -- auto-playing/looping/auto-updating motion running over 5s must be pausable (covers autoplay video, animated images, decorative loops, below); **2.3.1 Three Flashes (A)** -- distinct from vestibular risk, covered by Dim Flashing Lights below.
+Maps to WCAG 2.2: **2.3.3 Animation from Interactions (AAA)** -- interaction-triggered motion must be suppressible unless essential (honoring `accessibilityReduceMotion` satisfies this); **2.2.2 Pause, Stop, Hide (A)** -- auto-playing/looping/auto-updating motion running over 5s must be pausable (covers autoplay video, animated images, decorative loops, below); **2.3.1 Three Flashes (A)** -- distinct from vestibular risk, covered by Dim Flashing Lights below.
 
 ## accessibilityPrefersCrossFadeTransitions (iOS 26.4+)
 
@@ -167,6 +168,32 @@ A separate, stricter sub-toggle under Settings > Accessibility > Motion > Reduce
     ContentView().environment(\.accessibilityPrefersCrossFadeTransitions, true)
 }
 ```
+
+### The transition the preference asks for: `.crossFade` (iOS 27)
+
+Until iOS 27 the preference had no supported answer -- knowing the user wanted a cross-fade left you suppressing your custom transition and accepting the default push. iOS 27 adds `NavigationTransition.crossFade` (`CrossFadeNavigationTransition`) and the type-eraser `AnyNavigationTransition`, so the choice becomes one value selected at runtime and fed to `.navigationTransition(_:)`:
+
+```swift
+@available(iOS 27, *)
+struct HeroLink: View {
+    @Environment(\.accessibilityPrefersCrossFadeTransitions) private var prefersCrossFade
+    @Namespace private var hero
+    let item: Item
+
+    var body: some View {
+        NavigationLink(value: item) { Thumbnail(item: item) }
+            .matchedTransitionSource(id: item.id, in: hero)
+            .navigationDestination(for: Item.self) { item in
+                DetailView(item: item)
+                    .navigationTransition(prefersCrossFade
+                        ? AnyNavigationTransition(.crossFade)
+                        : AnyNavigationTransition(.zoom(sourceID: item.id, in: hero)))
+            }
+    }
+}
+```
+
+Two boundaries to respect. `.crossFade` and `CrossFadeNavigationTransition` are iOS 27 / iPadOS 27 / Mac Catalyst 27 / tvOS 27 / visionOS 27 / watchOS 27 but **NOT macOS** -- `AnyNavigationTransition` exists on macOS while the case it would carry does not, so a single `#available(iOS 27, macOS 27, *)` gate over both compiles on iOS and fails on macOS. And the gate reads `accessibilityPrefersCrossFadeTransitions`, never bare `accessibilityReduceMotion`: a user with Reduce Motion on and this sub-toggle off has not asked for a cross-fade. Below iOS 27 the only honest fallback is to drop the custom transition and take the default push -- there is no back-deployed `crossFade`.
 
 ## Availability + fallbacks
 
@@ -244,6 +271,8 @@ Inside `body(content:phase:)`, apply modifiers to `content` -- never conditional
 | `PhaseAnimator`/`KeyframeAnimator` loop with no RM branch | Never system-auto-gated, runs forever | Freeze on resting phase (`references/animation/03-advanced-animators.md#reduce-motion-critical`) |
 | Gating the live 1:1 drag offset itself | Breaks the touch -- direct manipulation isn't decorative motion | Gate only the release settle/spring-back |
 | Testing RM by grepping source for `.spring` | Proves nothing about runtime | Toggle the Simulator/device setting and observe |
+| Swapping to `.crossFade` on bare `accessibilityReduceMotion` | Reduce Motion alone is not a request for cross-fades; the sub-toggle is | Gate on `accessibilityPrefersCrossFadeTransitions` |
+| One `#available(iOS 27, macOS 27, *)` gate over `.crossFade` | `crossFade` is not available on macOS, only `AnyNavigationTransition` is | Gate the macOS path separately, or leave the transition off there |
 
 ## Severity guide
 

@@ -1,6 +1,6 @@
 # SF Symbols
 
-6,900+ icons (SF Symbols 7) designed by Apple to integrate visually with the system font (SF Pro). Free to use in any iOS/iPadOS/macOS/watchOS/tvOS/visionOS app. Treat the count as a soft marketing figure, not an authoritative API surface -- it grows every release.
+7,100+ icons (SF Symbols 27, the release formerly branded SF Symbols 8) designed by Apple to integrate visually with the system font (SF Pro). Free to use in any iOS/iPadOS/macOS/watchOS/tvOS/visionOS app. Treat the count as a soft marketing figure, not an authoritative API surface -- it grows every release.
 
 ## Why SF Symbols
 
@@ -181,6 +181,8 @@ Image(systemName: isPlaying ? "pause.fill" : "play.fill")
 | `.rotate` | 18+ | Loading, refresh |
 | `.drawOn`/`.drawOff` | 26+ (SF Symbols 7) | Handwriting-style stroke-on/off, incl. as a `.transition()` |
 
+**The table above is complete as of iOS 27.** SF Symbols 27 added new *symbols* and nothing else -- no new `SymbolEffect`, no fifth rendering mode, no new variable-rendering API. The Symbols framework's own API surface has not changed since June 2024. If an effect name isn't in this table, it does not exist.
+
 ## Symbol effects and Reduce Motion
 
 Discrete, one-shot effects (`.bounce`, `.wiggle`, `.rotate` fired via `value:`) are safe by default -- they play once on a real state change and settle. **Indefinite (looping) effects do NOT stop under Reduce Motion automatically.** `.pulse`, `.variableColor.iterative`, `.breathe`, and any effect passed `options: .repeating`/`.repeat(.continuous)` -- including `.rotate` used as a loop -- keep animating regardless of the accessibility setting unless you gate them yourself:
@@ -230,6 +232,32 @@ Icon-only controls (a `Button` whose label is only an `Image`, not wrapped in `L
 | Send | `paperplane`, `paperplane.fill` |
 | Reply | `arrowshape.turn.up.backward` (NOT `.left` -- breaks RTL) |
 | Forward (message) | `arrowshape.turn.up.forward` |
+
+### Adopting a symbol from the newest set
+
+Symbols added in SF Symbols 27 (Liquid Glass, Parental Controls, Siri AI, recent hardware) require iOS 27, iPadOS 27, macOS 27, watchOS 27, tvOS 27 or visionOS 27 **at runtime**. A missing symbol name does not fall back to anything -- `Image(systemName:)` renders nothing at all -- so a name from the new set always needs a runtime check and an older glyph beside it:
+
+```swift
+// iOS 27 symbol with a real pre-27 substitute, not a blank frame.
+Label {
+    Text("Screen Distance")
+} icon: {
+    if #available(iOS 27, *) {
+        Image(systemName: newSetSymbolName)
+    } else {
+        Image(systemName: "eye")
+    }
+}
+```
+
+An iOS-27-minimum target drops the branch. Check the symbol's availability in the SF Symbols app (its inspector states the minimum OS) before shipping the name -- this is the same discipline every symbol year has needed, and it is the only thing SF Symbols 27 changes.
+
+### Icons in menus and sidebars
+
+Symbol choice is not the whole decision -- whether an icon appears at all is guidance Apple states directly.
+
+- **Menus:** "Use menu item icons sparingly and with purpose... Apply a uniform visual treatment across menu items in the same group. For visual consistency and balance, provide icons for all menu items in a group, or none of them." All-or-none per group is a binary test. Show an icon when the item represents an *object or concept*; omit it when the item represents an *action*. On iPadOS 27 and macOS 27 the system now hides most menu item symbol images by default -- see `references/design/07-navigation-patterns.md#menu-item-icons-are-hidden-by-default-on-ipados-27`.
+- **Sidebars:** icons default to the app's accent color. A fixed color is worth spending only when it carries meaning (Mail's yellow VIP); a rainbow sidebar where every row gets a different hue is decoration. Owner: `references/design/04-color-system.md#sidebar-and-menu-icon-color`.
 
 ## Localization
 

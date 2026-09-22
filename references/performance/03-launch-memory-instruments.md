@@ -1,7 +1,7 @@
 # Launch, Memory, and Instruments
 
 > Owner: `references/performance/03-launch-memory-instruments.md` owns launch-phase timing and targets, the Instruments decision framework (Time Profiler, Allocations, Leaks, Hangs, Animation Hitches, the SwiftUI Instrument), MetricKit + Xcode Organizer field telemetry, XCTest performance-gate metrics, and the `phys_footprint`/jetsam memory model including image-decode memory cost. `references/performance/01-swiftui-rendering.md` owns body-evaluation cost and the animation cost table; `references/performance/02-scroll-list-performance.md` owns the scroll-specific hitch-severity table and the cell image-loading pipeline -- this file cites both rather than restating them.
-> Floors: see `references/_scaffolding/version-floor-registry.md` for every version cited below; MetricKit's `MX`-prefixed family is deprecated in the iOS 27 SDK (Beta) and gated `#available(iOS 27, *)` throughout.
+> Floors: see `references/_scaffolding/version-floor-registry.md` for every version cited below. MetricKit's `MX`-prefixed family is deprecated in the iOS 27 SDK; the Swift-native replacement is gated `#available(iOS 27, *)` throughout, because the install base is still overwhelmingly iOS 26 and earlier.
 
 A hitch, a hang, and a slow launch are the same failure at different timescales: main-thread work that missed its deadline. This file is the measurement layer -- which tool answers which question, which field metric is real vs. deprecated vs. phantom, and the `phys_footprint`/jetsam arithmetic that decides whether your app gets killed. Get the wrong metric class and you optimize a number nobody's phone reports; get the wrong memory field and you ship an app that OOMs on a 4GB device while `resident_size` looks fine on your Pro Max.
 
@@ -108,12 +108,15 @@ Also audit for what actually runs pre-main: enable clang `-Wglobal-constructors`
 | Memory warnings / OOM crashes | Allocations + Leaks, VM Tracker for composition |
 | Scrolling stutters | Animation Hitches + Core Animation |
 | Slow app launch | App Launch template |
-| SwiftUI body recomputation | SwiftUI Instrument (Xcode 26+, cause-and-effect graph) |
+| SwiftUI body recomputation | SwiftUI Instrument (Xcode 26+, cause-and-effect graph; Xcode 27 adds Summary of Updates + layout-cache-miss reasons) |
 | Thread contention / deadlocks | System Trace |
+| "Is the main actor busy or blocked?" | Swift Executors (Xcode 27) + Swift Task Collection tracks |
 
 Time Profiler workflow: record, exercise the exact interaction under suspicion, stop; in the Call Tree pane enable **Separate by Thread** (main-thread cost is what causes visible jank), **Invert Call Tree** (sorts by leaf functions, where time is actually spent), **Hide System Libraries** (surfaces your code first); **Heaviest Stack Trace** gives the single deepest/costliest path in one click. Allocations: record across a memory-neutral action repeated 3-5x, use **Mark Generation** heapshots before/after each cycle, inspect the **Growth** column between generations -- growth that repeats every cycle (not just cache warm-up that stabilizes) is a leak candidate. **Leaks** + the **Memory Graph Debugger** (Debug Navigator > Memory icon) show a live snapshot of every object and every strong reference between them; a circular arrangement of strong arrows is a retain cycle -- common causes are `Timer` closures capturing `self` strongly, un-removed `NotificationCenter` observers, non-`weak` delegate properties, and `@Observable` classes captured strongly inside a `Task { }` that outlives the view.
 
 Xcode 16+ additions: a **Flame Graph** detail view on Time Profiler/Allocations (width = time spent, widest bars are the hot path, click to zoom); **Processor Trace** (Apple Silicon: iPhone 16/A18+ and M-series Macs) records every function entry/exit with cycle-accurate timing via on-chip hardware tracing instead of ~1ms sampling -- reach for it after Time Profiler narrows the region, not as the first tool, for death-by-a-thousand-sub-millisecond-cuts launch cost or exact hot-path counts. **Thread Performance Checker** (Xcode 14+, Scheme > Diagnostics, on by default during tests) is a runtime issue-navigator diagnostic, not an Instruments template -- it flags hangs, priority inversions (a high-QoS thread waiting on a lower-QoS one), and main-thread disk writes during ordinary debugging. It is distinct from **Main Thread Checker**, which flags the inverse problem: UIKit/AppKit APIs illegally called *off* the main thread.
+
+Instruments 27 adds four things worth changing your workflow for. A CPU profile now opens in three complementary view modes -- **Call Tree**, **Flame Graph**, and **Top Functions** -- and **Run Comparison** measures the impact of a change by diffing two profiles directly, superseding File > Compare Traces. A **Swift Executors** instrument graphs the Cooperative Thread Pool, the Main Actor, and any `TaskExecutor`/`SerialExecutor` conformer as their own tracks, so "the main actor is busy" and "the main actor is blocked waiting" stop being an inference from Time Profiler; on pre-27 OSes executor names fall back to "Unknown executor". Task tracks group into named **Swift Task Collection** tracks, and Tasks/Collections/Actors/Executors gained a **Profile** detail showing a call tree built only from samples taken while the task was *running* (record alongside Time Profiler or CPU Profiler to populate it) -- which is what finally makes `.task(name:)` labels pay off in a trace. The **SwiftUI** instrument adds a **Summary of Updates** focus action on the View Hierarchy detail and now records layout-pass information including *the reason a layout computation was not cached*: a `GeometryReader` or custom `Layout` suspected of forcing repeated layout is now evidence you can point at rather than an argument from source. Instruments 27 requires target devices of at least iOS 17 / watchOS 10 / tvOS 17, and `xctrace record` accepts `--show-recording-options` / `--recording-options <json path>` for CI-driven captures.
 
 ## Hangs, hitches, and the SwiftUI Instrument
 
@@ -135,11 +138,101 @@ A **hitch** is a frame that misses its `CADisplayLink`/Core Animation commit dea
 
 Never average a hitch ratio across a mixed 60/120Hz fleet -- report the refresh regime alongside every hitch number. See `references/performance/02-scroll-list-performance.md#hitch-detection` for the scroll-specific severity table and bottleneck catalog; this file owns the general Instruments/field-metric layer underneath it.
 
-Hitch triage order: reproduce under the **Animation Hitches** template on a **physical device** (Simulator hides real GPU/thermal throttling and can over- or under-report); bisect main-thread vs. render-server (main-thread idle during the hitch -> Core Animation off-screen-render-pass territory, per `references/performance/02-scroll-list-performance.md#off-screen-rendering`); if main-thread work owns it, the Xcode 26+ **SwiftUI Instrument** graphs state mutation -> body recomputation -> main-thread cost directly, with dedicated lanes: **View Body**/**Long View Body Updates** (every `body` evaluation, isolates ones that individually blew the frame budget), **Update Groups** (one state mutation -> N body re-evaluations -> total cost, proving `references/performance/01-swiftui-rendering.md#equatable-views`-style findings with a trace instead of source reading), **Long Representable Updates** (expensive `UIViewRepresentable`/`UIViewControllerRepresentable` `updateUIView` work), **Core Animation Commits** (correlates a SwiftUI update to the CA commit it forced). Known rough edge as of Xcode/Instruments 26.3 (beta channel): entering "Show Cause & Effect Graph" from a SwiftUI iOS profiling session has a reported hang in some configurations (Apple Developer Forums, mid-2026) -- fall back to the flat body-evaluation list or Time Profiler with Hide System Libraries + Invert Call Tree if the graph view hangs. Fix one thing at a time, re-run with **Comparison Mode** (File > Compare Traces) against the pre-fix baseline for an objective before/after, not a subjective "feels smoother."
+Hitch triage order: reproduce under the **Animation Hitches** template on a **physical device** (Simulator hides real GPU/thermal throttling and can over- or under-report); bisect main-thread vs. render-server (main-thread idle during the hitch -> Core Animation off-screen-render-pass territory, per `references/performance/02-scroll-list-performance.md#off-screen-rendering`); if main-thread work owns it, the Xcode 26+ **SwiftUI Instrument** graphs state mutation -> body recomputation -> main-thread cost directly, with dedicated lanes: **View Body**/**Long View Body Updates** (every `body` evaluation, isolates ones that individually blew the frame budget), **Update Groups** (one state mutation -> N body re-evaluations -> total cost, proving `references/performance/01-swiftui-rendering.md#equatable-views`-style findings with a trace instead of source reading), **Long Representable Updates** (expensive `UIViewRepresentable`/`UIViewControllerRepresentable` `updateUIView` work), **Core Animation Commits** (correlates a SwiftUI update to the CA commit it forced). Two Xcode 26.x rough edges here are fixed in Xcode 27: the Cause & Effect graph could consume large amounts of memory when zoomed into a very small time range, and Instruments could crash opening the SwiftUI instrument's "Change Call Trees" view. On a 26.x toolchain, fall back to the flat body-evaluation list or Time Profiler with Hide System Libraries + Invert Call Tree if the graph view misbehaves. Fix one thing at a time, then diff the traces: **Run Comparison** (Xcode 27) on the pre-fix baseline, or File > Compare Traces on 26.x -- an objective before/after, not a subjective "feels smoother."
 
 ## Field telemetry: MetricKit
 
-MetricKit aggregates real-device data across your entire install base, delivered roughly daily. The `MX`-prefixed class family (`MXAppLaunchMetric`, `MXMemoryMetric`, `MXAppExitMetric`) is **deprecated in the iOS 27 SDK** (Beta), superseded by new Swift-native types including `ForegroundTerminationMetric`/`BackgroundTerminationMetric` (each exposing `memoryLimitTerminationCount: Int`, the OOM-kill count now first-class). Your install base is overwhelmingly iOS 26 and earlier today -- keep reading the `MX` classes (still the live, functional API) and dual-path new reads behind `#available`:
+MetricKit aggregates real-device data across your entire install base, delivered roughly daily. iOS 27 rewrote it Swift-first: `MetricManager` vends `metricReports` and `diagnosticReports` as async sequences, every report is `Codable` and `Sendable` (serialize it straight to your backend, no hand-rolled payload parsing), and values arrive as `MetricResult` cases instead of `MX` payload properties. Apple's wording on the old family is "no longer recommended for new adoption" -- **deprecated, not removed**. With the install base overwhelmingly iOS 26 and earlier, the correct shape is a dual path: keep the `MX` subscriber as the primary reader for reach, add a `MetricManager` consumer behind `#available(iOS 27, *)`, and never present the `MX` path as an error.
+
+| Deprecated `MX` type | iOS 27 successor | Platforms |
+|---|---|---|
+| `MXMetricManager` + `MXMetricManagerSubscriber` | `MetricManager` (`metricReports` / `diagnosticReports`) | iOS/iPadOS/Catalyst/macOS 27; visionOS 27 for diagnostics only |
+| `MXAppLaunchMetric` | `TimeToFirstDrawMetric`, `OptimizedTimeToFirstDrawMetric`, `ApplicationResumeTimeMetric`, `ExtendedLaunchMetric` | iOS/iPadOS/Catalyst/macOS 27 |
+| `MXMemoryMetric` | `PeakMemoryMetric`, `SuspendedMemoryMetric` | `PeakMemoryMetric`: **iOS/iPadOS 27 only** |
+| `MXAppExitMetric` | `ForegroundTerminationMetric`, `BackgroundTerminationMetric` | iOS/iPadOS/Catalyst/macOS 27 |
+| `MXAnimationMetric` | `HitchTimeMetric` (per-app animation hitch, not scroll-scoped) | iOS/iPadOS/Catalyst/macOS 27 |
+| (no equivalent) | `MemoryExceptionDiagnostic` -- a call stack for an OOM kill | **iOS/iPadOS 27 only** |
+| (no equivalent) | `MetalFrameRateMetric` -- per-`CAMetalLayer` frame pacing | iOS/iPadOS/Catalyst/macOS 27 |
+
+None of the new types exist on tvOS or watchOS: those targets keep the `MX` path indefinitely. `HitchTimeMetric.ratio` and `SignpostIntervalMetric.hitchTimeRatio` are typed `Measurement<HitchTimeRatio>`, a `Dimension` subclass expressing milliseconds of hitch per second of tracked duration -- code that treated the ratio as a plain `Measurement<Unit>` must be recompiled against the 27 SDK, which Apple calls out as a launch-crash risk otherwise.
+
+The iOS 27 reader is a long-lived object consuming two sequences:
+
+```swift
+import MetricKit
+
+@available(iOS 27, *)
+actor FieldMetrics {
+    private let manager = MetricManager()
+
+    func start() async {
+        async let metrics: Void = consumeMetrics()
+        async let diagnostics: Void = consumeDiagnostics()
+        _ = await (metrics, diagnostics)
+    }
+
+    private func consumeMetrics() async {
+        for await report in manager.metricReports {          // MetricReport: Codable, Sendable
+            for entry in report.intervalEntries {            // + report.stateEntries when StateReporting is on
+                for value in entry.values {
+                    switch value {
+                    case .hitchTime(let m):
+                        // ratio: Measurement<HitchTimeRatio> -- ms hitching per second of tracked ANIMATION,
+                        // app-wide, not scroll-scoped. Keep it in its own series from pre-27 scroll numbers.
+                        Telemetry.send(hitchRatio: m.ratio, over: m.totalAnimationTime)
+                    case .foregroundTermination(let m):
+                        Telemetry.send(oomKills: m.memoryLimitTerminationCount)   // jetsam count, first-class
+                    case .backgroundTermination(let m):
+                        Telemetry.send(backgroundOOMKills: m.memoryLimitTerminationCount)
+                    case .peakMemory(let m):
+                        Telemetry.send(peak: m.value)                             // Measurement<UnitInformationStorage>
+                    case .optimizedTimeToFirstDraw(let m):
+                        Telemetry.send(launch: m.histogram)                       // Histogram<UnitDuration>
+                    case .extendedLaunch(let m):
+                        Telemetry.send(extendedLaunch: m.histogram)
+                    default:
+                        break   // MetricResult has 30 cases; handle only what you trend, or switch
+                                // exhaustively with an @unknown default for forward compatibility
+                    }
+                }
+            }
+        }
+    }
+
+    private func consumeDiagnostics() async {
+        for await report in manager.diagnosticReports {
+            if case .memoryException(let diagnostic) = report.result {
+                // NEW in iOS 27: an actual call stack for a memory-limit termination.
+                Telemetry.send(oomStack: diagnostic.callStackTree)
+            }
+        }
+    }
+}
+```
+
+`OptimizedTimeToFirstDrawMetric` and `ExtendedLaunchMetric` are distinct types that happen to share a `histogram` member, so they need separate cases -- Swift will not let one binding cover both patterns. Extended launch is no longer only a signpost convention -- `MetricManager.trackLaunchTask(id:onTrackingError:_:)` measures a named async launch task on the main actor and the duration lands in `ExtendedLaunchMetric` in the field:
+
+```swift
+// trackLaunchTask is @MainActor, so hold a MetricManager on the main actor for it --
+// a separate reference from the actor-held one above. LaunchTaskID is ExpressibleByStringLiteral.
+@available(iOS 27, *)
+@MainActor
+enum LaunchTracking {
+    static let manager = MetricManager()
+
+    static func warmFeed() async throws -> FeedStore {
+        try await manager.trackLaunchTask(id: "first-feed-ready") {
+            try await FeedStore.warm()
+        }
+    }
+}
+```
+
+`StateReporting` (the framework is iOS 27 on all seven platforms; the MetricKit side that delivers it -- `StateReportingDomain` and `MetricManager(enabledStateReportingDomains:)` -- is iOS/iPadOS/Mac Catalyst/macOS 27 only, so tvOS and watchOS get no state-segmented metrics) closes the biggest gap in MetricKit field data for UI craft: it segments metrics by app-defined states, so hitch time and launch time can be attributed to a feature, an A/B arm, or a graphics-quality setting instead of averaged across the whole app. Declare a metadata struct with `@ReportableMetadata`, get a `StateReporter` for a domain, call `reportTransition(to:...)` on entry and `reportTransition(to: nil)` on exit, and construct the manager with `MetricManager(enabledStateReportingDomains: [.experiments])` so reports carry `stateEntries` alongside `intervalEntries`. Annotated states also show up in Instruments on the Points of Interest track. Keep `@ReportableMetadata` property names concise, and check `hasExceededStateLimit` on every report -- metrics for states past the system limit collapse into the full-day interval entry.
+
+For an app with a Metal-backed surface inside an otherwise SwiftUI UI -- a custom renderer, a map, a shader-driven effect -- `MetalFrameRateMetric` (via `MetricResult.metalFrameRate(_:)`) trends real-device frame pacing per `CAMetalLayer` in the field, which previously only Instruments could see. Read it against `HitchTimeMetric`: a healthy CA hitch ratio with a poor Metal frame rate points the investigation at the renderer, not at SwiftUI body cost.
+
+On iOS 26 and earlier, the `MX` subscriber is still the live, functional reader:
 
 ```swift
 import MetricKit
@@ -174,7 +267,7 @@ MXMetricManager.shared.add(MetricsSubscriber())   // register once, early (App.i
 
 `MXAppLaunchMetric.histogrammedTimeToFirstDraw` is itself deprecated (legacy, non-prewarm-aware) in favor of `histogrammedOptimizedTimeToFirstDraw` (the prewarmed-launch distribution); `histogrammedApplicationResumeTime` has been deprecated since iOS 13. Prefer `histogrammedExtendedLaunch` -- your own "fully ready" signal, not just first pixel -- as the field metric closest to what users experience as "launched."
 
-The iOS 27 SDK (Beta) introduces `ScrollHitchTimeMetric`, Apple's stated successor to `scrollHitchTimeRatio` -- gate any read of it behind `#available(iOS 27, *)` with a `// SDK-verify` caveat, and never in the primary shipping example; keep reading `scrollHitchTimeRatio` for the iOS 26 install base in the meantime.
+**Do not merge the two series.** `MXAnimationMetric.scrollHitchTimeRatio` is scroll-scoped; iOS 27's `HitchTimeMetric` reports hitch time across *every* tracked animation in the app. Averaging them into one chart silently changes what the number means at the 27 boundary, so the familiar "< 5 ms hitch per second of scrolling" target has to be restated as a per-app animation-hitch budget on iOS 27 and compared only against like-for-like history.
 
 For custom intervals, `OSSignposter` (iOS 15+/macOS 12+) feeds both Instruments traces and, via `mxSignpost`, MetricKit's field-aggregated `MXSignpostMetric` payloads -- the closest thing to "Instruments, but on every user's device":
 
@@ -195,9 +288,12 @@ signposter.endInterval("ColdLaunch", state)
 | Hang Rate | Hangs per hour of foreground use, >= 250 ms | Drive toward 0 |
 | Memory | Peak memory distribution across the fleet | Leading OOM indicator |
 | Terminations | Background/foreground termination counts incl. memory (OOM) and watchdog | Field `0x8badf00d`/OOM rate |
-| Scroll Hitch Rate | Hitch time ratio from real scrolling | < 5 ms/s |
+| Hitches | Hitch time across ALL animated interactions -- scrolling, transitions, other continuous motion | < 5 ms/s |
 | Disk Writes | Logical bytes written / hour | Excessive-I/O regressions |
+| Storage | The app's storage footprint trended across releases | Growth between versions |
 | Battery Usage | Energy relative to peers | Background/CPU regressions |
+
+The Hitches metric widened from scroll-only to every animated interaction in Xcode 27, matching MetricKit's move from `scrollHitchTimeRatio` to per-app `HitchTimeMetric` -- so a version-over-version hitch comparison that spans that change is comparing two different measurements. Xcode 27 Organizer also adds an **Insights** overview that surfaces high-impact regressions across metrics and diagnostic reports in one place, and draws a recommended goal value on each metric chart as a dashed line derived from similar apps and the app's own history -- useful as a sanity check on a target, not as a substitute for one you chose deliberately.
 
 Organizer's data is also available via the **App Store Connect API** (`perfPowerMetrics` endpoint) for pulling launch time, hang rate, memory, disk, and hitch percentiles into a CI/observability dashboard instead of opening Xcode.
 
@@ -294,7 +390,9 @@ cache.totalCostLimit = 50_000_000
 cache.setObject(image, forKey: url as NSURL, cost: Int(image.size.width * image.size.height * 4))
 ```
 
-`NSCache` participates in system memory-pressure eviction automatically. For large custom caches or in-flight buffers, also observe pressure directly: `UIApplication.didReceiveMemoryWarningNotification` for a coarse aggressive-purge hook, or `DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical])` for queue-based, severity-aware handling. There is no catchable in-process OOM signal -- a jetsam kill surfaces only as `EXC_RESOURCE`/`RESOURCE_TYPE_MEMORY` in a crash log (Xcode Organizer or App Store Connect); rising `MXMemoryMetric.peakMemoryUsage` percentiles in the field are the leading indicator that predicts rising OOM rates before `EXC_RESOURCE` crash volume climbs.
+`NSCache` participates in system memory-pressure eviction automatically. For large custom caches or in-flight buffers, also observe pressure directly: `UIApplication.didReceiveMemoryWarningNotification` for a coarse aggressive-purge hook, or `DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical])` for queue-based, severity-aware handling. There is still no catchable in-process OOM signal -- a jetsam kill cannot be trapped and handled. What changed in iOS 27 is what you get AFTER the kill: `MemoryExceptionDiagnostic` (iOS/iPadOS 27 only), delivered through `MetricManager.diagnosticReports`, carries a `callStackTree` for the memory-limit termination. That is the difference between guessing which decode blew the budget and knowing. On iOS 26 and earlier the kill surfaces only as `EXC_RESOURCE`/`RESOURCE_TYPE_MEMORY` in a crash log (Xcode Organizer or App Store Connect), with rising `MXMemoryMetric.peakMemoryUsage` percentiles as the leading indicator that predicts rising OOM rates before `EXC_RESOURCE` crash volume climbs; from iOS 27, trend `PeakMemoryMetric` and the two `memoryLimitTerminationCount`s directly.
+
+**iOS 27 moves Neural Engine memory onto your ledger.** Neural Engine allocations are now attributed to the app process instead of the system and appear in the Allocations instrument for the first time, so an app using Foundation Models or a Core ML model that sat comfortably inside its limit on iOS 26 can start taking OOM kills on iOS 27 with no code change. Re-measure `phys_footprint` on iOS 27 before shipping. iOS 27 also restricts background Neural Engine access the way it already restricted GPU use -- background inference needs the `com.apple.developer.background-tasks.continued-processing.inference` entitlement -- and improves load performance for models over 1 GB.
 
 ## Accessibility contract
 
@@ -306,12 +404,15 @@ This file instruments performance -- it has no direct Reduce Motion, VoiceOver, 
 |---|---|---|
 | Timing launch from `ProcessInfo` start / process creation | Prewarming can pre-spawn the process minutes before the user taps -- records a multi-minute "launch" | Check `ActivePrewarm`, anchor to `scenePhase -> .active` or first-frame capture |
 | Reading `resident_size` from `mach_task_basic_info` as the memory number | Excludes compressed memory, overcounts shared clean pages -- disagrees with what jetsam actually watches | Read `phys_footprint` via `task_info(TASK_VM_INFO)` |
-| Treating `MXAppLaunchMetric.histogrammedTimeToFirstDraw`/`histogrammedApplicationResumeTime` as the primary field metric | Both deprecated (`histogrammedApplicationResumeTime` since iOS 13); the whole `MX` launch/memory/exit class family deprecates further in the iOS 27 SDK | Use `histogrammedOptimizedTimeToFirstDraw`/`histogrammedExtendedLaunch`; dual-path new iOS 27 successor types behind `#available` |
-| Reaching for `MXAnimationMetric.hitchTimeRatio` | Does not exist on `MXAnimationMetric` | `MXAnimationMetric.scrollHitchTimeRatio` (iOS 14.0+/macOS 12.0+) |
+| Treating `MXAppLaunchMetric.histogrammedTimeToFirstDraw`/`histogrammedApplicationResumeTime` as the primary field metric | Both deprecated (`histogrammedApplicationResumeTime` since iOS 13); the whole `MX` launch/memory/exit class family is deprecated in the iOS 27 SDK | Use `histogrammedOptimizedTimeToFirstDraw`/`histogrammedExtendedLaunch`; dual-path the iOS 27 successor types behind `#available` |
+| Reaching for `MXAnimationMetric.hitchTimeRatio` | Does not exist on `MXAnimationMetric` | `MXAnimationMetric.scrollHitchTimeRatio` (iOS 14.0+/macOS 12.0+), or `HitchTimeMetric` on iOS 27 |
+| Charting pre-27 `scrollHitchTimeRatio` and iOS 27 `HitchTimeMetric` as one series | Scroll-scoped vs. app-wide animation hitch -- the metric's meaning changes mid-chart | Keep two series; restate the target as an animation-hitch budget on 27 |
+| Dropping the `MX` subscriber once `MetricManager` is wired up | The new types do not exist on tvOS or watchOS, and the install base is mostly pre-27 | Dual path: `MX` for reach, `MetricManager` behind `#available(iOS 27, *)` |
+| Shipping an iOS 27 Foundation Models / Core ML feature on an iOS 26 footprint measurement | Neural Engine memory now bills to the app process -- the same code can cross the jetsam limit on 27 | Re-measure `phys_footprint` on iOS 27; the allocations now show in Allocations |
 | `Image(...).resizable().frame()` or `AsyncImage` on a full-resolution photo in a list/grid | Neither downsamples -- decodes at source resolution, scales the already-decoded bitmap | `byPreparingThumbnail(ofSize:)` or ImageIO thumbnail generation at the target pixel size |
 | Judging decoded-image memory cost from file size on disk | A 2 MB JPEG can decode to 48-97 MB resident (4 or 8 bytes/pixel depending on gamut) | Compute `width x height x bytes_per_pixel`; downsample at decode time |
 | A widget/notification extension decoding a full-resolution source image | Extension ceilings (~24-30 MB) are far below the host app's; instant kill | Downsample to the exact rendered size before drawing; prefer vector assets |
-| Declaring a hitch fix from one "feels smoother" pass | Subjective, not attributable to the specific change | Re-run Animation Hitches with Comparison Mode against the pre-fix baseline trace |
+| Declaring a hitch fix from one "feels smoother" pass | Subjective, not attributable to the specific change | Re-run Animation Hitches and diff with Run Comparison against the pre-fix baseline trace |
 | A plain `Dictionary`-backed image cache | Never evicts -- grows unbounded, contributes to OOM | `NSCache` with `totalCostLimit`, participates in system eviction |
 
 ## Severity guide

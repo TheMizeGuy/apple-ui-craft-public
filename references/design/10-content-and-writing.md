@@ -8,7 +8,8 @@ Microcopy is not decoration applied at the end -- the words are the interface. A
 ## The Apple way
 
 - **Voice is constant, tone flexes.** Voice is who your app is (friendly, precise, playful). Tone is how it speaks in *this* moment -- celebratory on success, calm and blame-free on error. Same app, different tone per state, never a different personality.
-- **Address the user as "you"; refer to the app as "we" sparingly.** Prefer the imperative for actions the user takes ("Choose a photo") over "We need you to choose a photo."
+- **Address the user as "you"; avoid "we" altogether.** HIG Writing: "Avoid using we altogether because it may be unclear who the 'we' in question refers to. This is particularly problematic in error messages like 'We're having trouble loading this content.' Something like 'Unable to load content' is much clearer." Prefer the imperative for actions the user takes ("Choose a photo") over "We need you to choose a photo."
+- **Use possessive pronouns sparingly.** "Possessive pronouns like my and your are often unnecessary to establish context. For example, 'Favorites' conveys the same message as 'Your Favorites,' and is more succinct." Strip my/your from titles, tab labels and section headers unless the app uses them consistently everywhere -- half a navigation stack saying "Your Library" beside "Downloads" is the defect, not the pronoun itself.
 - **Be concise and concrete.** Cut hedge words ("simply," "just," "please" in most UI). "Send," not "Fire off," not "Please tap here to send your message."
 - **Never blame the user.** "That password didn't match," not "You entered the wrong password." This is the one place passive/neutral phrasing beats active voice.
 - **No jargon, no idiom in primary actions.** Idioms don't localize and fail plain-language cognitive accessibility -- "Send," not "Fire off."
@@ -37,13 +38,15 @@ Good: title "Discard Changes?" · buttons "Discard" / "Keep Editing." Bad: title
 
 ## Capitalization -- the decision table
 
-| Element | Style | HIG source |
+| Element | Style | Where it comes from |
 |---|---|---|
-| Buttons, alert buttons, menu items, alert titles | **Title Case**, no ending period | Buttons / Alerts pages |
+| Buttons, alert buttons, menu items, alert titles | **Title Case**, no ending period | HIG Buttons and Alerts examples ("Add to Cart"); neither page states a casing *rule* |
 | Alert *message* body (sentences) | **Sentence case**, full punctuation | Alerts page |
 | Tooltips / help text | **Sentence case**, omit ending period unless multi-sentence | Offering-help page |
 | Widget descriptions | **Sentence case**, start with an action verb | Widgets page |
-| Labels, list rows, most body content | Sentence case | Writing page |
+| Labels, list rows, most body content | Sentence case | Observed convention across Apple's own apps |
+
+Read that table as Apple's own apps' convention and a sane default, not as a rule the HIG prescribes. The Writing page softened this on December 16, 2025: "Adopt capitalization rules that align with your app's style, then apply them consistently... Title case is generally considered formal, while sentence case is more casual." So the finding to write is **"inconsistent casing within an element type,"** never "not sentence case." An app that title-cases every list row throughout is correct; one that mixes the two across its own settings rows is not.
 
 Title Case in Apple's sense = capitalize first/last word + all principal words; lowercase articles/short prepositions/conjunctions (a, an, the, and, or, for, to, with...). "Add to Reading List," not "Add To Reading List."
 
@@ -71,7 +74,23 @@ Each `ContentUnavailableView` cause (never-had-data / filtered-to-zero / no-scop
 
 Good empty description tells the user what will fill this space and how. Bad = "No data"/"Empty" (dead end, no path forward). Never put a Retry button on a never-had-data empty state -- nothing failed.
 
-**Error copy is blame-free, specific, actionable, and never shows an error code.** Say what happened + what to do, in the user's terms. Good: "You're offline. Check your connection and try again." Bad: "Error -1009" / "URLError.notConnectedToInternet" / "Something went wrong." Offline vs server vs unknown is a COPY decision on the same chrome: offline → user can self-fix; server → "Our servers are having trouble. Try again in a moment."; unknown → generic + Retry. Reserve the generic message for genuinely unclassifiable failures. Conform errors to `LocalizedError` (`errorDescription`, `recoverySuggestion`) so `error.localizedDescription` is a real sentence, never a Swift type dump.
+**Error copy is blame-free, specific, actionable, and never shows an error code.** Say what happened + what to do, in the user's terms. Good: "You're offline. Check your connection and try again." Bad: "Error -1009" / "URLError.notConnectedToInternet" / "Something went wrong." Offline vs server vs unknown is a COPY decision on the same chrome: offline → user can self-fix; server → "The server is having trouble. Try again in a moment."; unknown → generic + Retry. Reserve the generic message for genuinely unclassifiable failures. Note the phrasing: not "We're having trouble" -- a stateless sentence reads clearer and never leaves the user wondering who "we" is.
+
+Conform errors to `LocalizedError` (`errorDescription`, `recoverySuggestion`) so `error.localizedDescription` is a real sentence, never a Swift type dump. On Xcode 27 the compiler helps: `alert(error:actions:)` takes the optional error binding directly, so the alert's text and its trigger are the same value and cannot drift apart:
+
+```swift
+// Runtime floor iOS 15.0 -- these overloads ship in the iOS 27 SDK and need Xcode 27 to
+// compile, but they back-deploy. Never wrap them in #available.
+@State private var failure: SyncError?          // SyncError: LocalizedError
+
+contentView
+    .alert(error: $failure) {
+        Button("Try Again") { retry() }
+        Button("Cancel", role: .cancel) { }
+    }
+```
+
+That kills the two-state alert bug this file's anti-pattern table warns about -- a separate `Bool` plus a stored error that fall out of sync and present an alert with stale or empty text. The same shape exists as `alert(_:item:actions:)` and `confirmationDialog(_:item:titleVisibility:actions:)` for data-driven presentations, plus `message:` variants. Compiling with Xcode 26 or earlier, keep the `isPresented:` + `presenting:` pair.
 
 **Permission-prompt copy is content you must write.** `Info.plist` usage strings (`NSCameraUsageDescription`, `NSLocationWhenInUseUsageDescription`, `NSPhotoLibraryAddUsageDescription`) are shipped microcopy Apple requires -- App Review rejects generic ones. Formula: state the benefit to the user, in one sentence, referencing the concrete action. Good: "Lets you attach photos to your notes." Bad: "This app needs photo access." Prime before you prompt: show your own explanatory screen (your words, your button) BEFORE calling the system request -- the OS dialog is one-shot and unstyleable, and a denied prompt is expensive to recover. Request at the point of use ("just-in-time") so the purpose string reads true at that exact moment.
 
@@ -117,9 +136,23 @@ VoiceOver combines label and value into a single announcement ("Storage Used, 2.
 
 Truncation modifiers (`lineLimit`, `truncationMode`, `minimumScaleFactor`) live in `references/design/12-text-rendering.md#controlling-how-text-fits`; what you WRITE determines whether truncation reads as broken. Front-load the word that must survive: a tail-truncated "Confirm Your Emai…" loses the actionable word if it were "Please Confirm Your…"; a title starting with the noun that matters survives a cut. For values that must show in full (amounts, timers), prefer shrinking (`minimumScaleFactor`) or restructuring the label over accepting a truncated number -- a truncated dollar amount is a content bug, not a layout nit.
 
+## Naming features and labels
+
+Naming a feature is a content-design problem with its own criteria, and WWDC26's "Craft clear names for features and labels in your app" is the first-party framework for it. A name has to clear three bars:
+
+- **It belongs.** It fits the vocabulary the app already uses. A name that needs its own glossary entry has failed.
+- **It meets expectations.** It delivers what the reader predicts it will. Every name that over-promises spends trust the app does not get back.
+- **It works everywhere.** Across languages, markets and platforms -- which is where a pun or an idiom dies.
+
+The process: define the audience first, run a think/feel/do pass (what should the reader think, feel, and do when they read it), then test candidates **inside a real sentence somebody would say out loud**. "Turn on Enhance Dialogue" reads; "Turn on Audio Clarity Optimizer" does not. That read-aloud check is the most usable review test in this file.
+
+Descriptive, emotional and branded names are all legitimate -- "Enhance Dialogue," "Memories," "AutoMix" -- and a verb is the right shape when the feature is something the user *does*. The one hard ordering: on a destructive or account-level action, clarity and trust outrank brand expression. "Delete Account" is not a place for a product name.
+
 ## Terminology consistency
 
 Pick ONE term per concept and use it everywhere (nav title, button, empty state, alert, settings, VoiceOver). "Delete" vs "Remove" vs "Trash" for the same act confuses users and bloats the String Catalog. Maintain a tiny glossary; the String Catalog is the enforcement surface (one key, reused).
+
+Apple's own product names are part of that glossary and they move. The HIG page formerly titled "In-app purchase" was rebranded **Apple In-App Purchase** and rewritten in September 2026, so copy that refers to the mechanism by name should say "Apple In-App Purchase," and a citation to the old page slug now redirects. Commerce copy and paywall guidance are owned by `references/patterns/08-paywall-storekit-applepay.md`; the content rule here is that a platform feature's name is a term you inherit, not one you choose.
 
 ## Inclusive and respectful language
 
@@ -143,12 +176,15 @@ Every pattern above IS the VoiceOver experience -- a verb-first button, a specif
 | Retry button on a never-had-data empty state | Nothing failed; implies a fixable error | Benefit description + verb-first creation CTA |
 | `.accessibilityLabel("Settings button")` on a `Button` | Duplicates the auto-appended "button" trait | Just `.accessibilityLabel("Settings")` |
 | Mixing "Delete"/"Remove"/"Trash" for the same action across screens | Confuses users, bloats the String Catalog | One term, reused via one String Catalog key |
+| `"We're having trouble loading this content."` | "We" is ambiguous, and the sentence describes the app's feelings rather than the user's situation | `"Unable to load content."` |
+| `"Your Favorites"` / `"My Library"` as a title | Possessive pronouns rarely add context and drift out of sync across a nav stack | `"Favorites"` / `"Library"`, unless the app uses the pronoun everywhere |
+| A separate `Bool` plus a stored error driving one alert | The two fall out of sync; the alert shows stale or empty text | One `Binding<E?>` with `alert(error:actions:)` (Xcode 27, back-deploys to iOS 15) |
 
 ## Severity guide
 
 - **CRITICAL**: a raw error code, stack trace, or type dump shown to the user; a permission string that misrepresents what data is collected (App Review rejects, and it is dishonest to the user).
 - **HIGH**: destructive alert buttons that don't name the action ("OK" instead of "Delete"); a plural built with `count == 1 ? :` that breaks other locales.
-- **MEDIUM**: inconsistent terminology for the same concept across screens; capitalization style mismatched against the element-type table.
+- **MEDIUM**: inconsistent terminology for the same concept across screens; capitalization applied inconsistently *within* an element type (not merely differing from the table); first-person-plural error copy.
 - **LOW**: a missing translator `comment:` on an ambiguous short string; an ellipsis rendered as three periods instead of U+2026.
 
 ## See also

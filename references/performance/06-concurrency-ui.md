@@ -1,22 +1,25 @@
 # Swift Concurrency in UI
 
-> Owner: `references/performance/06-concurrency-ui.md` owns `.task`/`.task(id:)` cancellation semantics, `@MainActor` UI isolation and moving work off it, Swift 6.2 approachable concurrency (`@concurrent`, `nonisolated(nonsending)`, default actor isolation), structured concurrency inside views (`async let`, `TaskGroup`), `AsyncStream`/`AsyncSequence` as SwiftUI inputs, and the debounced-cancellable-Task idiom. `references/performance/04-state-architecture.md#view-identity-and-taskid-lifecycle` owns identity-driven cancellation as a STATE concept; this file owns the concurrency mechanics underneath it.
-> Floors: see `references/_scaffolding/version-floor-registry.md`. `.task(id:)` iOS 17+; `.task(name:file:line:)` params are iOS 26.4+ (no-op before). Swift 6.2 defaults cited below are an Xcode 26 project setting, not an iOS deployment floor.
+> Owner: `references/performance/06-concurrency-ui.md` owns `.task`/`.task(id:)` cancellation semantics, `@MainActor` UI isolation and moving work off it, approachable concurrency (`@concurrent`, `nonisolated(nonsending)`, default actor isolation), structured concurrency inside views (`async let`, `TaskGroup`), `AsyncStream`/`AsyncSequence` as SwiftUI inputs, and the debounced-cancellable-Task idiom. `references/performance/04-state-architecture.md#view-identity-and-taskid-lifecycle` owns identity-driven cancellation as a STATE concept; this file owns the concurrency mechanics underneath it.
+> Floors: see `references/_scaffolding/version-floor-registry.md`. `task(id:name:priority:file:line:_:)` and `task(name:priority:file:line:_:)` are both iOS 15.0+ and back-deploy, while the `executorPreference:` overload is iOS 26.4+. The approachable-concurrency defaults cited below are an Xcode project setting (Swift 6.2 onward), not an iOS deployment floor.
 
-Smooth UI means the main actor stays free to render; every state mutation SwiftUI observes must happen there, and every expensive computation must not. `.task` is the seam that ties async work to a view's lifetime, and Swift 6.2's approachable-concurrency defaults reshape how much of that seam you have to think about by hand.
+Smooth UI means the main actor stays free to render; every state mutation SwiftUI observes must happen there, and every expensive computation must not. `.task` is the seam that ties async work to a view's lifetime, and the approachable-concurrency defaults reshape how much of that seam you have to think about by hand.
 
 ## .task and .task(id:)
 
 ```swift
-// iOS 17+. Verified signature (developer.apple.com/documentation/swiftui).
+// iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+ / visionOS 1.0+ for BOTH overloads below.
+// Verified against the iOS 27 SDK.
 nonisolated func task(
-    name: String? = nil,                      // iOS 26.4+; no-op before
+    name: String? = nil,
     priority: TaskPriority = .userInitiated,
+    file: String = #fileID, line: Int = #line,
     _ action: sending @escaping @isolated(any) () async -> Void
 ) -> some View
 
 nonisolated func task<T: Equatable>(
     id: T, name: String? = nil, priority: TaskPriority = .userInitiated,
+    file: String = #fileID, line: Int = #line,
     _ action: sending @escaping @isolated(any) () async -> Void
 ) -> some View
 ```
@@ -37,7 +40,7 @@ struct UserProfileView: View {
 }
 ```
 
-Default `priority` is `.userInitiated` -- not `.medium`, don't state a made-up default. `id` must conform to `Equatable`, not `Hashable`. The `name`/`file`/`line` params surface the task in Instruments' Swift Concurrency template with a readable label; they are documented no-ops before iOS/iPadOS/macOS/tvOS/watchOS/visionOS 26.4, so passing them is back-deploy-safe.
+Default `priority` is `.userInitiated` -- not `.medium`, don't state a made-up default. `id` must conform to `Equatable`, not `Hashable`. The `name`/`file`/`line` params surface the task in Instruments with a readable label; the overload carrying them is documented at iOS 15.0 and ships with `@export(implementation)`, so it back-deploys -- use it freely. Do NOT conflate it with `task(name:executorPreference:priority:file:line:action:)`, the `TaskExecutor` overload, which is the one gated at iOS 26.4 on every platform. Naming tasks pays off concretely from Instruments 27, where task tracks group into named Swift Task Collection tracks and each task gets a Profile detail built from samples taken while it was running.
 
 **A frame-timing nuance, not a documented mechanism:** work in a `.task` closure written before the first `await` can be observed running within the same update pass, on the caller's actor -- state you set there can land without a visible render hop. Treat this as an observable behavior to design around, not as a citable API guarantee about how `.task` is internally implemented; do not attribute it to a specific primitive by name in shipping documentation.
 
@@ -58,9 +61,42 @@ A plain **non-throwing** `await` (`await someTask.value` on a `Task<Void, Never>
 
 `try await` on Apple's cancellable primitives (`URLSession.data`, `Task.sleep`, `url.lines`) DOES throw `CancellationError`, so a guard there is optional -- but a bare non-throwing `await` never does. Rule: add an explicit `guard !Task.isCancelled else { return }` immediately after every non-throwing `await` where proceeding under a stale assumption is unsafe.
 
+### Cleanup that must survive the cancellation (Swift 6.4)
+
+The other half of the same problem: `.task` cancels on disappear or `id` change, which silently kills the cleanup an author wrote at the END of that task -- flushing an analytics event, committing a draft, releasing a hardware session. Swift 6.4 (Xcode 27) gives that cleanup two language-level tools.
+
+SE-0493 allows `await` inside a `defer` block: "any asynchronous code you write in a `defer` block is awaited and runs to completion before it exits." SE-0504 adds `withTaskCancellationShield`, which temporarily prevents code from observing cancellation status -- inside the shield `Task.isCancelled` reads `false` and cancellation does not propagate into child tasks, `async let`, or task groups:
+
+```swift
+// Swift 6.4 language/stdlib feature (SE-0504). No Apple DocC symbol page.
+public func withTaskCancellationShield<Value, Failure>(
+    _ operation: () throws(Failure) -> Value
+) throws(Failure) -> Value
+
+public nonisolated(nonsending) func withTaskCancellationShield<Value, Failure>(
+    _ operation: nonisolated(nonsending) () async throws(Failure) -> Value
+) async throws(Failure) -> Value
+```
+
+```swift
+.task(id: draft.id) {
+    defer {
+        // Runs to completion even though the task is being cancelled.
+        await withTaskCancellationShield { await DraftStore.commit(draft) }
+    }
+    try? await editor.stream(draft)
+}
+```
+
+Shield only the cleanup, never the work: a shielded fetch is an uncancellable fetch, which is the bug cancellation exists to prevent. Below Swift 6.4, hoist the cleanup into a detached task or an actor that outlives the view and guard it explicitly against `Task.isCancelled`.
+
 ## @MainActor isolation and moving work off it
 
-Xcode 26 new-project default is **Default Actor Isolation = MainActor** (the "Approachable Concurrency" build setting) -- every type is implicitly `@MainActor` unless you opt out, so single-threaded UI code compiles cleanly under strict concurrency with no annotations. You must be deliberate about opting OUT for background work. This default, `nonisolated(nonsending)` as the safe default for plain `nonisolated async` functions, and synchronous-start task semantics are documented in Swift Evolution SE-0461, SE-0466, and SE-0472 -- cite the proposals, not blog posts, when a review needs the authoritative rule.
+The new-project default since Xcode 26 is **Default Actor Isolation = MainActor** (the "Approachable Concurrency" build setting) -- every type is implicitly `@MainActor` unless you opt out, so single-threaded UI code compiles cleanly under strict concurrency with no annotations. You must be deliberate about opting OUT for background work. This default, `nonisolated(nonsending)` as the safe default for plain `nonisolated async` functions, and synchronous-start task semantics are documented in Swift Evolution SE-0461, SE-0466, and SE-0472 -- cite the proposals, not blog posts, when a review needs the authoritative rule.
+
+**A bare `nonisolated async` does not get you off the main actor -- Apple says so in its own release notes.** From the iOS 27 notes: "With approachable-concurrency defaults that infer `MainActor` isolation, an unannotated `nonisolated` async method runs on the main actor, defeating the intent of off-main reading and writing. Conforming types that previously used `nonisolated` should switch to `@concurrent` to match." Apple applied that to its own SDK -- `DocumentReader.read(from:progress:)` and `DocumentWriter.write(content:to:previous:progress:)` are declared `@concurrent`, not `nonisolated`. So `nonisolated func decode() async` written as a "get off main" device is a defect with a first-party citation, not a style preference, and `@concurrent` is the only correct annotation for CPU-heavy UI-adjacent work. State which Default Actor Isolation setting the project uses before making the finding: with it set to `nonisolated` (the pre-Swift-6.2 model) the old inference applies.
+
+Instruments 27's **Swift Executors** instrument is the tool that settles the argument on a device: the Main Actor track shows whether a supposedly-`@concurrent` function is still running there. See `references/performance/03-launch-memory-instruments.md#instruments-which-tool-answers-which-question`.
 
 ```swift
 @MainActor @Observable
@@ -237,7 +273,7 @@ AsyncImage(url: url, transaction: Transaction(animation: .smooth(duration: 0.4))
 .frame(width: 120, height: 120)
 ```
 
-Pair `withAnimation` (or scoped `.animation(_, value:)`) around the state write with a `.transition` on the conditional branch, and key it on the loaded value's identity so the transition actually fires: `.animation(.smooth(duration: 0.35), value: model.article?.id)`. `AsyncImage` has no HTTP cache before iOS 27 -- every appearance re-downloads unless you own a caching pipeline yourself; do not assume repeated `AsyncImage` loads of the same URL are free pre-27.
+Pair `withAnimation` (or scoped `.animation(_, value:)`) around the state write with a `.transition` on the conditional branch, and key it on the loaded value's identity so the transition actually fires: `.animation(.smooth(duration: 0.35), value: model.article?.id)`. `AsyncImage` has no HTTP cache before iOS 27 -- every appearance re-downloads unless you own a caching pipeline yourself. From iOS 27 it caches per the server's HTTP headers, and `asyncImageURLSession(_:)` injects one `URLSession` (your `URLCache`, cache policy, auth headers) for every `AsyncImage` in a subtree; `references/performance/02-scroll-list-performance.md#asyncimage-caching-and-session-control----ios-27` owns that pipeline. The decode side is unchanged on every version: `AsyncImage` decodes at source resolution and never downsamples, so caching never makes it the right default for a scrolling cell.
 
 Every animated commit above -- the `Loadable` state's `withAnimation`, the `AsyncImage` `Transaction`, and `.animation(_, value:)` -- must respect Reduce Motion. Route them through one shared accessor rather than gating each call site independently:
 
@@ -261,6 +297,9 @@ func settle(_ base: Animation) -> Animation? { reduceMotion ? nil : base }   // 
 | Custom pull-to-refresh control | Can't match system rubber-band/haptics | `.refreshable { await load() }` |
 | Debounce token stored without `@ObservationIgnored` | Every cancel/reassign invalidates the view | `@ObservationIgnored private var searchTask: Task<Void, Never>?` |
 | Assuming `AsyncImage` caches across appearances pre-iOS 27 | Re-downloads every time | Own a caching pipeline, or gate the assumption behind `#available(iOS 27, *)` |
+| `nonisolated func work() async` used to move work off the main actor | Under MainActor-by-default it runs in the caller's context -- the main actor | `@concurrent` |
+| Cleanup written at the end of a `.task` body | Cancellation kills it before it runs | `defer { await ... }` (SE-0493), wrapped in `withTaskCancellationShield` when it must not observe the cancellation |
+| `withTaskCancellationShield` around the actual work | An uncancellable fetch -- the bug cancellation exists to prevent | Shield only the cleanup |
 
 ## See also
 

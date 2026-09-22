@@ -199,6 +199,23 @@ let tapOrLongPress = TapGesture()
 | `.simultaneousGesture()` | Runs alongside child gestures |
 | `.highPriorityGesture()` | Wins over child gestures |
 
+## Input-source filtering (iOS 27+)
+
+Priority is not the only axis. Every value-producing gesture gained an `inputKinds: GestureInputKinds = .all` initializer parameter in iOS 27, so a gesture can decline touches that did not come from the hardware it is meant for -- `.directTouch` (finger), `.indirectTouch` (trackpad/remote), `.pencil`, `.pointer`. Because the parameter defaults to `.all`, adding it never changes existing behavior:
+
+```swift
+@available(iOS 27, *)
+struct Canvas27: View {
+    var body: some View {
+        CanvasSurface()
+            .gesture(DragGesture(minimumDistance: 0, inputKinds: .pencil).onChanged(mark))
+            .simultaneousGesture(DragGesture(minimumDistance: 10, inputKinds: .directTouch).onChanged(pan))
+    }
+}
+```
+
+Below iOS 27 the same split needs a `UIGestureRecognizerRepresentable` bridge (iOS 18+) inspecting `UITouch.type`. Which gesture wins a touch, and the full `inputKinds:` catalog across the nine gesture types that gained it, is owned by `references/interaction/04-gesture-disambiguation.md#input-kinds-partitioning-by-hardware-ios-27` (OWNER) -- this section is the syntax pointer only.
+
 ## Interactive springs for gesture handoff
 
 The spring in `.onEnded` commits state to a new resting offset -- it does not automatically inherit the finger's release velocity. Mutating state inside `withAnimation` starts a FRESH spring from the current visual position to the new target; true velocity preservation only happens when an ALREADY-RUNNING animation is retargeted mid-flight (a real interruption), which is a different case from this one:
@@ -275,6 +292,8 @@ List(items) { item in
 
 **Critical:** Swipe actions are accelerators, not the only way to perform an action. Always provide an explicit alternative (button, context menu).
 
+On iOS 27 `swipeActions` is no longer confined to `List`: applied to any row it works inside any scroll container that carries `swipeActionsContainer()`, and a new `onPresentationChanged:` parameter reports when a row's drawer opens or closes. Both are owned by `references/interaction/06-custom-controls-reorderable.md#swipe-actions-outside-list-ios-27` (OWNER).
+
 ## Drag and drop
 
 ```swift
@@ -333,6 +352,9 @@ Swipe actions are accelerators, never the only path (see "Swipe actions on List 
 Not gesture code you write -- a declarative, scroll-direction-driven system chrome behavior, noted here because it lives in the same "scroll direction drives UI" territory as everything above.
 
 ```swift
+@Environment(\.accessibilityReduceMotion) private var reduceMotion
+@State private var barHidden = false          // pre-27 fallback state only
+
 // Tab bar: iOS 26.0+, iPhone-only (not supported for iPad tab bar minimization; Mac Catalyst available)
 TabView {
     ScrollView { /* ... */ }
@@ -340,21 +362,30 @@ TabView {
 }
 .tabBarMinimizeBehavior(.onScrollDown)
 
-// Toolbar: a DIFFERENT type, iOS 27.0+ Beta -- gate, never ship ungated
+// Toolbar: a DIFFERENT type and modifier, iOS 27.0+ -- gate separately from the 26.0 tab-bar behavior
 if #available(iOS 27, *) {
     NavigationStack {
         ScrollView { /* ... */ }
+            .toolbarMinimizationBehavior(.onScrollDown, for: .navigationBar)   // on the content, inside the stack
     }
-    .toolbarMinimizeBehavior(.onScrollDown, for: .navigationBar)   // SDK-verify
 } else {
-    // iOS 26 fallback: manual onScrollGeometryChange-driven toolbar opacity/offset
+    // iOS 26 fallback: drive the bar's visibility from scroll direction (onScrollGeometryChange, iOS 18+).
     NavigationStack {
         ScrollView { /* ... */ }
+            .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { oldY, newY in
+                guard abs(newY - oldY) > 4 else { return }              // ignore sub-pixel jitter
+                withAnimation(reduceMotion ? nil : .snappy(duration: 0.25)) {
+                    barHidden = newY > oldY                             // scrolling down hides the bar
+                }
+            }
+            .toolbar(barHidden ? .hidden : .visible, for: .navigationBar)
     }
 }
 ```
 
-`TabBarMinimizeBehavior.onScrollDown` (iOS 26.0+) and `ToolbarMinimizeBehavior.onScrollDown` (iOS 27.0+ Beta) are DIFFERENT types on DIFFERENT floors -- gate them separately, never as one `#available(iOS 26, *)` block.
+`for bars:` is variadic (`ToolbarPlacement...`), but `.navigationBar` is the only placement the modifier supports today (an integrated top tab bar minimizes with it), so pass `.navigationBar` and nothing else.
+
+`TabBarMinimizeBehavior.onScrollDown` (iOS 26.0+, via `tabBarMinimizeBehavior(_:)`) and `ToolbarMinimizationBehavior.onScrollDown` (iOS 27.0+, via `toolbarMinimizationBehavior(_:for:)`) are DIFFERENT types on DIFFERENT floors -- gate them separately, never as one `#available(iOS 26, *)` block. The modifier and the `ToolbarMinimizationBehavior` type ship on every platform, but the explicit cases (`.onScrollDown`, `.onScrollUp`, `.never`) are iOS/iPadOS/Mac Catalyst only; `.automatic` is the one portable case. An app whose deployment target is already iOS 27 drops the `#available` wrapper and the fallback branch here, as everywhere else in this file.
 
 ## Common mistakes
 
@@ -369,6 +400,8 @@ if #available(iOS 27, *) {
 | No Reduce Motion gate on the release settle | Vestibular-trigger motion never stops | Gate the spring per the Reduce Motion section above -- never the 1:1 drag itself |
 | Gesture on `Color` | Color has zero size | Use a Rectangle or set explicit frame |
 | Magnify/rotate on list cell | Conflicts with scroll | Restrict to non-scrollable contexts |
+| `.toolbarMinimizeBehavior(_:for:)` / `ToolbarMinimizeBehavior` | The WWDC26 beta spelling, renamed before release -- no such symbol in the shipping SDK, so it does not compile | `.toolbarMinimizationBehavior(_:for:)` / `ToolbarMinimizationBehavior`, iOS 27.0+ |
+| Custom `LongPressGesture`/`DragGesture` on a `Text` with `.textSelection(.enabled)` | Rebuilt against the iOS 27 SDK, that `Text` gets interactive system text selection, which swallows the custom gesture | `.highPriorityGesture(_:)` so yours wins, or drop `.textSelection(.enabled)` on that view |
 
 ## See also
 
