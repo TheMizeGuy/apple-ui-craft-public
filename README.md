@@ -150,7 +150,7 @@ Every report states its evidence mode and coverage as its first line.
 
 ## Dispatch
 
-The session that runs a skill chooses the model for each agent it dispatches (Opus 5 is the usual default for design, review and implementation); nothing here pins a model or an effort level. On a wide scope, the skills split evidence collection from grading and fan out the collection. The shared dispatch mechanics live in `references/_scaffolding/conductor-dispatch-protocol.md`; the user-facing explanation is [`USAGE.md` -- How the skills fan out](USAGE.md#how-the-skills-fan-out).
+The session that runs a skill chooses the model for each agent it dispatches; nothing here pins a model or an effort level. On a wide scope, the skills split evidence collection from grading and fan out the collection. The shared dispatch mechanics live in `references/_scaffolding/dispatch-protocol.md`; the user-facing explanation is [`USAGE.md` -- How the skills fan out](USAGE.md#how-the-skills-fan-out).
 
 ## Backed by
 

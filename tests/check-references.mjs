@@ -60,6 +60,13 @@ let citations = 0;
 // changelog pointing at a deleted reference is a real broken pointer.
 const ANCHOR_EXEMPT = new Set(['CHANGELOG.md']);
 
+// A reference renamed after a release shipped it. Release history keeps the
+// name that release used, and its pointer resolves through the successor, which
+// must exist. Only release history gets this: live docs must cite the new name.
+const RENAMED = new Map([
+  ['references/_scaffolding/conductor-dispatch-protocol.md', 'references/_scaffolding/dispatch-protocol.md'],
+]);
+
 for (const f of files) {
   const rel = relative(ROOT, f);
   const lines = readFileSync(f, 'utf8').split('\n');
@@ -67,7 +74,8 @@ for (const f of files) {
     for (const m of line.matchAll(CITATION)) {
       citations++;
       const [ref, anchor] = [m[0], m[1]];
-      const path = ref.split('#')[0];
+      const cited = ref.split('#')[0];
+      const path = ANCHOR_EXEMPT.has(rel) && RENAMED.has(cited) ? RENAMED.get(cited) : cited;
       if (!existsSync(join(ROOT, path))) {
         failures.push({ file: rel, line: i + 1, ref, why: 'file does not exist' });
       } else if (anchor && !ANCHOR_EXEMPT.has(rel) && !slugIndex.get(path)?.has(anchor.slice(1))) {

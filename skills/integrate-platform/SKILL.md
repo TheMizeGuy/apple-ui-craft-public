@@ -42,7 +42,7 @@ All findings are advisory. The user chooses what to build.
 
 ## Execution mode
 
-Dispatch on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the integration scope is small, run the audit inline in the main context instead of dispatching a separate agent -- without weakening the platform-engineer's read-only guarantee. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
+The session picks the model for each dispatch; the plugin sets no model or effort level. When the integration scope is small, run the audit inline in the main context instead of dispatching a separate agent -- without weakening the platform-engineer's read-only guarantee. Shared mechanics: `references/_scaffolding/dispatch-protocol.md`.
 
 
 ## Review ledger (write it, without asking)
@@ -58,14 +58,14 @@ from a different scope is not a prior run for this scope.
 
 ## Fanning out on a wide scope
 
-An app with many existing surfaces splits into a census and a ranking pass. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard solo dispatch above unchanged.
+An app with many existing surfaces splits into a census and a ranking pass. Dispatch mechanics: `references/_scaffolding/dispatch-protocol.md`. On an ordinary scope, run the standard solo dispatch above unchanged.
 
 **Split of labor**
 
-| Stays with the session | Fans out well |
+| Needs the whole scope in view | Fans out well |
 |---|---|
 | Opportunity ranking, value-vs-cost judgment, integration plan synthesis, anything entitlement- or privacy-adjacent | Surface census (existing intents, widgets, activities, extensions, plist declarations); per-surface API-shape research from the approved opportunity list (framework, floor, required entitlements, minimal adoption checklist) |
 
 **Scoping the sweep (on top of what the protocol says a prompt carries)**
 - Reference set: absolute paths of `references/platform/` + `references/cross-platform/` + `references/_scaffolding/version-floor-registry.md`.
-- A census returns evidence and research, never rankings -- the session ranks. This skill stays advisory end to end: nothing it dispatches writes project files. Scaffolding is a separate task the user must ask for after the report.
+- A census returns evidence and research; ranking happens once, over the whole census. This skill stays advisory end to end: nothing it dispatches writes project files. Scaffolding is a separate task the user must ask for after the report.

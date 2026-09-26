@@ -54,7 +54,7 @@ All findings are advisory. The user chooses what to apply.
 
 ## Execution mode
 
-Dispatch on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the audit scope is small, run it inline in the main context instead of dispatching a separate agent -- without weakening the accessibility-engineer's read-only guarantee. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
+The session picks the model for each dispatch; the plugin sets no model or effort level. When the audit scope is small, run it inline in the main context instead of dispatching a separate agent -- without weakening the accessibility-engineer's read-only guarantee. Shared mechanics: `references/_scaffolding/dispatch-protocol.md`.
 
 
 ## Review ledger (write it, without asking)
@@ -70,13 +70,13 @@ from a different scope is not a prior run for this scope.
 
 ## Fanning out on a wide scope
 
-An audit spanning many screens splits into an evidence sweep and a grading pass. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard solo dispatch above unchanged.
+An audit spanning many screens splits into an evidence sweep and a grading pass. Dispatch mechanics: `references/_scaffolding/dispatch-protocol.md`. On an ordinary scope, run the standard solo dispatch above unchanged.
 
 **Split of labor**
 
-| Stays with the session | Fans out well |
+| Needs the whole scope in view | Fans out well |
 |---|---|
-| Scope decision, severity verdicts, WCAG-level grading, finding dedup, final report synthesis -- an accessibility verdict is never handed off | Per-screen a11y evidence collection against the engineer's 5-dimension check tables; VoiceOver label/trait/order inventory; contrast-pair computation sweeps; Dynamic Type breakpoint capture |
+| Scope decision, severity verdicts, WCAG-level grading, finding dedup, final report synthesis | Per-screen a11y evidence collection against the engineer's 5-dimension check tables; VoiceOver label/trait/order inventory; contrast-pair computation sweeps; Dynamic Type breakpoint capture |
 
 **Scoping the sweep (on top of what the protocol says a prompt carries)**
 - Reference set: absolute paths of `references/accessibility/` + `references/_scaffolding/version-floor-registry.md`.

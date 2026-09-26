@@ -103,11 +103,11 @@ Any failed check goes back to the producing stage with the concrete gap named --
 
 ## Execution mode
 
-Dispatch on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the design scope is small, produce the design inline in the main context instead of dispatching a separate agent -- without weakening the accessibility-engineer's read-only guarantee in Stage 2. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
+The session picks the model for each dispatch; the plugin sets no model or effort level. When the design scope is small, produce the design inline in the main context instead of dispatching a separate agent -- without weakening the accessibility-engineer's read-only guarantee in Stage 2. Shared mechanics: `references/_scaffolding/dispatch-protocol.md`.
 
 ## Fanning out on a wide scope
 
-A design spanning several component families can be scaffolded in parallel once the architecture is set. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard architect + accessibility-pass dispatch above unchanged.
+A design spanning several component families can be scaffolded in parallel once the architecture is set. Dispatch mechanics: `references/_scaffolding/dispatch-protocol.md`. On an ordinary scope, run the standard architect + accessibility-pass dispatch above unchanged.
 
 **Split of labor**
 

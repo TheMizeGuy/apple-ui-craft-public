@@ -2,6 +2,17 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.6.1 -- 2026-09-25
+
+The dispatch notes are in plain words: no model version, no leftover control-layer wording, and no all-caps refusal in the team lead. Dispatch mechanics are unchanged.
+
+- `craft-team-lead` drops its sequential-wave fallback for the harness session reset on parallel subagent spawns (anthropics/claude-code#44753); that issue closed on 2026-04-11.
+- The dispatch notes name no model version: the six skills, the dispatch protocol, and the docs say the session picks the model per dispatch and stop there. The skills no longer forbid `model:` on a dispatch, since choosing a model per dispatch is exactly the session's call; the plugin still sets none and pins no effort.
+- `references/_scaffolding/conductor-dispatch-protocol.md` is renamed `dispatch-protocol.md` and rewritten as plain mechanics. It now says which skills dispatch by plugin name and why `craft-ios-ui` goes through `general-purpose` (the team lead needs the `Agent` tool), and it explains judgment by where the whole picture is rather than by who holds it. `tests/check-references.mjs` resolves the old name through the rename for release history only.
+- `craft-team-lead` and `craft-ios-ui` drop the "established orchestration contract" wording and the all-caps refusal: the lead states why it is dispatched as `general-purpose` and, without the `Agent` tool, tells the caller instead of refusing. The split-of-labor tables head their left column "Needs the whole scope in view", and two lines that contradicted the specialists grading their own dimension are gone.
+- The Agent-tool reason for a `general-purpose` dispatch is now given for the team lead only. The dispatch protocol, `craft-team-lead` and ARCHITECTURE add that the lead inlines each specialist under `general-purpose` too, which drops the specialist's read-only tool grant, so the specialist's own read-only rule travels in its inlined body. Dispatch mechanics are unchanged.
+- The version-lockstep gate in `tests/run-all.sh` fails when a `## Unreleased` heading sits below the newest release entry, so a version bump cannot leave released changes filed under Unreleased; a release folds that section into its own entry.
+
 ## 0.6.0 -- 2026-09-22
 
 ### iOS 27 is current, the app icon is a first-class craft, and every area was scored by Jev

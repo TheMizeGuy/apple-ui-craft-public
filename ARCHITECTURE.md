@@ -32,7 +32,7 @@ apple-ui-craft/
 └── references/                  (14 directories -- self-contained knowledge files)
     ├── _scaffolding/
     │   ├── _TEMPLATE.md                     reference-file skeleton (authoring-only)
-    │   ├── conductor-dispatch-protocol.md   shared dispatch mechanics (all 6 skills point here)
+    │   ├── dispatch-protocol.md             shared dispatch mechanics (all 6 skills point here)
     │   └── version-floor-registry.md        SINGLE source of availability floors + PHANTOM list
     ├── design/
     │   ├── 01-apple-design-philosophy.md    clarity, deference, depth
@@ -174,11 +174,11 @@ Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship t
 | `audit-accessibility` | `accessibility-engineer` (solo, deep) | Single |
 | `integrate-platform` | `platform-engineer` (solo) | Single |
 
-`craft-team-lead` and the specialists it fans out are dispatched as `general-purpose` with the agent body inlined -- this is the plugin's established orchestration contract. Agent access depends on runtime tool grants and nesting depth. Every dispatch carries `PLUGIN ROOT:` and `REFERENCES:` lines; the agents resolve `references/` from them, with `${CLAUDE_PLUGIN_ROOT}` and the plugin-cache glob as fallbacks.
+`craft-team-lead` is dispatched as `general-purpose` with its agent body inlined, because it needs the `Agent` tool and Agent access depends on runtime tool grants and nesting depth. The lead also inlines each specialist's body under `general-purpose`; that drops the specialist's read-only tool grant, so each specialist prompt states that it is read-only (the inlined body carries the specialist's own read-only rule). Every dispatch carries `PLUGIN ROOT:` and `REFERENCES:` lines; the agents resolve `references/` from them, with `${CLAUDE_PLUGIN_ROOT}` and the plugin-cache glob as fallbacks.
 
 ## Reference <-> agent wiring (no orphan references)
 
-Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appears in at least one agent's read scope.** `_scaffolding/` holds process files, not knowledge: `version-floor-registry.md` is read first by every agent, `conductor-dispatch-protocol.md` is read by whoever dispatches, `_TEMPLATE.md` is authoring-only. Agents read the floor registry first, then start-here files, then glob the rest of a domain when the task goes deep. Ownership below is the "who authors/owns this concept" map; reviewers read across domains.
+Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appears in at least one agent's read scope.** `_scaffolding/` holds process files, not knowledge: `version-floor-registry.md` is read first by every agent, `dispatch-protocol.md` is read by whoever dispatches, `_TEMPLATE.md` is authoring-only. Agents read the floor registry first, then start-here files, then glob the rest of a domain when the task goes deep. Ownership below is the "who authors/owns this concept" map; reviewers read across domains.
 
 | Agent | Owns / reads |
 |---|---|
@@ -237,7 +237,7 @@ and dedup key on.
 
 ## Dispatch
 
-The dispatching session chooses the model per dispatch (Opus 5 is the usual default for design, review and implementation); no agent frontmatter carries a pin and no effort level is ever set. On a scope too wide for one pass per dimension, each skill splits evidence collection from grading and fans out the collection; each skill carries only its own split-of-labor table and dimension-specific scoping. The dispatch policy, fan-out, what a dispatch prompt carries, and how to read a result live in ONE place: `references/_scaffolding/conductor-dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-the-skills-fan-out).
+The dispatching session chooses the model per dispatch; no agent frontmatter carries a pin and no effort level is ever set. On a scope too wide for one pass per dimension, each skill splits evidence collection from grading and fans out the collection; each skill carries only its own split-of-labor table and dimension-specific scoping. The dispatch policy, fan-out, what a dispatch prompt carries, and how to read a result live in one place: `references/_scaffolding/dispatch-protocol.md`. The user-facing explanation is [`USAGE.md`](USAGE.md#how-the-skills-fan-out).
 
 ## Relationship to ios-code-review
 

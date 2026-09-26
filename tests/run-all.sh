@@ -37,6 +37,9 @@ if (!own) errors.push("marketplace.json has no entry for " + plugin.name);
 else if (own.version !== plugin.version) errors.push(`marketplace.json ${own.version} != plugin.json ${plugin.version}`);
 const top = (changelog.match(/^##\s+([0-9]+\.[0-9]+\.[0-9]+)/m) || [])[1];
 if (top !== plugin.version) errors.push(`CHANGELOG top entry ${top} != plugin.json ${plugin.version}`);
+const unreleasedAt = changelog.search(/^##\s+Unreleased\b/m);
+const topAt = changelog.search(/^##\s+[0-9]+\.[0-9]+\.[0-9]+/m);
+if (unreleasedAt > -1 && topAt > -1 && unreleasedAt > topAt) errors.push(`CHANGELOG "## Unreleased" sits below release ${top}; a release folds that section into its own entry`);
 if (errors.length) { errors.forEach(e => console.error("  " + e)); process.exit(1); }
 console.log(`  plugin.json, marketplace.json and CHANGELOG.md all at ${plugin.version}`);
 '; then

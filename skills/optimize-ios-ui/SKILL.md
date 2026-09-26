@@ -59,7 +59,7 @@ Unified report with:
 
 ## Execution mode
 
-Dispatch on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the optimization scope is small, run a specialist's review inline in the main context instead of dispatching a separate agent -- without weakening the read-only guarantee the reviewer agents carry. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
+The session picks the model for each dispatch; the plugin sets no model or effort level. When the optimization scope is small, run a specialist's review inline in the main context instead of dispatching a separate agent -- without weakening the read-only guarantee the reviewer agents carry. Shared mechanics: `references/_scaffolding/dispatch-protocol.md`.
 
 
 ## Review ledger (write it, without asking)
@@ -75,11 +75,11 @@ from a different scope is not a prior run for this scope.
 
 ## Fanning out on a wide scope
 
-A codebase-wide motion and performance sweep splits into inventory and judgment. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard 2-specialist dispatch above unchanged.
+A codebase-wide motion and performance sweep splits into inventory and judgment. Dispatch mechanics: `references/_scaffolding/dispatch-protocol.md`. On an ordinary scope, run the standard 2-specialist dispatch above unchanged.
 
 **Split of labor**
 
-| Stays with the session | Fans out well |
+| Needs the whole scope in view | Fans out well |
 |---|---|
 | Animation/haptic/performance verdicts, spring-parameter judgment, conflict resolution (heavier spring vs hitch), apply/no-apply judgment, final report synthesis | Instrumentation sweeps: body-reevaluation candidates, animation inventory (curve/spring params per site), haptic-trigger inventory, scroll-container census; post-approval mechanical application of approved parameter changes |
 

@@ -66,7 +66,7 @@ All findings are advisory. The user chooses what to apply.
 
 ## Execution mode
 
-Dispatch on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the review scope is small, run a specialist's review inline in the main context instead of dispatching a separate agent -- without weakening the read-only guarantee the reviewer agents carry. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
+The session picks the model for each dispatch; the plugin sets no model or effort level. When the review scope is small, run a specialist's review inline in the main context instead of dispatching a separate agent -- without weakening the read-only guarantee the reviewer agents carry. Shared mechanics: `references/_scaffolding/dispatch-protocol.md`.
 
 
 ## Review ledger (write it, without asking)
@@ -82,11 +82,11 @@ from a different scope is not a prior run for this scope.
 
 ## Fanning out on a wide scope
 
-A scope too wide for one pass per dimension splits into an evidence sweep and a grading pass. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard 3-specialist dispatch above unchanged.
+A scope too wide for one pass per dimension splits into an evidence sweep and a grading pass. Dispatch mechanics: `references/_scaffolding/dispatch-protocol.md`. On an ordinary scope, run the standard 3-specialist dispatch above unchanged.
 
 **Split of labor**
 
-| Stays with the session | Fans out well |
+| Needs the whole scope in view | Fans out well |
 |---|---|
 | Per-dimension verdicts, severity grading, finding dedup across dimensions, final report synthesis | Per-screen evidence sweeps (one agent per screen group): HIG deviations, contrast pairs, touch-target measurements, Dynamic Type breakpoints -- raw evidence tables for the session and the 3 specialists to grade |
 
@@ -94,4 +94,4 @@ A scope too wide for one pass per dimension splits into an evidence sweep and a 
 - Each agent owns one screen group (non-overlapping) and gets the evidence-table format inline.
 - Reference set: absolute paths of the review dimension's reference files + `references/_scaffolding/version-floor-registry.md`.
 - Inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- An evidence sweep returns evidence. The verdict is the specialist's and the severity is the session's.
+- An evidence sweep returns evidence. The specialists grade it, and the merge reconciles their severities.

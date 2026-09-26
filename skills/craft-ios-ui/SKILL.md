@@ -10,7 +10,7 @@ The full Apple UI treatment. Five specialists review every dimension of the app'
 
 ## Dispatch
 
-This skill dispatches a single orchestrator. **Do NOT dispatch it via the plugin namespace** under this plugin's established orchestration contract. `Agent` access depends on runtime tool grants and nesting depth.
+This skill dispatches a single orchestrator, `craft-team-lead`, as `general-purpose` with its body inlined rather than through the plugin namespace: the lead needs the `Agent` tool to dispatch its team, and `Agent` access depends on runtime tool grants and nesting depth.
 
 Resolve the plugin root first: `${CLAUDE_PLUGIN_ROOT}` is substituted with this plugin's install root when the skill loads (fallback: the parent of this skill's base directory, two levels up from `skills/craft-ios-ui/SKILL.md`). Every agent body and every `references/...` path the team lead and its specialists read resolves against that root, so pass it explicitly. Then dispatch:
 
@@ -24,7 +24,7 @@ Agent({
 })
 ```
 
-The team lead then dispatches all 5 review specialists. It inlines each specialist's body into a `general-purpose` dispatch as required by this plugin's established orchestration contract (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md`). Inlining is required, not stylistic:
+The team lead then dispatches all 5 review specialists the same way, each specialist's body inlined into a `general-purpose` dispatch (see "How this agent is dispatched" in `agents/craft-team-lead.md`):
 1. `apple-ui-reviewer` -- HIG, Liquid Glass, typography, color, navigation, layout
 2. `animation-haptics-engineer` -- motion, springs, haptic design, Reduce Motion
 3. `accessibility-engineer` -- VoiceOver, Dynamic Type, contrast, motor, cognitive
@@ -110,7 +110,7 @@ One failed item -> one re-dispatch to the offending agent with the concrete gap 
 
 ## Execution mode
 
-Dispatch the team lead and its 5 specialists on the model the session chooses (Opus 5 is the usual default for design, review and implementation); never pin `model:` or `effort:`. When the review scope is small, run a specialist's review inline in the main context instead of dispatching a separate agent -- without weakening the read-only guarantee the reviewer agents carry. Shared mechanics: `references/_scaffolding/conductor-dispatch-protocol.md#dispatch-policy`.
+The session picks the team lead's model, and the lead picks each specialist's; the plugin sets no model or effort level. When the review scope is small, run a specialist's review inline in the main context instead of dispatching a separate agent -- without weakening the read-only guarantee the reviewer agents carry. Shared mechanics: `references/_scaffolding/dispatch-protocol.md`.
 
 
 ## Review ledger (write it, without asking)
@@ -139,15 +139,15 @@ adoption guide: `ci/README.md`.
 
 ## Fanning out on a wide scope
 
-A project-wide sweep splits into evidence collection and grading. Dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`. On an ordinary scope, run the standard dispatch above unchanged.
+A project-wide sweep splits into evidence collection and grading. Dispatch mechanics: `references/_scaffolding/dispatch-protocol.md`. On an ordinary scope, run the standard dispatch above unchanged.
 
 **Split of labor**
 
-| Stays with the session | Fans out well |
+| Needs the whole scope in view | Fans out well |
 |---|---|
-| Scope decision, severity verdicts, finding dedup + conflict resolution, apply/no-apply judgment, final report synthesis, anything security- or accessibility-verdict-shaped | Recon inventory (map screens/views per scope, SwiftUI-vs-UIKit split, deployment target); per-screen evidence collection against each specialist's checklist; post-approval mechanical application of approved findings (worktree-isolated, one screen-set per agent) |
+| Scope decision, severity verdicts, finding dedup + conflict resolution, apply/no-apply judgment, final report synthesis | Recon inventory (map screens/views per scope, SwiftUI-vs-UIKit split, deployment target); per-screen evidence collection against each specialist's checklist; post-approval mechanical application of approved findings (worktree-isolated, one screen-set per agent) |
 
 **Scoping the sweep (on top of what the protocol says a prompt carries)**
 - Reference set per dimension from the ARCHITECTURE reference<->agent matrix + `references/_scaffolding/version-floor-registry.md`.
 - When reviewing motion, translucency, or custom controls, inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- Phase map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection fan out; the 5 specialist reviews are dispatched as usual; merge and report (Process steps 3-4) stay with the session; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated.
+- Phase map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection fan out; the 5 specialist reviews are dispatched as usual; merge and report (Process steps 3-4) stay with the team lead; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated.

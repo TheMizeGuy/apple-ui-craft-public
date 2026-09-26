@@ -2,27 +2,33 @@
 
 Shared dispatch mechanics for every apple-ui-craft skill. Skills state WHAT to scope (their
 split-of-labor table plus dimension-specific reference sets); this file states HOW to dispatch.
-Read it once per task, before the first dispatch. Keeping these rules in one file is deliberate:
-six per-skill copies drifted out of sync once already.
+Keeping these rules in one file is deliberate: six per-skill copies drifted out of sync once
+already.
 
 ## Dispatch policy
 
-Three rules, and nothing else about models belongs in this plugin:
-
-1. **The dispatching session chooses the model, per dispatch.** Dispatch on the model the
-   session chooses (Opus 5 is the usual default for design, review and implementation). Never
-   pin `model:` or `effort:` on a dispatch, and never put a model pin in agent frontmatter.
-2. **Judgment stays with the session that dispatched.** Severity grades, rankings,
-   apply/no-apply decisions, design origination, and final synthesis are the dispatching
-   session's. A specialist returns what it found; the session decides what it means.
+1. **The session picks the model for each dispatch.** Nothing in this plugin sets a model or
+   an effort level: agent frontmatter carries no model pin, and no skill or agent names one.
+2. **Judgment happens where the whole picture is.** Severity calibration across screens,
+   dedup, conflict resolution, rankings, and apply/no-apply decisions need every result in
+   view, so they happen where the results come together: each specialist grades its own
+   dimension, and the merge reconciles them. An evidence sweep on a wide scope sees only its
+   slice, so it returns what it found rather than a verdict.
 3. **Output goes in the final message.** A dispatched agent writes its findings to a file
    only if they exceed a few KB, and then returns the path; otherwise it returns them
-   directly. There is no report-file contract to satisfy.
+   directly.
 
 ## Dispatch mechanics
 
-- Plugin specialist agents (`apple-ui-craft:*`) are dispatched as `general-purpose` with the
-  agent file's body inlined as the prompt prefix:
+- The skills dispatch specialists by their plugin name (`apple-ui-craft:<agent>`). The
+  exception is `craft-ios-ui`: `craft-team-lead` needs the `Agent` tool to dispatch its team,
+  and `Agent` access depends on runtime tool grants and nesting depth, so the lead is
+  dispatched as `general-purpose` with its agent-file body inlined as the prompt prefix.
+- The lead also inlines each of its five specialists' bodies under `general-purpose`. A
+  specialist needs no `Agent` tool, and that dispatch drops its read-only tool grant (its
+  frontmatter carries no `Edit` or `Write`), so each specialist prompt states that it is
+  read-only: the inlined body carries the specialist's own read-only rule, which is why the
+  body goes in whole.
 
 ```
 Agent({
@@ -54,8 +60,8 @@ items on top):
 2. Absolute paths of the reference files for its dimension, plus
    `references/_scaffolding/version-floor-registry.md`.
 3. Whether it is collecting evidence or forming a verdict, so it knows which one to return.
-4. The escalation rule: two failed attempts at the same step, or genuine spec ambiguity ->
-   report the blocker, the options, and a recommendation, and return early instead of guessing.
+4. What to do when blocked: on genuine spec ambiguity or a step that will not yield, report
+   the blocker, the options, and a recommendation instead of guessing.
 
 ## Reading what comes back
 

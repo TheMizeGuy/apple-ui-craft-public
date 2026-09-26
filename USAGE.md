@@ -145,11 +145,11 @@ Reviews are **read-only by default.** Findings are advisory. The orchestrator ap
 
 On an ordinary scope a skill dispatches its specialists directly and that is the whole story. On a scope too wide for one pass per dimension, the skills split the work. You do not do anything differently:
 
-- **Your session picks the model for every agent it dispatches** (Opus 5 is the usual default for design, review and implementation). Nothing in the plugin pins a model or an effort level.
+- **Your session picks the model for every agent it dispatches.** Nothing in the plugin pins a model or an effort level.
 - **Evidence collection fans out; judgment does not.** Reconnaissance inventory, per-screen evidence collection, instrumentation sweeps, component scaffolding, and post-approval mechanical application split cleanly across agents, each with a non-overlapping file set, the dimension's reference paths plus the version-floor registry, and the skill's inlined check tables. Scope decisions, severity grading, dedup, conflict resolution, and the final report stay in one place.
 - **Results are checked before they reach you** -- claims spot-checked against the actual files, and the `git diff` read whenever an agent wrote code.
 
-Shared dispatch mechanics: `references/_scaffolding/conductor-dispatch-protocol.md`.
+Shared dispatch mechanics: `references/_scaffolding/dispatch-protocol.md`.
 
 
 ## The reference library
@@ -178,7 +178,7 @@ Run both before shipping: one clears the gate, the other earns the delight.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `craft-ios-ui` produces nothing, or the team lead can't fan out to specialists | The team lead lacks Agent access or remaining nesting depth, or the skill's dispatch contract was bypassed | Dispatch `craft-team-lead` as `general-purpose` with its agent-file body inlined as the prompt prefix (see the RUNTIME DISPATCH NOTE in `agents/craft-team-lead.md` and the Dispatch section of `skills/craft-ios-ui/SKILL.md`) |
+| `craft-ios-ui` produces nothing, or the team lead can't fan out to specialists | The team lead lacks Agent access or remaining nesting depth, or it was dispatched through the plugin namespace instead of as `general-purpose` | Dispatch `craft-team-lead` as `general-purpose` with its agent-file body inlined as the prompt prefix (see "How this agent is dispatched" in `agents/craft-team-lead.md` and the Dispatch section of `skills/craft-ios-ui/SKILL.md`) |
 | The GoodMem search step is silently skipped | The GoodMem MCP is not configured, or is unreachable, in this session | Expected behavior -- no memory service is required. The space and reranker IDs inlined in the agent files are the plugin author's; substitute your own if you run GoodMem |
 | A finding or design suggests an API that does not compile | Training data is stale for iOS-26-era APIs (Liquid Glass, `.sensoryFeedback`, App Intents) | Check `references/_scaffolding/version-floor-registry.md`'s PHANTOM list, and verify the API shape with Context7 before applying the suggestion |
 | A review dispatches its specialists directly instead of fanning out an evidence sweep first | The scope is narrow enough that a sweep would add a hop and nothing else | Expected -- the fan-out is for wide scopes only (see [How the skills fan out](#how-the-skills-fan-out)); no action needed |
@@ -200,4 +200,4 @@ Run both before shipping: one clears the gate, the other earns the delight.
 
 **How do I get the most out of a review?** Scope it. Point a skill at the screen or flow you care about rather than the whole project, and you get denser, more actionable findings.
 
-**Which model runs this?** Whichever your session chooses for each dispatch -- Opus 5 is the usual default for design, review and implementation. The plugin pins no model and no effort level, so it inherits whatever your session policy is.
+**Which model runs this?** Whichever your session chooses for each dispatch. The plugin pins no model and no effort level, so it inherits whatever your session policy is.
