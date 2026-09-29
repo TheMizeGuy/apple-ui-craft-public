@@ -2,6 +2,15 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.6.2 -- 2026-09-29
+
+A device-only launch crash is now designed out and reviewed for: SwiftUI running the main thread out of stack while building the first frame, which passes Debug builds, Release on the Simulator and archives, then crashes on users' phones.
+
+- `references/performance/03-launch-memory-instruments.md` gains "Launch crash: stack exhaustion at first render": the crash signature, the three stack consumers (AttributeGraph naming any attribute type of 8,192 B or more, `ModifiedContent` nesting decoded at runtime on device Release builds, native `_makeView` depth from modifiers wrapped around the root), launch-path rules with a worked root view, and a runtime-measuring guard. Three anti-pattern rows and a CRITICAL severity line cover it.
+- `performance-engineer` checks the root and first screen against that budget under launch-time impact, CRITICAL when a root change ships without a device Release launch.
+- `apple-ui-architect` keeps the app root shallow by construction: observers on a zero-size sibling, heavy overlay content behind a nominal `View`, long modifier runs as one `ViewModifier`. Its read scope now includes the launch-crash section of `performance/03`.
+- `review-ios-ui` adds a launch-path line to its report whenever the scope touches the app root or first screen, since its three specialists do not check it; `methodology/01`'s stored-closure rule names the launch-path size boundary as its one exception.
+
 ## 0.6.1 -- 2026-09-25
 
 The dispatch notes are in plain words: no model version, no leftover control-layer wording, and no all-caps refusal in the team lead. Dispatch mechanics are unchanged.

@@ -109,6 +109,7 @@ The most common iOS performance problem: views re-evaluating their body unnecess
 | No heavy work in app init | SDK init, analytics, remote config deferred to after first frame | HIGH |
 | Root view renders immediately | No blocking network call or database migration before first render | CRITICAL |
 | Lazy singletons | `static let shared = ...` (lazy by default in Swift) | MEDIUM |
+| Root and first screen within the stack budget | Launch-path view values and bodies under 8,192 B, including what a boundary view holds; no `some View` helper chains, long modifier chains or observer stacks wrapped around the root; a device Release launch for any change there (`references/performance/03-launch-memory-instruments.md#launch-crash-stack-exhaustion-at-first-render`) | CRITICAL when a change adds wrappers, modifiers or observers at or above the root, or inline `.overlay {}` / `.background {}` / `.safeAreaInset {}` content on the launch path, until the developer reports a device Release launch; HIGH for a launch-path value at or near 8,192 B, or no measuring guard, on an unchanged path |
 | Off-main work is actually off main | Under Xcode 27's approachable-concurrency defaults an unannotated `nonisolated async` function runs on the main actor; decode, parse and sort work needs `@concurrent` | HIGH when it blocks the first frame or a scroll |
 
 ## Grep patterns for common issues

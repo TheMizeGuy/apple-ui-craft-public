@@ -35,6 +35,7 @@ After all 3 complete, merge findings:
 - Group by screen/file
 - If two specialists' recommendations conflict, present both with the trade-off named -- never silently pick one
 - Present unified report with per-dimension verdicts
+- If the scope touches the `@main` App, a wrapper or modifier at or above the scene root, or the first screen, add one line to the report, because none of these three specialists checks it: "Launch path changed: run optimize-ios-ui (performance-engineer, launch-time impact) and launch a Release build on a physical device before upload (`references/performance/03-launch-memory-instruments.md#launch-crash-stack-exhaustion-at-first-render`)."
 
 **Carry NOT ASSESSED through unchanged.** `apple-ui-reviewer` covers four
 dimensions that need a sequence, a configuration change, or a measurement (task

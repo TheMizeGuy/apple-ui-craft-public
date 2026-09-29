@@ -36,7 +36,7 @@ Every `references/...` path below is relative to the plugin's install root, not 
 | Animation + feel | `animation/01-animation-fundamentals.md`, `animation/02-spring-physics.md` | `animation/03`..`animation/07`, `interaction/01`..`interaction/06` (motion choreography; the FEEL layer: interruptibility, fluid transitions, direct manipulation, gestures, press feedback, custom controls) |
 | Haptics | `haptics/01-haptic-design-principles.md` | `haptics/02-swiftui-sensory-feedback.md` (the SensoryFeedback owner) |
 | Accessibility | `accessibility/01-voiceover-fundamentals.md`, `accessibility/03-visual-accessibility.md`, `accessibility/05-motion-accessibility.md` | `accessibility/02`, `04`, `06`, `07` (Dynamic Type, motor, localization/RTL, cognitive/hearing) |
-| Architecture + platform | `patterns/01-gotchas-anti-patterns.md` | `performance/04-state-architecture.md`, `platform/09-scene-lifecycle.md`, `methodology/01-component-api-design.md`, `methodology/02-previews-design-qa.md` (the preview-matrix discipline for step 5), `methodology/04-whatsnew-sota-log.md` (API currency before emitting anything recent) |
+| Architecture + platform | `patterns/01-gotchas-anti-patterns.md` | `performance/03-launch-memory-instruments.md#launch-crash-stack-exhaustion-at-first-render` (any app root, scene root or first screen), `performance/04-state-architecture.md`, `platform/09-scene-lifecycle.md`, `methodology/01-component-api-design.md`, `methodology/02-previews-design-qa.md` (the preview-matrix discipline for step 5), `methodology/04-whatsnew-sota-log.md` (API currency before emitting anything recent) |
 | Usability + flow | `usability/01-task-flows-and-journeys.md` (step 3 depends on it) | `usability/02`..`usability/04` (forms and error recovery, navigation and IA, states/feedback/affordances) -- the dimensions that decide whether the screen you designed can be finished |
 | Adaptive + economy | `usability/05-adaptive-review-method.md` (step 4b depends on it) | `review/03-density-and-economy.md` (whether regular width is EARNED), `design/08-adaptive-layout-ipad.md` (the APIs) |
 | Worked exemplars | `exemplars/01-glass-screen.md` | `exemplars/02`..`05` (motion+haptics, accessibility, perf list, platform integration) -- complete screens showing every rule above applied together; steal their structure |
@@ -185,6 +185,7 @@ Your code must be:
 - Alerts and confirmation dialogs driven by data: `.alert(_:item:)`, `.confirmationDialog(_:item:)`, or `.alert(error:)`, not a `Bool` plus a separate optional (Xcode 27; runs back to iOS 15)
 - `LazyVStack` for unbounded content in `ScrollView`
 - `#Preview` macro (not `PreviewProvider`)
+- A shallow app root and first screen: observers and side-effect modifiers go on a zero-size sibling, not wrapped around the root; heavy overlay and inset content goes behind a nominal `View` struct (a `some View` property is not one); a long run of modifiers becomes one `ViewModifier`. A deep root can crash on launch on devices while every Simulator run passes (`references/performance/03-launch-memory-instruments.md#launch-crash-stack-exhaustion-at-first-render`)
 
 **Visually Apple-native:**
 - System font styles (`.title`, `.headline`, `.body`, `.caption`) -- never hardcoded sizes

@@ -23,7 +23,7 @@ Every reusable SwiftUI component makes the same handful of API decisions Apple's
 | Generic parameterized view | Reusable over a caller-supplied data type | `List(items) { }`, `ForEach` | `SelectableList<Item, Row>` |
 | Style protocol | Consumers re-skin without re-implementing behavior | `ButtonStyle`, `LabelStyle` | see "Building your own styleable component" below |
 
-For a single slot, put the `@ViewBuilder` LAST so it becomes the trailing closure, and capture the built value once in `init` rather than storing the closure and re-invoking it in `body` -- re-invocation defeats view identity and can re-run side effects:
+For a single slot, put the `@ViewBuilder` LAST so it becomes the trailing closure, and capture the built value once in `init` rather than storing the closure and re-invoking it in `body` -- re-invocation defeats view identity and can re-run side effects. The one exception is a launch-path size boundary (`references/performance/03-launch-memory-instruments.md#launch-crash-stack-exhaustion-at-first-render`):
 
 ```swift
 struct Card<Content: View>: View {
@@ -250,7 +250,7 @@ Default to the plain array. A hand-rolled builder for a 3-call-site component is
 |---|---|---|
 | 8+ non-defaulted `init` parameters | Unreadable call site, brittle to reorder | Data-only `init`; optional config on modifiers/environment |
 | `Bool` flags for variants (`isDestructive:`, `big:`) | Doesn't scale, unreadable at N flags | A semantic enum or `OptionSet` (`role: .destructive`) |
-| Storing a `@ViewBuilder` closure and re-invoking it in `body` | Defeats view identity, can re-run side effects | Capture the built value once in `init` |
+| Storing a `@ViewBuilder` closure and re-invoking it in `body` | Defeats view identity, can re-run side effects | Capture the built value once in `init`. Exception: a launch-path size boundary (`references/performance/03-launch-memory-instruments.md#launch-crash-stack-exhaustion-at-first-render`) |
 | `@State private var expanded = false` plus `_expanded = State(initialValue: startsExpanded)` in the component's `init` | Xcode 27's `@State` macro rejects a declaration-site value AND an `init` assignment on the same property; it no longer compiles | Declare `@State private var expanded: Bool` with no default and assign once in `init` -- and remember the seed is read only once (`references/performance/04-state-architecture.md#state-ownership-and-the-initialization-trap`) |
 | A public `.modifier(FooModifier())` call site | Leaks an implementation type, reads awkwardly | Wrap in a named `View` extension |
 | `AnyView`-erased style body on a hot list row | Defeats structural diffing at scale | Plain parameterized view or `ViewModifier` instead |

@@ -93,7 +93,7 @@ apple-ui-craft/
     ├── performance/
     │   ├── 01-swiftui-rendering.md          OWNER: animation cost table, body eval, Equatable
     │   ├── 02-scroll-list-performance.md    hitches, prefetching, image handling, drawingGroup
-    │   ├── 03-launch-memory-instruments.md  launch phases, MetricKit, Instruments, jetsam
+    │   ├── 03-launch-memory-instruments.md  launch phases, first-render stack crash, MetricKit, Instruments, jetsam
     │   ├── 04-state-architecture.md         @Observable, @State/@Bindable, observation granularity
     │   ├── 05-display-promotion-color.md    ProMotion 120Hz, wide gamut, HDR
     │   ├── 06-concurrency-ui.md             .task/.task(id:), @MainActor, Swift 6.2 concurrency
@@ -182,7 +182,7 @@ Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appe
 
 | Agent | Owns / reads |
 |---|---|
-| `apple-ui-architect` | design/* (all), patterns/* (all), animation/*, interaction/*, haptics/01-02, accessibility/01-06, performance/04, platform/09, methodology/01-02, methodology/04, **usability/01 (step 3, task flow) + usability/02-05**, **review/03** (whether regular width is earned), exemplars/* (all -- worked screens to steal structure from). Start: design/01-02, patterns/00-01, usability/01 |
+| `apple-ui-architect` | design/* (all), patterns/* (all), animation/*, interaction/*, haptics/01-02, accessibility/01-06, performance/03 (launch-crash rules) + performance/04, platform/09, methodology/01-02, methodology/04, **usability/01 (step 3, task flow) + usability/02-05**, **review/03** (whether regular width is earned), exemplars/* (all -- worked screens to steal structure from). Start: design/01-02, patterns/00-01, usability/01 |
 | `apple-ui-reviewer` | design/* (all), patterns/* (all), interaction/*, accessibility/01-05, methodology/03-04 (Apple-sample calibration + API currency), **review/01-03 (format, evidence, density)**, **usability/01-05 (dimensions 9-12)**. Start: review/01-02, design/01-02, design/07, patterns/01. Runs the 11-row a11y/perf gate |
 | `animation-haptics-engineer` | animation/* (all), interaction/* (all), haptics/* (all), accessibility/05, **review/01-02**. Owns interaction/ + haptics/ |
 | `accessibility-engineer` | accessibility/* (all, and **08-wcag-2-2-mapping.md is the audit checklist**), design/03-04, design/06, patterns/01, **review/01-02**, **usability/01-05** (the structural WCAG criteria: 3.3.x, 3.2.3, and the Dynamic Type analogues of 1.4.4/1.4.10). Owns accessibility/ |

@@ -1,6 +1,6 @@
 # Launch, Memory, and Instruments
 
-> Owner: `references/performance/03-launch-memory-instruments.md` owns launch-phase timing and targets, the Instruments decision framework (Time Profiler, Allocations, Leaks, Hangs, Animation Hitches, the SwiftUI Instrument), MetricKit + Xcode Organizer field telemetry, XCTest performance-gate metrics, and the `phys_footprint`/jetsam memory model including image-decode memory cost. `references/performance/01-swiftui-rendering.md` owns body-evaluation cost and the animation cost table; `references/performance/02-scroll-list-performance.md` owns the scroll-specific hitch-severity table and the cell image-loading pipeline -- this file cites both rather than restating them.
+> Owner: `references/performance/03-launch-memory-instruments.md` owns launch-phase timing and targets, the first-render stack-exhaustion launch crash, the Instruments decision framework (Time Profiler, Allocations, Leaks, Hangs, Animation Hitches, the SwiftUI Instrument), MetricKit + Xcode Organizer field telemetry, XCTest performance-gate metrics, and the `phys_footprint`/jetsam memory model including image-decode memory cost. `references/performance/01-swiftui-rendering.md` owns body-evaluation cost and the animation cost table; `references/performance/02-scroll-list-performance.md` owns the scroll-specific hitch-severity table and the cell image-loading pipeline -- this file cites both rather than restating them.
 > Floors: see `references/_scaffolding/version-floor-registry.md` for every version cited below. MetricKit's `MX`-prefixed family is deprecated in the iOS 27 SDK; the Swift-native replacement is gated `#available(iOS 27, *)` throughout, because the install base is still overwhelmingly iOS 26 and earlier.
 
 A hitch, a hang, and a slow launch are the same failure at different timescales: main-thread work that missed its deadline. This file is the measurement layer -- which tool answers which question, which field metric is real vs. deprecated vs. phantom, and the `phys_footprint`/jetsam arithmetic that decides whether your app gets killed. Get the wrong metric class and you optimize a number nobody's phone reports; get the wrong memory field and you ship an app that OOMs on a 4GB device while `resident_size` looks fine on your Pro Max.
@@ -394,6 +394,54 @@ cache.setObject(image, forKey: url as NSURL, cost: Int(image.size.width * image.
 
 **iOS 27 moves Neural Engine memory onto your ledger.** Neural Engine allocations are now attributed to the app process instead of the system and appear in the Allocations instrument for the first time, so an app using Foundation Models or a Core ML model that sat comfortably inside its limit on iOS 26 can start taking OOM kills on iOS 27 with no code change. Re-measure `phys_footprint` on iOS 27 before shipping. iOS 27 also restricts background Neural Engine access the way it already restricted GPU use -- background inference needs the `com.apple.developer.background-tasks.continued-processing.inference` entitlement -- and improves load performance for models over 1 GB.
 
+## Launch crash: stack exhaustion at first render
+
+A build can pass every test and still crash on launch for users: SwiftUI runs the main thread out of stack while building the first frame. The crash log shows `EXC_BAD_ACCESS` / `KERN_PROTECTION_FAILURE` on the stack guard page ("Thread stack size exceeded due to excessive recursion" or "Could not determine thread index for stack guard region"), Swift demangler or `TypeDecoder` recursion under SwiftUI's first-render frames (`_makeView`, or AttributeGraph updating a root `body.getter` under `_UIHostingView.layoutSubviews`), and no app code beyond `main` or that one `body.getter`. The OS elides the middle of such a stack, so frame numbers jump by hundreds or thousands (213 -> 1870); the gap is the recursion depth.
+
+Whether it fires depends on the stack left for each device, OS version and restored state. In the incidents behind this section, some builds crashed for every tester, and others crashed on an iPhone 11 and an iPhone 15 Pro Max on iOS 26.3.x while testers on newer iOS versions launched fine. Debug test suites, Release builds on the Simulator and `xcodebuild archive` all passed on trees that crashed. The reproductions were Release builds on physical devices, plus one optimized Release copy with its main-thread stack forced down to 768 KB.
+
+Three consumers of the same stack add up:
+
+| Consumer | Mechanism | Measured |
+|---|---|---|
+| Attribute size | AttributeGraph names every attribute type of 8,192 B or more at first render (its "large attribute" INFO log is on by default), and naming a type runs the Swift runtime demangler, which recurses once per nested generic level. An inline subtree in `.overlay {}`, `.background {}`, `.safeAreaInset {}` or container content is stored by value and inflates the parent's `Body` | A 10,482 B body inside a floating composer overlay crashed an iPhone 11 and an iPhone 15 Pro Max; closure boundaries took it to 50 B |
+| Type nesting | Each modifier wraps the view in another `ModifiedContent<...>`; device Release code can instantiate that metadata from a mangled name at runtime | A root body with 42 outermost modifiers launched; 43 crashed on every launch |
+| Construction depth | Each modifier wrapped around the root adds native `_makeView` frames before the child is built | 96 `.onChange(of:)` observers around a root view added 728 frames |
+
+The launch path is the app root plus everything the first frame renders: wrappers and modifiers applied at or above the scene root (often defined in other files, such as a settings extension), the first screen, its overlays, insets, toolbars and list rows, `UIHostingConfiguration` cells, and the screen restored from saved state. On that path:
+
+- Keep every launch-path attribute value under 8,192 B, with margin, since sizes move by tens of bytes between OS versions: each view struct (`MemoryLayout<V>.size`), each `Body` (`MemoryLayout<V.Body>.size`), and each closure-produced value.
+- Collapse a long run of modifiers into one non-generic `ViewModifier`, or extract subtrees into nominal `View` structs. `ViewModifier.concat` and re-ordering keep the same node count and do not help. A `some View` computed property or helper function is not a boundary: its concrete type and bytes land in the caller's `Body`, and one crashing release grew its root body through 16 such helpers while every guard stayed green.
+- Put heavy inline content behind a boundary view that stores the builder closure instead of the built value, so the parent stores a closure. The boundary does not shrink what it holds (`AttributeBoundary<C>.Body` is `C`), so content that is itself 8,192 B or more still has to be split into smaller nominal views. Its body re-runs whenever its parent's body does, because SwiftUI cannot compare closures, so use it only where the size budget needs it and keep side effects out of the closure. This is the one exception to the stored-closure rule in `references/methodology/01-component-api-design.md`.
+- Mount observers and side-effect modifiers (`.onChange`, `.onReceive`, `.task`, and presenters that do not anchor to a source view, such as `.sheet`, `.fullScreenCover` and `.alert`) on a zero-size sibling, never wrapped around the root. Keep `.popover` and `.confirmationDialog` on the control that triggers them, or they point at the middle of the window at regular width.
+
+```swift
+struct AttributeBoundary<Content: View>: View {
+    private let content: () -> Content
+    init(@ViewBuilder _ content: @escaping () -> Content) { self.content = content }
+    var body: some View { content() }
+}
+
+struct RootView: View {
+    @State private var settings = SettingsModel()
+
+    var body: some View {
+        ChatScreen()
+            .safeAreaInset(edge: .bottom) { AttributeBoundary { ComposerView() } }   // stores a closure, not the subtree
+            .background {
+                Color.clear.frame(width: 0, height: 0)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                    .modifier(SettingsAutoSave(settings: settings))              // observers as a sibling, not a wrapper
+            }
+    }
+}
+```
+
+Fix the consumer that overflowed: shrinking the root `Body` from 7,480 B to 712 B did not stop a crash caused by observer depth.
+
+Gate it with a test that measures from the scene root: `MemoryLayout<V.Body>.size` for every launch-path body, including closure-produced values (`ForEach` rows, `GeometryReader` bodies, `UIHostingConfiguration` cell roots); the generic nesting of `_typeName(V.Body.self, qualified: true)`; and the native frames added above a mounted child. Give the test a positive control (a deliberately oversize type it must flag) and a minimum-count check, because a walker that silently stops matching looks like a healthy tree, and never raise its budget to go green. Before upload, a launch-path change needs a Release build launched on a physical device running the oldest iOS your users run, cold and again with restored state. A Simulator launch never clears it.
+
 ## Accessibility contract
 
 This file instruments performance -- it has no direct Reduce Motion, VoiceOver, or Dynamic Type surface of its own. What it protects: the hang-rate and hitch-ratio targets gated here are the mechanical floor underneath `references/accessibility/05-motion-accessibility.md`'s vestibular-safety contract. A screen that correctly gates every `withAnimation(`/`.animation(_:value:)` call under Reduce Motion but still hangs or hitches is still perceived as uncontrolled motion by the user -- stutter reads as motion even when no `Animation` value fired. Treat a hang/hitch fix as unconditional (never gated on `accessibilityReduceMotion`); only the animated-transition choice itself is conditional.
@@ -414,10 +462,13 @@ This file instruments performance -- it has no direct Reduce Motion, VoiceOver, 
 | A widget/notification extension decoding a full-resolution source image | Extension ceilings (~24-30 MB) are far below the host app's; instant kill | Downsample to the exact rendered size before drawing; prefer vector assets |
 | Declaring a hitch fix from one "feels smoother" pass | Subjective, not attributable to the specific change | Re-run Animation Hitches and diff with Run Comparison against the pre-fix baseline trace |
 | A plain `Dictionary`-backed image cache | Never evicts -- grows unbounded, contributes to OOM | `NSCache` with `totalCostLimit`, participates in system eviction |
+| Observers and side-effect modifiers wrapped around the root view | Each adds native `_makeView` frames before the child is built; 96 of them ran the main thread out of stack at first render on devices | Mount them on a zero-size `.background` sibling ([launch crash](#launch-crash-stack-exhaustion-at-first-render)) |
+| A large inline subtree in `.overlay {}` / `.safeAreaInset {}` on a launch-path body | Stored by value; a `Body` of 8,192 B or more triggers AttributeGraph's type-name walk at first render | A nominal `View` or a closure-storing boundary view; keep launch-path bodies under 8 KB |
+| Clearing a launch-path change with a Simulator or Debug launch | Every crashing build passed the Debug suite and launched on the Simulator; Debug emits the nesting metadata statically | A Release build on a physical device running the oldest iOS your users run, cold and with restored state |
 
 ## Severity guide
 
-- **CRITICAL**: unbounded memory growth or a jetsam/OOM risk shipping to users, or a widget/extension blowing its process ceiling.
+- **CRITICAL**: unbounded memory growth or a jetsam/OOM risk shipping to users, a widget/extension blowing its process ceiling, or a launch-path change (root wrappers, modifiers or observers; new inline overlay or inset content on the launch path) with a first-render stack-exhaustion risk and no device Release launch.
 - **HIGH**: a launch or hitch regression that crosses the CI baseline threshold, or a wrong metric class producing false confidence (deprecated or phantom API treated as the source of truth).
 - **MEDIUM**: a mis-measured number (prewarming-skewed launch time, a hitch "fixed" without a hitch-ratio re-measurement) that could silently mask a real regression.
 - **LOW**: an order-of-magnitude heuristic (framework-load cost, extension ceilings) presented with false precision.
