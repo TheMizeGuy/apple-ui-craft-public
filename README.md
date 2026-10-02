@@ -156,8 +156,8 @@ The session that runs a skill chooses the model for each agent it dispatches; no
 
 - 88-file iOS Development vault (~103,000 lines), distilled into the reference library
 - A version-floor registry verified against Apple's symbol metadata (iOS 13 through iOS 27, with the 27.1/27.2 beta tier fenced)
-- GoodMem Learnings for prior debugging and audit findings
-- serena for symbol-level project navigation
+- GoodMem, when configured, for an optional query of prior debugging and audit findings
+- serena, when available, for symbol-level project navigation
 - Context7 for live Apple framework docs
 - XcodeBuildMCP, when available, for the Runtime evidence mode: build, run, `snapshot_ui` geometry, driven sequences
 

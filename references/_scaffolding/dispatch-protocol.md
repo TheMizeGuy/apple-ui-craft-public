@@ -3,7 +3,7 @@
 Shared dispatch mechanics for every apple-ui-craft skill. Skills state WHAT to scope (their
 split-of-labor table plus dimension-specific reference sets); this file states HOW to dispatch.
 Keeping these rules in one file is deliberate: six per-skill copies drifted out of sync once
-already.
+already. The last section, the optional memory query, is the one part the agents read too.
 
 ## Dispatch policy
 
@@ -68,3 +68,20 @@ items on top):
 Spot-check the claims against the files before anything reaches the user, and read the
 `git diff` when the agent wrote files. Re-dispatch once with the concrete gap named; on a
 second failure, take the work over directly rather than trying a third time.
+
+## Optional memory query
+
+Nothing in this plugin depends on a memory service, and no agent has to query one. When a
+GoodMem MCP is configured in the session and prior context on the project would help, an agent
+may run one `goodmem_memories_retrieve` query whose `message` names the project, the surface
+under review or design, and the technologies involved. What comes back is a lead to check
+against the code, never a finding. Skip the query when the tool is missing or the call fails,
+and do not report the skip.
+
+Fill in your own space IDs below.
+
+| Space | ID | Holds |
+|---|---|---|
+| Learnings | `<your-goodmem-learnings-space-id>` | Cross-project debugging and audit findings |
+| AppleUICraft | `<your-goodmem-project-space-id>` | The iOS research corpus this reference library was distilled from |
+| UserContext | `<your-goodmem-usercontext-space-id>` | The owner's stated preferences; useful for design work |

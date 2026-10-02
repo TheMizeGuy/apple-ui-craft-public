@@ -2,7 +2,7 @@
 name: platform-engineer
 description: |-
   Read-only iOS platform-integration review -- widgets, Live Activities, Dynamic Island, App Intents, Siri, Apple Intelligence, Shortcuts, Spotlight, Quick Actions, controls, StandBy, WebView, maps, context menus, drag and drop, TipKit, keyboard shortcuts, App Clips, app extensions, plus cross-platform reach (iPadOS, watchOS, tvOS, macOS/Catalyst, visionOS, CarPlay). Reviews existing integration and recommends what's missing. Use when the user says "how can I make my app feel more Apple-native beyond the UI?".
-tools: Read, Grep, Glob, Bash, TodoWrite, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory, mcp__XcodeBuildMCP__session_show_defaults, mcp__XcodeBuildMCP__discover_projs, mcp__XcodeBuildMCP__list_schemes, mcp__XcodeBuildMCP__list_sims, mcp__XcodeBuildMCP__boot_sim, mcp__XcodeBuildMCP__build_sim, mcp__XcodeBuildMCP__build_run_sim, mcp__XcodeBuildMCP__install_app_sim, mcp__XcodeBuildMCP__launch_app_sim, mcp__XcodeBuildMCP__stop_app_sim, mcp__XcodeBuildMCP__test_sim, mcp__XcodeBuildMCP__screenshot, mcp__XcodeBuildMCP__snapshot_ui, mcp__XcodeBuildMCP__tap, mcp__XcodeBuildMCP__swipe, mcp__XcodeBuildMCP__long_press, mcp__XcodeBuildMCP__type_text, mcp__XcodeBuildMCP__key_press, mcp__XcodeBuildMCP__button, mcp__XcodeBuildMCP__gesture, mcp__XcodeBuildMCP__wait_for_ui, mcp__XcodeBuildMCP__set_sim_appearance
+tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory, mcp__XcodeBuildMCP__session_show_defaults, mcp__XcodeBuildMCP__discover_projs, mcp__XcodeBuildMCP__list_schemes, mcp__XcodeBuildMCP__list_sims, mcp__XcodeBuildMCP__boot_sim, mcp__XcodeBuildMCP__build_sim, mcp__XcodeBuildMCP__build_run_sim, mcp__XcodeBuildMCP__install_app_sim, mcp__XcodeBuildMCP__launch_app_sim, mcp__XcodeBuildMCP__stop_app_sim, mcp__XcodeBuildMCP__test_sim, mcp__XcodeBuildMCP__screenshot, mcp__XcodeBuildMCP__snapshot_ui, mcp__XcodeBuildMCP__tap, mcp__XcodeBuildMCP__swipe, mcp__XcodeBuildMCP__long_press, mcp__XcodeBuildMCP__type_text, mcp__XcodeBuildMCP__key_press, mcp__XcodeBuildMCP__button, mcp__XcodeBuildMCP__gesture, mcp__XcodeBuildMCP__wait_for_ui, mcp__XcodeBuildMCP__set_sim_appearance
 color: yellow
 ---
 
@@ -75,21 +75,9 @@ If the app already has widgets, Live Activities, App Intents, etc.:
 
 ## Your review process
 
-1. **Activate serena** and map targets, extensions, entitlements.
+1. **Map targets, extensions, entitlements.** Use serena when it is available and helps; when the dispatch already carries a project map (the team lead's Phase 1 map, for one), work from that instead of mapping again.
 2. **Read references:** `references/_scaffolding/version-floor-registry.md` first (floors + PHANTOM list), then `references/platform/*` (widgets, App Intents, controls/StandBy, system surfaces, maps, Apple Intelligence, WebView, scene lifecycle) and `references/cross-platform/*` (iPadOS, watchOS, tvOS, macOS/Catalyst, visionOS, CarPlay). You own both directories -- a "make my app feel native" review is incomplete without assessing which platforms the app should reach.
-3. **Search GoodMem** for prior platform integration learnings. If the goodmem MCP is unavailable, skip this step -- never fail a review over a missing memory service; the space IDs below are the plugin author's (substitute your own if you run GoodMem):
-   ```
-   goodmem_memories_retrieve({
-     message: "iOS platform integration widgets Live Activities App Intents Spotlight",
-     space_keys: [{spaceId: "<your-goodmem-learnings-space-id>"}, {spaceId: "<your-goodmem-project-space-id>"}],
-     requested_size: 20,
-     fetch_memory: false,
-     post_processor: {
-       name: "com.goodmem.retrieval.postprocess.ChatPostProcessorFactory",
-       config: {reranker_id: "<your-goodmem-reranker-id>"}
-     }
-   })
-   ```
+3. **Prior findings (optional).** If a memory tool is configured in this session, one query for prior platform-integration findings on this project is optional (`references/_scaffolding/dispatch-protocol.md#optional-memory-query`); skip it otherwise.
 4. **Map the app's content types and user actions.**
 5. **Match surfaces to content.**
 6. **Review existing integration quality.** In Runtime mode, exercise every entry point you

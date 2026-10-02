@@ -32,7 +32,7 @@ apple-ui-craft/
 └── references/                  (14 directories -- self-contained knowledge files)
     ├── _scaffolding/
     │   ├── _TEMPLATE.md                     reference-file skeleton (authoring-only)
-    │   ├── dispatch-protocol.md             shared dispatch mechanics (all 6 skills point here)
+    │   ├── dispatch-protocol.md             shared dispatch mechanics (all 6 skills point here) + the optional memory query
     │   └── version-floor-registry.md        SINGLE source of availability floors + PHANTOM list
     ├── design/
     │   ├── 01-apple-design-philosophy.md    clarity, deference, depth
@@ -178,7 +178,7 @@ Tiering: Stage A (existing corrected + recreates) and the P0/P1 expansion ship t
 
 ## Reference <-> agent wiring (no orphan references)
 
-Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appears in at least one agent's read scope.** `_scaffolding/` holds process files, not knowledge: `version-floor-registry.md` is read first by every agent, `dispatch-protocol.md` is read by whoever dispatches, `_TEMPLATE.md` is authoring-only. Agents read the floor registry first, then start-here files, then glob the rest of a domain when the task goes deep. Ownership below is the "who authors/owns this concept" map; reviewers read across domains.
+Rule: **every knowledge file (`references/**/*.md` outside `_scaffolding/`) appears in at least one agent's read scope.** `_scaffolding/` holds process files, not knowledge: `version-floor-registry.md` is read first by every agent, `dispatch-protocol.md` is read by whoever dispatches (agents read only its optional-memory-query section), `_TEMPLATE.md` is authoring-only. Agents read the floor registry first, then start-here files, then glob the rest of a domain when the task goes deep. Ownership below is the "who authors/owns this concept" map; reviewers read across domains.
 
 | Agent | Owns / reads |
 |---|---|

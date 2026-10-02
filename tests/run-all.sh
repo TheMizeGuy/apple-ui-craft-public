@@ -50,6 +50,51 @@ else
 fi
 echo
 
+# Model naming: text names model classes only (opus, sonnet, fable). No versioned or dated
+# model ID, no version word such as "<Class> 5", no model: frontmatter pin. CHANGELOG.md is
+# release history, so only the dated-ID rule applies to it. scripts/regenerate-mirror.sh runs
+# the same check as a scrub-gate row.
+echo "=== model naming"
+if node -e '
+const fs = require("fs");
+const path = require("path");
+const SKIP = new Set([".git", ".serena", ".claude", ".anti-slop", ".remember", "node_modules"]);
+const EXT = /\.(md|json|mjs|sh|swift|ya?ml)$/;
+const DATED = [/claude-[a-z]+-[0-9.]+-[0-9]{8}/, "dated model ID"];
+const RULES = [
+  DATED,
+  [/claude-(opus|sonnet|haiku|fable)-[0-9]/, "versioned model ID"],
+  [/\b(Opus|Sonnet|Haiku|Fable) [0-9]/, "model version name"],
+  [/^model:/, "model: pin"],
+];
+const hits = [];
+let scanned = 0;
+(function walk(dir) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (SKIP.has(e.name)) continue;
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) { walk(full); continue; }
+    if (!EXT.test(e.name)) continue;
+    const rel = path.relative(".", full);
+    const rules = rel === "CHANGELOG.md" ? [DATED] : RULES;
+    scanned++;
+    fs.readFileSync(full, "utf8").split("\n").forEach((line, i) => {
+      for (const [re, what] of rules) {
+        if (re.test(line)) hits.push(`${rel}:${i + 1}: ${what}: ${line.trim().slice(0, 120)}`);
+      }
+    });
+  }
+})(".");
+if (hits.length) { hits.forEach(h => console.error("  " + h)); process.exit(1); }
+console.log(`  ${scanned} files name model classes only`);
+'; then
+  echo "--- model naming: PASS"
+else
+  echo "--- model naming: FAIL"
+  fail=1
+fi
+echo
+
 if [ "$fail" -eq 0 ]; then
   echo "ALL GATES PASS"
 else

@@ -2,6 +2,17 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.6.3 -- 2026-10-02
+
+Older-model residue is gone from the agents, and the model-naming rule is now checked on every change rather than only at mirror time.
+
+- The memory step is optional everywhere. `craft-team-lead`, `apple-ui-reviewer`, `accessibility-engineer`, `platform-engineer` and `apple-ui-architect` drop their inlined `goodmem_memories_retrieve` call blocks (fixed result size, reranker, space list): when a memory tool is configured, one query is optional, and the space IDs live in one new section, `references/_scaffolding/dispatch-protocol.md#optional-memory-query`. `accessibility-engineer` had no guard on the step before.
+- Mapping the project no longer opens with "Activate serena". The team lead maps once and passes the map to every specialist; a specialist whose dispatch carries a map works from it, and serena is used when it is available and helps.
+- `TodoWrite` is gone from every agent's `tools:` line; the task tools replaced it and current models are not offered it.
+- The agent openers drop invented experience ("decades", "every major iOS redesign since iOS 7", "since the original iPhone", "Your taste is earned", "These aren't guidelines. They're convictions."); each keeps its scope and how it judges the work.
+- `design-ios` no longer stops to ask when scope is unclear: it designs the most likely reading, states the assumption in the dispatch and the result, and asks first only when the readings would produce materially different designs.
+- `tests/run-all.sh` gains a model-naming gate: no versioned or dated model ID, no model class followed by a version number, no `model:` pin, anywhere outside `CHANGELOG.md` (dated IDs are refused there too). The mirror scrub gate gains the same `versioned model names` row; its old dated-ID row let versioned names through. The mirror's emoji row now runs on perl, because the BSD grep on macOS has no `-P` and the row passed vacuously.
+
 ## 0.6.2 -- 2026-09-29
 
 A device-only launch crash is now designed out and reviewed for: SwiftUI running the main thread out of stack while building the first frame, which passes Debug builds, Release on the Simulator and archives, then crashes on users' phones.

@@ -80,7 +80,7 @@ When the request is the app icon, the architect follows its icon workflow (`refe
 | "design a component" | Reusable view + API surface |
 | "design the app" | Tab structure + key screens (start with structure, iterate) |
 
-If scope is unclear, ask. Don't guess.
+If the scope is unclear, design the most likely reading, state the assumption in the dispatch, and repeat it when you present the result. Ask first only when the readings would produce materially different designs.
 
 ## Verification before presenting
 
