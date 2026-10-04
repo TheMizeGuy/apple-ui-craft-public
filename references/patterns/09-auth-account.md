@@ -183,7 +183,7 @@ Button {
 .disabled(isLoading || !isFormValid)
 ```
 
-Swapping label→spinner IN PLACE, same frame, avoids a resize-on-tap that reads as jank. `.disabled` while the form is invalid gives the button a "not yet" appearance that guides completion.
+Swapping label→spinner IN PLACE, same frame, avoids a resize-on-tap that reads as jank. `.disabled` while the form is invalid gives the button a "not yet" appearance that guides completion, as long as the form says what is still missing.
 
 **Cancel is not an error** -- the #1 auth-UX bug. Dismissing the SIWA or passkey sheet returns `ASAuthorizationError.canceled`; showing an error alert for it is jarring after the user deliberately backed out.
 

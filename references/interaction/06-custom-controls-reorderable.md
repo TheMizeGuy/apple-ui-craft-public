@@ -350,8 +350,8 @@ tvOS has neither `reorderContainer`/`reorderable()` nor `swipeActionsContainer()
 
 ## Severity guide
 
-- **CRITICAL** -- a custom control ships with no accessibility bridge at all; `reorderContainer` shipped as the ONLY reorder path on a floor below 27 or on tvOS (won't compile); a `move:` closure calling a phantom `apply` (won't compile).
-- **HIGH** -- hand-rolled grid reorder invisible to VoiceOver (no drag point/drop point actions); haptic fired per-frame instead of edge-triggered; `swipeActions` outside a `List` with no `swipeActionsContainer()` on a 27 floor.
+- **CRITICAL** -- a custom control ships with no accessibility bridge at all.
+- **HIGH** -- `reorderContainer` shipped as the ONLY reorder path on a floor below 27 or on tvOS (won't compile); a `move:` closure calling a phantom `apply` (won't compile); hand-rolled grid reorder invisible to VoiceOver (no drag point/drop point actions); haptic fired per-frame instead of edge-triggered; `swipeActions` outside a `List` with no `swipeActionsContainer()` on a 27 floor.
 - **MEDIUM** -- a hand-rolled grid/stack reorder in an app whose floor is already 27 (reinvents a system primitive); missing hysteresis causes visible flicker at slot boundaries; `.position` used instead of `.offset` causing a pickup jump.
 - **LOW** -- `reorderContainer` with no `dragContainer` on iPad/Mac where dragging an item out is expected; lift/settle share one animation value; segmented-pill glass morph missing a stable `glassEffectID`.
 

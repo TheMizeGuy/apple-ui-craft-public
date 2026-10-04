@@ -2,6 +2,16 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.6.5 -- 2026-10-04
+
+Five severity and dispatch rules that two files stated differently now read the same everywhere.
+
+- `design-ios` follows `references/_scaffolding/dispatch-protocol.md#reading-what-comes-back`: a failed verification check gets one re-dispatch with the gap named, and on a second miss the session finishes the work itself, as `craft-ios-ui` does, instead of escalating the miss to the user.
+- Reduce Motion tiers follow their owner. `apple-ui-reviewer`'s accessibility gate keeps its HIGH floor and CRITICAL rows and takes two tiers from `accessibility/05-motion-accessibility.md#severity-guide`: any ungated looping animation is CRITICAL, and an ungated decorative flourish is MEDIUM. `accessibility-engineer`'s Reduce Motion row gains the same MEDIUM tier.
+- A compile failure is HIGH. `interaction/06` (a `reorderContainer` below its floor, a phantom `apply`), `methodology/02` (a get-only environment key injection) and `platform/07` (`WebView` as the only implementation below iOS 26) drop from CRITICAL to HIGH, matching `exemplars/01`, `patterns/10` and `patterns/01`; `methodology/03` defers compile-breaking bugs to the owning file without filing them under CRITICAL.
+- `usability/04` grades a missing haptic on a consequential action HIGH, as `review/01`'s severity scale does.
+- A disabled submit is allowed when the form says what is missing. `usability/02` forbids disabling only as the sole signal of incompleteness, matching its own anti-pattern row, `usability/04` section 6 and the `patterns/02` forms recipe; `patterns/09`'s sign-in button carries the same condition.
+
 ## 0.6.4 -- 2026-10-04
 
 Files that disagreed on the same point now agree, severity grades follow the file that owns them, and history notes give way to the rules they explained.

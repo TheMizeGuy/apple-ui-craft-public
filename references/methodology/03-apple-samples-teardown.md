@@ -280,7 +280,7 @@ Every animated recipe above routes through the single `Animation?` / `nil` acces
 
 ## Severity guide
 
-CRITICAL: n/a to this file directly -- see the owning API file's severity guide for compile-breaking or data-loss bugs surfaced through these recipes. HIGH: a signature first-party moment implemented with the wrong primitive entirely (a `.sheet` standing in for a zoom transition, a looping video standing in for `TimelineView` + `Canvas`) -- reads as fundamentally un-Apple, not merely rough. MEDIUM: the right primitive, missing the composition detail that sells it (a hero card without `style: .continuous`, an unmanaged toolbar spacing gap). LOW: a single benchmark-checklist miss on a screen that isn't part of the app's primary flow.
+CRITICAL: n/a to this file directly -- a compile-breaking or data-loss bug surfaced through these recipes takes its grade from the owning API file's severity guide. HIGH: a signature first-party moment implemented with the wrong primitive entirely (a `.sheet` standing in for a zoom transition, a looping video standing in for `TimelineView` + `Canvas`) -- reads as fundamentally un-Apple, not merely rough. MEDIUM: the right primitive, missing the composition detail that sells it (a hero card without `style: .continuous`, an unmanaged toolbar spacing gap). LOW: a single benchmark-checklist miss on a screen that isn't part of the app's primary flow.
 
 ## See also
 

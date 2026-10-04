@@ -312,7 +312,7 @@ Put the numbers in a `Measurement:` line. See
 
 ### 5. Run the accessibility + performance-safety gate
 
-Every screen with motion, translucency, or custom controls gets checked against this 11-row gate (source: `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`). Each failed row is at least HIGH; rows 1-2, 6, 8, 10 are CRITICAL when they exclude a user.
+Every screen with motion, translucency, or custom controls gets checked against this 11-row gate (source: `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`). Each failed row is at least HIGH; rows 1-2, 6, 8, 10 are CRITICAL when they exclude a user. Two Reduce Motion cases take their tier from the owner's severity guide (`references/accessibility/05-motion-accessibility.md#severity-guide`): any ungated looping animation (rows 1-3) is CRITICAL, and an ungated decorative flourish (row 1; never parallax, zoom, or rotation) is MEDIUM.
 
 1. Non-essential motion is Reduce-Motion double-gated (`withAnimation(` AND `.animation(_:value:)` via one `Animation?`/nil accessor; no fake `.identity`).
 2. Looping symbol effects gated `isActive:`/`symbolEffectsRemoved` (one-shot discrete effects are fine).

@@ -305,9 +305,9 @@ nobody can see them.
 | Severity | Example |
 |---|---|
 | CRITICAL | An action fails silently with no indication; a permission-denied screen with no path forward on the primary flow |
-| HIGH | Missing empty state; missing error state; empty and zero-results conflated; silent optimistic rollback; a gesture-only action with no visible equivalent; no feedback within 100ms of a tap; a skeleton VoiceOver reads as content |
+| HIGH | Missing empty state; missing error state; empty and zero-results conflated; silent optimistic rollback; a gesture-only action with no visible equivalent; no feedback within 100ms of a tap; missing haptic on a consequential action; a skeleton VoiceOver reads as content |
 | MEDIUM | Spinner replacing loaded content on refresh; skeleton that does not match the layout; disabled submit with no explanation; missing offline state; a determinate operation shown as indeterminate |
-| LOW | Spinner under 100ms; missing haptic on a consequential action; progress without a count |
+| LOW | Spinner under 100ms; progress without a count |
 | NIT | Empty-state illustration preference |
 
 ## See also

@@ -144,7 +144,7 @@ app is broken.
 | Mark the minority | If most fields are required, mark the optional ones; do not asterisk fifteen of eighteen |
 | Never colour alone | An asterisk in red is a colour-only signifier for the colour-blind; the asterisk itself carries it |
 | Say it in the accessibility label | `.accessibilityLabel("Email, required")` |
-| Do not disable submit to signal incompleteness | See section 6 of `references/usability/04-states-feedback-and-affordances.md`; a disabled button with no explanation is the single most common dead end in a form |
+| Do not disable submit as the only signal of incompleteness | See section 6 of `references/usability/04-states-feedback-and-affordances.md`; a disabled submit is fine when the form says what is missing, and a disabled button with no explanation is the single most common dead end in a form |
 
 ## 5. Input types, keyboards, and autofill
 

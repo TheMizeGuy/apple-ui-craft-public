@@ -238,7 +238,7 @@ The rendered DOM's accessibility tree, Dynamic Type via CSS, and Reduce Motion v
 
 ## Severity guide
 
-CRITICAL: `WebView`/`WebPage` shipped as the ONLY implementation with a deployment target below iOS 26 (build failure or crash on older OS). HIGH: navigation-failure handling written against a non-existent `.failed` case, silently never firing; an unconditional `.grant` from the iOS 27 geolocation permission callback. MEDIUM: `ScrollInputKind` mis-gated to iOS 26 in a doc or comment, misleading a future reader into over-gating a call site. LOW: missing `.webViewTextSelection`/`.webViewMagnificationGestures` on a content-heavy embed. NIT: a custom progress overlay with no Reduce Motion gate on an otherwise-correct integration.
+HIGH: `WebView`/`WebPage` shipped as the ONLY implementation with a deployment target below iOS 26 (build failure or crash on older OS); navigation-failure handling written against a non-existent `.failed` case, silently never firing; an unconditional `.grant` from the iOS 27 geolocation permission callback. MEDIUM: `ScrollInputKind` mis-gated to iOS 26 in a doc or comment, misleading a future reader into over-gating a call site. LOW: missing `.webViewTextSelection`/`.webViewMagnificationGestures` on a content-heavy embed. NIT: a custom progress overlay with no Reduce Motion gate on an otherwise-correct integration.
 
 ## See also
 

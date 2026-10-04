@@ -99,7 +99,7 @@ Run every check against the architect's output; do not present the deliverable u
 | Adaptive contract stated | Stage 1 output has an Adaptive contract table | A sizing strategy per component, and it is never "fixed" for content |
 | States shipped | Stage 1 output has a State coverage table, or one line saying the view is stateless | Loading, loaded, empty, and error all rendered; zero-results wherever there is a filter; every terminal state carries an onward action |
 
-Any failed check goes back to the producing stage with the concrete gap named -- one re-dispatch, then escalate to the user rather than shipping a known miss.
+Any failed check goes back to the producing stage with the concrete gap named -- one re-dispatch; on a second miss, the session finishes the work itself rather than dispatching a third time or shipping a known miss (`references/_scaffolding/dispatch-protocol.md#reading-what-comes-back`).
 
 ## Execution mode
 

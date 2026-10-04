@@ -211,7 +211,7 @@ Previews cover the writable environment values listed above directly; every get-
 
 ## Severity guide
 
-CRITICAL: an `.environment(_:_:)` injection of a get-only key that fails to compile. HIGH: a clipped/truncated element or sub-44pt hit target at AX5, a contrast failure, or a Live-mode animation with no Reduce Motion fallback. MEDIUM: missing preview on a non-trivial screen, no empty/error state design, missing RTL check, or non-Apple-metric padding revealed by `.sizeThatFitsLayout`. LOW: a missing component-size or extra-locale preview. NIT: an unhedged claim about SDK-unverified preview behavior.
+HIGH: an `.environment(_:_:)` injection of a get-only key that fails to compile, a clipped/truncated element or sub-44pt hit target at AX5, a contrast failure, or a Live-mode animation with no Reduce Motion fallback. MEDIUM: missing preview on a non-trivial screen, no empty/error state design, missing RTL check, or non-Apple-metric padding revealed by `.sizeThatFitsLayout`. LOW: a missing component-size or extra-locale preview. NIT: an unhedged claim about SDK-unverified preview behavior.
 
 ## See also
 

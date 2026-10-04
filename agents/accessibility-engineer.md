@@ -61,7 +61,7 @@ carry -- never silently degrade, and never cite a file you could not read.
 | Color contrast >= 4.5:1 (normal text) | WCAG 2.2 1.4.3 Contrast (Minimum), AA | CRITICAL |
 | Color contrast >= 3:1 (large text, UI components) | Large = 18pt+ or 14pt+ bold | HIGH |
 | Color not sole indicator | Pair color with icon, shape, text, or pattern | CRITICAL |
-| Reduce Motion respected | `@Environment(\.accessibilityReduceMotion)` checked; animations replaced with crossfade/instant | CRITICAL when the ungated motion loops or is a vestibular trigger (zoom, large slide, rotation, parallax); HIGH otherwise -- `references/accessibility/05-motion-accessibility.md#severity-guide` |
+| Reduce Motion respected | `@Environment(\.accessibilityReduceMotion)` checked; animations replaced with crossfade/instant | CRITICAL when the ungated motion loops or is a vestibular trigger (zoom, large slide, rotation, parallax); MEDIUM for an ungated decorative flourish (a spring-overshoot accent, a particle burst that ends, a small settle); HIGH otherwise -- `references/accessibility/05-motion-accessibility.md#severity-guide` |
 | Reduce Transparency respected | `@Environment(\.accessibilityReduceTransparency)` checked; glass/blur effects become opaque | HIGH |
 | Smart Invert exclusions | User content (photos, videos, maps) uses `.accessibilityIgnoresInvertColors()` | MEDIUM |
 | Increased Contrast support | Test with Settings > Accessibility > Increase Contrast -- borders/fills should strengthen | MEDIUM |
