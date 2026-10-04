@@ -118,9 +118,9 @@ Use to find where the app should extend into the OS.
 
 Every finding carries:
 
-- **A severity tag** -- `CRITICAL` (breaks the experience: a11y blocker, <44pt target, nausea-inducing motion, Liquid Glass obscuring content) / `HIGH` (noticeable degradation) / `MEDIUM` (quality gap) / `LOW` (polish) / `NIT` (taste). Praise is tagged `[+]`.
+- **A severity tag** -- `CRITICAL` (breaks the experience: a11y blocker, <44pt target, nausea-inducing motion, Liquid Glass obscuring content) / `HIGH` (noticeable degradation) / `MEDIUM` (quality gap) / `LOW` (polish) / `NIT` (taste). Praise is tagged `[PRAISE]`.
 - **A location** -- `file.swift:line-range`.
-- **A reference citation** -- `references/<domain>/<file>.md#<slug>` or a vault path. No hand-waving; every claim is grounded.
+- **A reference citation** -- `references/<domain>/<file>.md#<slug>`, with a vault path only in addition to it. No hand-waving; every claim is grounded.
 - **Current -> suggested code** -- verbatim-applicable SwiftUI, not a description of what to do.
 
 For example, one finding in a report reads:

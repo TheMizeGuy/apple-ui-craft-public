@@ -170,13 +170,9 @@ traces still come from Xcode (`references/performance/03-launch-memory-instrumen
 
 | Dimension | CRIT | HIGH | MED | LOW |
 |---|---|---|---|---|
-| Body evaluation | | | | |
-| Lazy loading | | | | |
-| Image handling | | | | |
-| Rendering | | | | |
-| Scroll | | | | |
-| Animation perf | | | | |
-| Launch time | | | | |
+| Rendering performance | | | | |
+| Scroll and list performance | | | | |
+| Launch and memory | | | | |
 | **TOTAL** | | | | |
 
 ### Findings

@@ -281,7 +281,7 @@ Text("Brand")
 
 ## Environment key injectability (#Preview and testing)
 
-Not every accessibility environment key can be set with `.environment(_:_:)` in a `#Preview` or test harness -- some are read-only reflections of a system setting, and injecting them silently no-ops.
+Not every accessibility environment key can be set with `.environment(_:_:)` in a `#Preview` or test harness -- some are read-only reflections of a system setting, exposed as a `KeyPath` rather than a `WritableKeyPath`, so injecting one fails to compile.
 
 | Get-only (cannot inject) | Writable (can inject) |
 |---|---|

@@ -24,8 +24,9 @@ can act on a verdict it did not itself produce.
 
 `line` and `evidence` are optional. When `line` is present the CI schema requires
 an integer `>= 1`, so **omit the key rather than writing 0**. The dimension
-registry lives in `references/review/01-finding-format.md`; the CI schema carries
-a coarser enum, explained below.
+registry lives in `references/review/01-finding-format.md`, and the CI schema's
+`dimension` enum carries it verbatim; the coarser per-area keys are the
+`verdicts` object, explained below.
 
 ## Review ledger, schema v1
 

@@ -79,7 +79,7 @@ carry -- never silently degrade, and never cite a file you could not read.
 | Keyboard shortcuts (iPad/Mac) | `.keyboardShortcut()` for frequent actions | LOW |
 | Focus not obscured by sticky headers | WCAG 2.4.11 -- focused elements not covered by fixed UI | HIGH |
 
-### Dimension 5: Cognitive & hearing accessibility
+### Dimension 5: Cognitive and hearing accessibility
 
 | Check | Expected | Severity |
 |---|---|---|
@@ -94,7 +94,7 @@ carry -- never silently degrade, and never cite a file you could not read.
 ## Your review process
 
 1. **Map the project structure.** Use serena when it is available and helps; when the dispatch already carries a project map (the team lead's Phase 1 map, for one), work from that instead of mapping again.
-2. **Read references:** `references/_scaffolding/version-floor-registry.md` first, then `references/accessibility/*` (all files: voiceover, dynamic-type, visual, motor, motion-accessibility, localization-rtl, cognitive-hearing-assistive). `accessibility/05-motion-accessibility.md` owns the Reduce Motion double-gate and the env-key injectability split. Also read `references/design/03-typography-dynamic-type.md`, `design/04-color-system.md`, `design/06-layout-spacing.md`, and `references/patterns/01-gotchas-anti-patterns.md` (the `#Preview` env-key gotcha) for cross-domain findings.
+2. **Read references:** `references/_scaffolding/version-floor-registry.md` first, then `references/accessibility/*` (all files: voiceover, dynamic-type, visual, motor, motion-accessibility, localization-rtl, cognitive-hearing-assistive, wcag-2-2-mapping). `accessibility/05-motion-accessibility.md` owns the Reduce Motion double-gate and the env-key injectability split. Also read `references/design/03-typography-dynamic-type.md`, `design/04-color-system.md`, `design/06-layout-spacing.md`, and `references/patterns/01-gotchas-anti-patterns.md` (the `#Preview` env-key gotcha) for cross-domain findings.
 3. **Prior findings (optional).** If a memory tool is configured in this session, one query for prior accessibility findings on this project is optional (`references/_scaffolding/dispatch-protocol.md#optional-memory-query`); skip it otherwise.
 4. **Systematic audit** through all 5 dimensions on every file in scope.
 5. **Grep patterns** that catch common issues:

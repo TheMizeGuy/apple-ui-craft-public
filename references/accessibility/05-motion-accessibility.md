@@ -212,7 +212,7 @@ struct CrossFadeAware<Content: View>: View {
 var prefersCrossFadeFallback: Bool { UIAccessibility.prefersCrossFadeTransitions }
 ```
 
-`.task(name:file:line:)` (iOS 26.4+ metadata) is unrelated and a no-op before that floor -- do not confuse the two 26.4 boundaries.
+The other 26.4 boundary is unrelated: the `executorPreference:` overload of `.task`. Plain `.task(name:file:line:)` is iOS 15.0 and back-deploys (`references/performance/06-concurrency-ui.md#task-and-taskid`) -- do not confuse the two.
 
 ## Autoplay and flashing-content gates -- the other Motion settings
 

@@ -70,7 +70,7 @@ Generate this fixed set for every non-trivial screen -- together they catch roug
 #Preview("Overflow") { ProfileView(user: .longNamePreview, items: .many) }
 ```
 
-Only FIVE accessibility-relevant environment values are injectable in a `#Preview` at all -- `colorScheme` (prefer `.preferredColorScheme(_:)`), `dynamicTypeSize` (prefer `.dynamicTypeSize(_:)`, also accepts a range), `locale`, `layoutDirection`, and `legibilityWeight` (Bold Text; declared `{ get set }`, so `.environment(\.legibilityWeight, .bold)` compiles). Every other visual-accessibility setting (Reduce Motion, Reduce Transparency, Increase Contrast, Differentiate Without Color, Smart Invert) is a GET-ONLY environment value and cannot compile inside `.environment(_:_:)` in a preview closure at all -- see `references/patterns/01-gotchas-anti-patterns.md#the-preview-environment-key-trap` (owner) for the full get-only/writable split and why the compile error happens. Reach for the Xcode canvas's own Variants/accessibility-override controls, or the Environment Overrides described below, to exercise those states.
+Only SIX accessibility-relevant environment values are injectable in a `#Preview` at all -- `colorScheme` (prefer `.preferredColorScheme(_:)`), `dynamicTypeSize` (prefer `.dynamicTypeSize(_:)`, also accepts a range), `locale`, `layoutDirection`, `legibilityWeight` (Bold Text; declared `{ get set }`, so `.environment(\.legibilityWeight, .bold)` compiles), and `accessibilityPrefersCrossFadeTransitions` (iOS 26.4+). Every other visual-accessibility setting (Reduce Motion, Reduce Transparency, Increase Contrast, Differentiate Without Color, Smart Invert) is a GET-ONLY environment value and cannot compile inside `.environment(_:_:)` in a preview closure at all -- see `references/patterns/01-gotchas-anti-patterns.md#the-preview-environment-key-trap` (owner) for the full get-only/writable split and why the compile error happens. Reach for the Xcode canvas's own Variants/accessibility-override controls, or the Environment Overrides described below, to exercise those states.
 
 ## `PreviewModifier` and `@Previewable`
 
@@ -196,13 +196,13 @@ Xcode 27's canvas adds three overrides that used to need the simulator: a locali
 
 ## Accessibility contract
 
-Previews cover the four writable environment values directly; every get-only visual-accessibility setting must instead be exercised through Environment Overrides or the automated audit, per the section above. None of this file introduces new motion -- if a preview drives a `Live`-mode animation, confirm the underlying view reads `\.accessibilityReduceMotion` and has a non-animated fallback per `references/accessibility/05-motion-accessibility.md` (owner of the double-gate); flipping Reduce Motion in Environment Overrides while a Live preview or running app is active is the fastest way to confirm the gate actually fires.
+Previews cover the writable environment values listed above directly; every get-only visual-accessibility setting must instead be exercised through Environment Overrides or the automated audit, per the section above. None of this file introduces new motion -- if a preview drives a `Live`-mode animation, confirm the underlying view reads `\.accessibilityReduceMotion` and has a non-animated fallback per `references/accessibility/05-motion-accessibility.md` (owner of the double-gate); flipping Reduce Motion in Environment Overrides while a Live preview or running app is active is the fastest way to confirm the gate actually fires.
 
 ## Anti-patterns
 
 | Wrong | Why it fails | Right |
 |---|---|---|
-| A non-trivial view with zero `#Preview` | Craft is unverifiable; CRITICAL finding | Add at least a baseline preview |
+| A non-trivial view with zero `#Preview` | Craft is unverifiable; a MEDIUM finding | Add at least a baseline preview |
 | `.environment(\.accessibilityReduceMotion, true)` inside a `#Preview` | Get-only key, does not compile | Read the flag via `@Environment` in the view; toggle via Environment Overrides |
 | Only a full-screen preview for a small component | Hides oversized padding / intrinsic-size bugs | Add a `.sizeThatFitsLayout` variant |
 | Blanket-suppressing a whole `auditType` in `performAccessibilityAudit` to force CI green | Defeats the audit entirely | Suppress one named element with a justifying comment |
@@ -211,7 +211,7 @@ Previews cover the four writable environment values directly; every get-only vis
 
 ## Severity guide
 
-CRITICAL: missing preview on a non-trivial screen, or an `.environment(_:_:)` injection of a get-only key that fails to compile. HIGH: a clipped/truncated element or sub-44pt hit target at AX5, a contrast failure, or a Live-mode animation with no Reduce Motion fallback. MEDIUM: no empty/error state design, missing RTL check, or non-Apple-metric padding revealed by `.sizeThatFitsLayout`. LOW: a missing component-size or extra-locale preview. NIT: an unhedged claim about SDK-unverified preview behavior.
+CRITICAL: an `.environment(_:_:)` injection of a get-only key that fails to compile. HIGH: a clipped/truncated element or sub-44pt hit target at AX5, a contrast failure, or a Live-mode animation with no Reduce Motion fallback. MEDIUM: missing preview on a non-trivial screen, no empty/error state design, missing RTL check, or non-Apple-metric padding revealed by `.sizeThatFitsLayout`. LOW: a missing component-size or extra-locale preview. NIT: an unhedged claim about SDK-unverified preview behavior.
 
 ## See also
 

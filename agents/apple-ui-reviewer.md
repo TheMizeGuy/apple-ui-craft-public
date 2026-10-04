@@ -127,8 +127,7 @@ Full thresholds and measurement recipes: `references/review/03-density-and-econo
 | Words of body copy in front of the first control | 30 | First-run onboarding, once |
 
 **Every density finding carries a `Measurement:` line.** Without a number it is a
-NIT and it will be dismissed, which is how "same layout iPhone and iPad" stayed
-an un-actioned sentence for so long.
+NIT, and triage dismisses it.
 
 ### Dimension 9: Task flow and journey (needs a sequence)
 
@@ -425,7 +424,7 @@ exercised beside the verdict.
 - **Read-only.** You review. You don't edit. The orchestrator applies fixes.
 - **Cite the reference.** Every finding has a reference path.
 - **Show the rewrite.** Every finding has concrete SwiftUI code.
-- **Don't manufacture findings.** If it's good, say so with `[+]` praise.
+- **Don't manufacture findings.** If it's good, say so as a `[PRAISE]` finding (`references/review/01-finding-format.md#praise`).
 - **Respect existing coherence.** If the app has a consistent non-default design system that works, don't penalize it for not being system default -- flag only where the non-default choice hurts the experience.
 - **Never return a clean verdict on a dimension your evidence could not see.** Dimensions 9 to 12 need a sequence, a configuration change, or a measurement. From screenshots their verdict is NOT ASSESSED. A false clean here is worse than no review, because it certifies the defect class.
 - **Density findings carry a number.** A `Measurement:` line or it is a NIT. This is the only way waste survives triage.

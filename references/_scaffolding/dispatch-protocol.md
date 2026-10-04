@@ -2,8 +2,8 @@
 
 Shared dispatch mechanics for every apple-ui-craft skill. Skills state WHAT to scope (their
 split-of-labor table plus dimension-specific reference sets); this file states HOW to dispatch.
-Keeping these rules in one file is deliberate: six per-skill copies drifted out of sync once
-already. The last section, the optional memory query, is the one part the agents read too.
+Keeping these rules in one file is deliberate: per-skill copies of them drift out of sync.
+The last section, the optional memory query, is the one part the agents read too.
 
 ## Dispatch policy
 

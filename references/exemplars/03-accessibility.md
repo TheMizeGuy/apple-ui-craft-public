@@ -299,7 +299,7 @@ struct AlertRow: View {
             Image(systemName: item.category.symbol).font(.system(size: iconSize)).foregroundStyle(item.category.tint)
                 .frame(width: iconSize + 8, height: iconSize + 8).accessibilityHidden(true)
             if item.isUnread {
-                // A static dot: a pulsing live indicator is user-banned by default (patterns/01) and
+                // A static dot: a pulsing live indicator is off by default (patterns/01) and
                 // would need the Reduce Motion + Auto-Play Animated Images double gate.
                 Circle().fill(Color.accentColor).frame(width: dotSize, height: dotSize)
                     .overlay { if diffWithoutColor { Circle().strokeBorder(.primary, lineWidth: 1) } }

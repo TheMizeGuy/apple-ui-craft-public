@@ -87,9 +87,8 @@ Collect all specialist reports. Then:
 
 1. **Deduplicate.** Multiple agents may flag the same issue (e.g., accessibility-engineer and apple-ui-reviewer both flag touch targets). Dedup key is `<Dimension>` plus `File:` plus the defect, NOT the title, which varies by agent. Keep the most detailed finding, credit both agents. Where two agents disagree on severity for the same defect, take the higher and say which agent set it.
 
-1a. **Reconcile the overlap the new dimensions create.** These pairs will
-   collide by design; the named owner's finding survives and the other is folded
-   into it as corroboration:
+1a. **Reconcile overlapping ownership.** These pairs collide by design; the named
+   owner's finding survives and the other is folded into it as corroboration:
 
    | Overlap | Owner |
    |---|---|
@@ -194,20 +193,20 @@ Present the report to the user. Wait for approval before applying any changes. T
 - **Conflicts go to the conservative choice.** If unsure, preserve existing behavior.
 - **Order by impact, not by agent.** The user cares about their app, not our org chart.
 - **Dispatch mechanics live in one place.** `references/_scaffolding/dispatch-protocol.md` (under the references path in this dispatch) covers the dispatch policy, fan-out, what a dispatch prompt carries, and how to read a result.
-- **No AI slop.** No "Great code overall!", no trailing summaries, no hedging.
+- **No AI slop.** State findings and verdicts plainly; praise names a specific decision and why it works; the executive summary opens the report, so nothing after Praise restates it.
 
 ## Fanning out on a large scope
 
 On a scope too wide for one pass per dimension, split the work by phase. The shared mechanics
 are in `references/_scaffolding/dispatch-protocol.md`; this agent adds only the phase map:
 
-- **Phase 1 (recon)** and **Phase 2 (evidence collection)** fan out well: each agent owns a
-  non-overlapping screen/file set, reads the dimension's reference files +
+- **Phase 1 (recon)**, and any evidence sweep run ahead of the specialist reviews, fan out well:
+  each agent owns a non-overlapping screen/file set, reads the dimension's reference files +
   `references/_scaffolding/version-floor-registry.md`, and returns raw evidence tables --
   evidence, never verdicts.
 - **The 5 specialist reviews** are dispatched as `general-purpose` with each specialist's body
   inlined, as in Phase 2.
 - **Phase 3 (merge/dedup/prioritize)** and **Phase 4 (report)** stay with you. They are the
   judgment, and splitting them produces two half-reports.
-- **Phase 5 (apply, after user approval)** fans out with `isolation: "worktree"`, one
+- **Applying fixes, after user approval,** fans out with `isolation: "worktree"`, one
   non-overlapping file set each; read every `git diff` before merging.

@@ -22,7 +22,7 @@ Apple's most significant visual redesign since iOS 7, and immediate legibility c
 
 ## iOS 26.1 (~November 2025) -- Clear vs. Tinted is a Settings toggle, not an API
 
-Settings > Display & Brightness > Liquid Glass: **Clear** (original see-through) vs. **Tinted** (higher opacity/contrast), system-wide. Glass inherits the choice with ZERO code -- the same contract the reference set documents for Reduce Transparency and Increased Contrast. There is no `@Environment(\.tintMode)`; do not invent one (`version-floor-registry.md`'s PHANTOM list). An earlier version of this log dated the whole parameterized glass button surface to 26.1; Apple's symbol metadata puts `.buttonStyle(.glass(_:))` and `.glass(.clear)` at 26.0 and only the explicit `GlassButtonStyle.init(_:)` at 26.1.
+Settings > Display & Brightness > Liquid Glass: **Clear** (original see-through) vs. **Tinted** (higher opacity/contrast), system-wide. Glass inherits the choice with ZERO code -- the same contract the reference set documents for Reduce Transparency and Increased Contrast. There is no `@Environment(\.tintMode)`; do not invent one (`version-floor-registry.md`'s PHANTOM list). Of the parameterized glass button surface, only the explicit `GlassButtonStyle.init(_:)` is 26.1; Apple's symbol metadata puts `.buttonStyle(.glass(_:))` and `.glass(.clear)` at 26.0.
 
 ## iOS 26.2 (~December 2025)
 
@@ -34,7 +34,7 @@ Privacy, carrier, and wallpaper features only. No UI-framework API changes -- no
 
 ## iOS 26.4 (Spring 2026) -- cross-fade preference, cancellable intents
 
-`accessibilityPrefersCrossFadeTransitions` and the `executorPreference:` overload of `.task` reach their 26.4 floor (the `name:`/`file:`/`line:` overload is iOS 15.0 and back-deploys; an earlier version of this log had that backwards) -- owners `references/accessibility/05-motion-accessibility.md` and `references/performance/06-concurrency-ui.md#task-and-taskid`. App Intents gains `CancellableIntent` and `IntentValueRepresentation`; Image Playground gains `.imagePlaygroundOptions(_:)`; two CarPlay categories gain a third level of push depth. An earlier version of this log said the revamped Siri shipped here. It did not: it shipped with iOS 27 (below).
+`accessibilityPrefersCrossFadeTransitions` and the `executorPreference:` overload of `.task` reach their 26.4 floor (the `name:`/`file:`/`line:` overload is iOS 15.0 and back-deploys) -- owners `references/accessibility/05-motion-accessibility.md` and `references/performance/06-concurrency-ui.md#task-and-taskid`. App Intents gains `CancellableIntent` and `IntentValueRepresentation`; Image Playground gains `.imagePlaygroundOptions(_:)`; two CarPlay categories gain a third level of push depth. The revamped Siri did not ship in 26.4; it shipped with iOS 27 (below).
 
 ## iOS 26.5 (~mid-2026)
 

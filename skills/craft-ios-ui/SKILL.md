@@ -49,47 +49,23 @@ Defaults to the entire project. Can be scoped to specific screens/directories.
 Comprehensive report with:
 - Executive summary
 - The evidence mode and coverage as the report's first line -- it bounds every verdict below it
-- Per-dimension verdicts (visual, density and economy, usability and flow, adaptive layout, animation+haptics, accessibility, performance, platform)
+- Per-dimension verdicts (visual, density and economy, usability and flow, adaptive layout, animation, haptics, accessibility, performance, platform)
 - Findings organized by screen/flow
 - Cross-cutting findings
 - Platform integration opportunity map
 - Prioritized improvement plan
 - Praise for well-implemented patterns
 
-## Finding format (worked example)
+## Finding format
 
-Every finding in the merged report carries four parts: a severity tag, a `file:line` location, a `references/` citation, and a current -> suggested rewrite in verbatim-applicable SwiftUI. This is what a correct finding looks like:
-
-> **HIGH -- Favorite toggle gives no tactile confirmation** -- `RecipeCard.swift:31-36`
->
-> The heart animates visually but fires no haptic, so the action feels weightless -- and the hard-coded `easeInOut` fights the toggle's snap. Pair the state change with `.sensoryFeedback`, let a spring carry the motion, and route it through the Reduce Motion accessor like every other animation in the app. Reference: `references/haptics/02-swiftui-sensory-feedback.md#toggle`; gate: `references/accessibility/05-motion-accessibility.md#accessibility-contract`.
-
-```swift
-// current
-Button { isFavorite.toggle() } label: {
-    Image(systemName: isFavorite ? "heart.fill" : "heart")
-}
-.animation(.easeInOut(duration: 0.3), value: isFavorite)
-
-// suggested -- AppMotion is the project's Animation? accessor (accessibility/05)
-@Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-Button { isFavorite.toggle() } label: {
-    Image(systemName: isFavorite ? "heart.fill" : "heart")
-        .contentTransition(.symbolEffect(.replace))
-}
-.animation(AppMotion.standard(reduceMotion), value: isFavorite)
-.sensoryFeedback(.impact(weight: .light), trigger: isFavorite)
-```
-
-A finding missing any of the four parts fails the report gate below -- send it back to the producing specialist, never patch it up silently.
+Every finding in the merged report uses the canonical template in `references/review/01-finding-format.md` verbatim: its field names, severity scale, confidence classes, and dimension registry. That file's worked examples show what a correct finding looks like, and the team lead validates each specialist's output against it before merging. A finding that does not conform fails the report gate below -- send it back to the producing specialist, never patch it up silently.
 
 ## Report acceptance gate
 
 Check the team lead's merged report against each item before presenting it to the user:
 
 1. All 5 specialists reported, and each report has substance -- not a stub or an empty section list.
-2. Every finding carries all four parts of the format above.
+2. Every finding follows `references/review/01-finding-format.md`: severity and confidence tags, a registry dimension, `File:` and `Current code:` whenever source is in scope, `Evidence:`, a verbatim-applicable `Suggested fix:`, and a `Reference:` citation.
 3. The verdict table has all 10 rows (visual design, density and economy, usability and flow, adaptive layout, animation, haptics, accessibility, performance, platform integration, Overall), each with a verdict from that dimension's fixed vocabulary. Animation and haptics are two rows because they are two verdicts with two vocabularies. `NOT ASSESSED` is a legal value on the six evidence-bounded rows (usability and flow, adaptive layout, animation, haptics, accessibility, performance) and is carried through from the specialist unchanged -- never promoted to a clean verdict during synthesis.
 4. No finding appears twice -- duplicates flagged by multiple specialists are merged with both credited.
 5. The improvement plan is ordered by severity, then effort; every plan item names the finding(s) it addresses.
@@ -150,4 +126,4 @@ A project-wide sweep splits into evidence collection and grading. Dispatch mecha
 **Scoping the sweep (on top of what the protocol says a prompt carries)**
 - Reference set per dimension from the ARCHITECTURE reference<->agent matrix + `references/_scaffolding/version-floor-registry.md`.
 - When reviewing motion, translucency, or custom controls, inline the severity scale (CRITICAL/HIGH/MEDIUM/LOW/NIT) and the 11-row a11y/perf gate from `agents/apple-ui-reviewer.md` (sourced from `references/accessibility/05-motion-accessibility.md`, `references/patterns/01-gotchas-anti-patterns.md`, `references/performance/01-swiftui-rendering.md`).
-- Phase map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon and Phase 2 evidence collection fan out; the 5 specialist reviews are dispatched as usual; merge and report (Process steps 3-4) stay with the team lead; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated.
+- Phase map for the `craft-team-lead` orchestrator (dispatched as `general-purpose` with its body inlined -- see Dispatch above): Phase 1 recon, and any evidence sweep run ahead of the specialist reviews, fan out; the 5 specialist reviews (Process step 2) are dispatched as usual; merge and report (Process steps 3-4) stay with the team lead; the apply step (Process step 6, after user approval in step 5) fans out worktree-isolated.

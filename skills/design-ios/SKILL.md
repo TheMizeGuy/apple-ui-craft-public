@@ -95,9 +95,9 @@ Run every check against the architect's output; do not present the deliverable u
 | Reduce Motion gated | Every `withAnimation(` / `.animation(` site | Each paired with a Reduce Motion accessor, or listed in the rationale as motion-safe |
 | Stage 2 ran | Accessibility report present | Findings, or an explicit pass, for all 5 audit dimensions |
 | Task frame stated | Stage 1 output has a Task frame section | Task, observable success condition, entry points, frequency -- or one line saying it is a standalone component with no task around it |
-| Flow map present | Stage 1 output has a Flow map table | No empty `State carried in`, `Failure modes`, or `Exit paths` cell; each empty cell is a defect being designed in |
+| Flow map present | Stage 1 output has a Flow map table, or one line saying why none applies (a lone component) | No empty `State carried in`, `Failure modes`, or `Exit paths` cell; each empty cell is a defect being designed in |
 | Adaptive contract stated | Stage 1 output has an Adaptive contract table | A sizing strategy per component, and it is never "fixed" for content |
-| States shipped | Stage 1 output has a State coverage table | Loading, loaded, empty, and error all rendered; zero-results wherever there is a filter; every terminal state carries an onward action |
+| States shipped | Stage 1 output has a State coverage table, or one line saying the view is stateless | Loading, loaded, empty, and error all rendered; zero-results wherever there is a filter; every terminal state carries an onward action |
 
 Any failed check goes back to the producing stage with the concrete gap named -- one re-dispatch, then escalate to the user rather than shipping a known miss.
 

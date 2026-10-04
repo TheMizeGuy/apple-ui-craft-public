@@ -174,7 +174,7 @@ None of the surfaces in this file introduce a motion obligation -- the review sh
 
 ## Severity guide
 
-CRITICAL: a permission or review prompt fired cold on first launch with no priming, burning the one-shot system dialog. HIGH: a priming screen that imitates the system alert (App Review rejection risk), or re-prompting after `.denied` instead of degrading gracefully. MEDIUM: a negative-sentiment dead end with no feedback path, or `.timeSensitive` content shipped without the matching capability. LOW: review-prompt timing that's merely suboptimal (e.g. mid-task instead of after a clean completion) but not actively hostile.
+HIGH: a permission or review prompt fired cold on first launch with no priming, burning the one-shot system dialog; a priming screen that imitates the system alert (App Review rejection risk), or re-prompting after `.denied` instead of degrading gracefully. MEDIUM: a negative-sentiment dead end with no feedback path, or `.timeSensitive` content shipped without the matching capability. LOW: review-prompt timing that's merely suboptimal (e.g. mid-task instead of after a clean completion) but not actively hostile.
 
 ## See also
 

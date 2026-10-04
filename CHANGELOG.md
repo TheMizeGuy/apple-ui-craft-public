@@ -2,6 +2,17 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.6.4 -- 2026-10-04
+
+Files that disagreed on the same point now agree, severity grades follow the file that owns them, and history notes give way to the rules they explained.
+
+- Severity follows its owners. `patterns/07` grades a cold permission or review prompt HIGH, as `review/01` and every other reference do. `methodology/02` grades a missing `#Preview` MEDIUM in both its severity guide and its anti-pattern row, since CRITICAL means a user-facing break and fails the CI gate. `patterns/01` sends Reduce Motion gaps to the tiers in `accessibility/05-motion-accessibility.md#severity-guide` instead of grading every gap CRITICAL, and no longer cites WCAG 2.3.3, an AAA criterion, as the violation.
+- One finding format. `craft-ios-ui` drops its own worked example and four-part gate and checks the merged report against `references/review/01-finding-format.md`; its verdict list names animation and haptics separately, as its gate already did. `apple-ui-reviewer` and `USAGE.md` tag praise `[PRAISE]`, not `[+]`, and a finding cites `references/` always.
+- Registry names verbatim. `accessibility-engineer`'s fifth dimension heading reads "Cognitive and hearing accessibility" and `performance-engineer`'s summary table uses the three registry names, which the CI schema enum requires. `review/04` says the schema's `dimension` enum carries the full registry; only the `verdicts` keys are coarser. `accessibility-engineer`'s read list names `08-wcag-2-2-mapping.md`.
+- Preview injectability agrees across files: six writable keys, `accessibilityPrefersCrossFadeTransitions` included (`methodology/02`), and injecting a get-only key fails to compile rather than silently doing nothing (`accessibility/03`). `accessibility/05` dates `.task(name:file:line:)` to iOS 15.0, as the registry does; only the `executorPreference:` overload is 26.4.
+- `craft-team-lead`'s fan-out map uses its own phases (no Phase 2 "evidence collection", no Phase 5), and `craft-ios-ui`'s phase map matches it. `apple-ui-architect`'s preview gloss points at step 6. `design-ios` accepts the one-line "none applies" form the architect writes for a lone component or a stateless view.
+- Past-tense incident notes, a dated authorship stamp on the live-badge ban (now "off by default"), and "an earlier version of this log" corrections give way to the current rule in `dispatch-protocol.md`, `apple-ui-reviewer`, `craft-team-lead`, `patterns/01`, `patterns/02`, `exemplars/03` and `methodology/04`. The architect and the team lead state their no-slop rule positively.
+
 ## 0.6.3 -- 2026-10-02
 
 Older-model residue is gone from the agents, and the model-naming rule is now checked on every change rather than only at mirror time.
