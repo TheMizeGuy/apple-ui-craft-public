@@ -19,7 +19,7 @@ git clone https://github.com/TheMizeGuy/apple-ui-craft-public.git
 claude --plugin-dir ./apple-ui-craft-public
 ```
 
-No build step, no configuration. The plugin is Markdown-only: skills, agents, and a reference library. It uses GoodMem, serena, and Context7 when they are available in your session and degrades gracefully when they are not.
+No build step, no configuration. The plugin is Markdown-only: skills, agents, and a reference library. It uses GoodMem and Context7 when they are available in your session and degrades gracefully when they are not.
 
 
 ## The six skills
@@ -190,7 +190,7 @@ Run both before shipping: one clears the gate, the other earns the delight.
 
 **Does it modify my code?** Not without approval. Reviews are read-only; `design-ios` and the apply phase of `craft-ios-ui` write code only after you say yes.
 
-**Do I need GoodMem / serena / Context7?** No. They sharpen retrieval, navigation, and API-currency when present, and the plugin degrades gracefully without them.
+**Do I need GoodMem / Context7?** No. They sharpen retrieval and API-currency when present, and the plugin degrades gracefully without them.
 
 **Why iOS 26 and 27?** Liquid Glass and the rest of the modern craft surface (sensory feedback, `@Observable`, App Intents, Foundation Models) arrived by iOS 26, which is still the floor most apps support. iOS 27 (shipped 2026-09-14) adds toolbar overflow, reordering and swipe actions in any container, Siri AI, Swift MetricKit and the `@State` macro. Examples lead with an iOS 27 API where it is the right tool and show the iOS 26 fallback beside it; lower targets use `#available(iOS 26, *)` gates with Material fallbacks. Symbols Apple still labels beta (iOS 27.1/27.2) stay fenced.
 

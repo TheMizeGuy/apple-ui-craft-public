@@ -2,6 +2,14 @@
 
 All notable changes to `apple-ui-craft` are documented here.
 
+## 0.6.6 -- 2026-10-10
+
+Serena was retired on 2026-10-09, and the plugin no longer names it.
+
+- The `mcp__plugin_serena_serena__*` tool names leave all seven agents' `tools:` lines. A tool name with no server behind it was dropped at load, so no grant changes in practice.
+- Mapping a project reads "with Glob, Grep and Read" in `craft-team-lead`, `apple-ui-reviewer`, `apple-ui-architect`, `accessibility-engineer` and `platform-engineer`, where it read "serena when it is available and helps". The rule that a specialist works from a map its dispatch already carries is unchanged.
+- `README.md` (Backed by), `USAGE.md` (the intro and the FAQ row), the architect's description and the `plugin.json` description no longer list serena among the optional tools.
+
 ## 0.6.5 -- 2026-10-04
 
 Five severity and dispatch rules that two files stated differently now read the same everywhere.

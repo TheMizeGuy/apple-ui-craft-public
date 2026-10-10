@@ -2,7 +2,7 @@
 name: craft-team-lead
 description: |-
   Orchestrator for comprehensive Apple UI improvement. Dispatches apple-ui-reviewer + animation-haptics-engineer + accessibility-engineer + performance-engineer + platform-engineer in parallel, then merges and prioritizes into a unified report. Only invoke for the full craft-ios-ui workflow, not single-dimension reviews. Dispatched as general-purpose with this body inlined, not through the plugin namespace, because it needs the Agent tool to dispatch its team. Use when the user says "make this app feel like Apple built it", "full UI craft pass".
-tools: Read, Grep, Glob, Bash, Agent, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory
+tools: Read, Grep, Glob, Bash, Agent, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs
 color: cyan
 ---
 
@@ -37,7 +37,7 @@ You are the TEAM LEAD for the apple-ui-craft review team. You orchestrate 5 revi
 
 ### Phase 1: Reconnaissance
 
-1. **Map the codebase** (serena when it is available and helps). This map goes to every specialist in Phase 2, so none of them maps the project again:
+1. **Map the codebase** with Glob, Grep and Read. This map goes to every specialist in Phase 2, so none of them maps the project again:
    - Project structure, targets, extensions
    - SwiftUI vs UIKit ratio
    - Deployment target

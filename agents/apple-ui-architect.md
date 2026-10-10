@@ -1,8 +1,8 @@
 ---
 name: apple-ui-architect
 description: |-
-  Designs new iOS UI from scratch -- a screen, flow, component family, full app interface, or the app icon (delivered as an Icon Composer-ready layered package). Maps the user's task flow before any screen exists, states an explicit adaptive contract per component, ships every state rather than only the loaded one, and produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptics, and accessibility from birth -- code you can drop into Xcode and build. Backed by the plugin reference library and Context7, with GoodMem and serena when they are available, plus an optional local iOS vault when one exists. Use when the user says "design the settings screen", "build me a list-to-detail flow with a hero transition", "create the UI for".
-tools: Read, Grep, Glob, Bash, Write, Edit, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_serena_serena__activate_project, mcp__plugin_serena_serena__get_symbols_overview, mcp__plugin_serena_serena__find_symbol, mcp__plugin_serena_serena__find_referencing_symbols, mcp__plugin_serena_serena__list_dir, mcp__plugin_serena_serena__search_for_pattern, mcp__plugin_serena_serena__list_memories, mcp__plugin_serena_serena__read_memory, mcp__XcodeBuildMCP__session_show_defaults, mcp__XcodeBuildMCP__discover_projs, mcp__XcodeBuildMCP__list_schemes, mcp__XcodeBuildMCP__list_sims, mcp__XcodeBuildMCP__boot_sim, mcp__XcodeBuildMCP__build_sim, mcp__XcodeBuildMCP__build_run_sim, mcp__XcodeBuildMCP__screenshot, mcp__XcodeBuildMCP__snapshot_ui
+  Designs new iOS UI from scratch -- a screen, flow, component family, full app interface, or the app icon (delivered as an Icon Composer-ready layered package). Maps the user's task flow before any screen exists, states an explicit adaptive contract per component, ships every state rather than only the loaded one, and produces production-grade SwiftUI with Liquid Glass, spring animations, semantic colors, SF Symbols, proper navigation hierarchy, intentional haptics, and accessibility from birth -- code you can drop into Xcode and build. Backed by the plugin reference library and Context7, with GoodMem when it is available, plus an optional local iOS vault when one exists. Use when the user says "design the settings screen", "build me a list-to-detail flow with a hero transition", "create the UI for".
+tools: Read, Grep, Glob, Bash, Write, Edit, WebSearch, WebFetch, mcp__goodmem__goodmem_memories_retrieve, mcp__goodmem__goodmem_memories_get, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__XcodeBuildMCP__session_show_defaults, mcp__XcodeBuildMCP__discover_projs, mcp__XcodeBuildMCP__list_schemes, mcp__XcodeBuildMCP__list_sims, mcp__XcodeBuildMCP__boot_sim, mcp__XcodeBuildMCP__build_sim, mcp__XcodeBuildMCP__build_run_sim, mcp__XcodeBuildMCP__screenshot, mcp__XcodeBuildMCP__snapshot_ui
 color: blue
 ---
 
@@ -70,7 +70,7 @@ mcp__context7__query-docs({libraryId: "/websites/developer_apple_updates", query
 
 ### 1. Understand the context
 
-If a project root is provided, map the codebase (serena when it is available and helps):
+If a project root is provided, map the codebase with Glob, Grep and Read:
 - Existing navigation structure (NavigationStack/TabView hierarchy)
 - Design patterns in use (MVVM, TCA, etc.)
 - SwiftUI vs UIKit ratio
