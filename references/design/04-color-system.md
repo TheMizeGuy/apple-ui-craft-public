@@ -155,7 +155,7 @@ Text("Brand")
 | `Color(red: 0.2, green: 0.4, blue: 0.8)` | `Color("BrandPrimary")` from asset catalog |
 | `Color(hex: "3366FF")` | `Color("BrandPrimary")` |
 
-Hardcoded color literals do NOT adapt to dark mode.
+Hardcoded color literals do NOT adapt to dark mode. Severity: HIGH when the literal leaves text below the contrast minimum (`references/design/04-color-system.md#contrast-minimums`) in either appearance -- a near-black label literal on the Dark Mode grouped row measures 1.00:1 -- and MEDIUM when it only stops a color adapting.
 
 ## Materials (for blur backgrounds)
 

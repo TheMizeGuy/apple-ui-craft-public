@@ -137,7 +137,7 @@ layout obligation follows from that.
 | Nothing is clipped or truncated at AX5 on the narrowest supported width | Truncation of a label that carries meaning is a HIGH finding |
 | Horizontal stacks of text become vertical past `.xxxLarge` | Branch on `dynamicTypeSize.isAccessibilitySize` or use `ViewThatFits` |
 | Every screen scrolls at AX5 | Content that fit at default no longer fits; a non-scrolling container becomes unreachable content |
-| Custom fonts scale | `Font.custom(_:size:relativeTo:)`, never a bare `size:` |
+| Custom fonts scale | `Font.custom(_:size:relativeTo:)` naming the role; never `fixedSize:` |
 | Custom dimensions scale | `@ScaledMetric` for padding, icon sizes, and fixed heights that sit beside text |
 | Tap targets stay at least 44pt | They usually grow; the failure is a fixed-height control beside grown text |
 | `minimumScaleFactor` is not the answer | It shrinks text back down, which defeats the accessibility setting the user chose |
@@ -198,8 +198,8 @@ padding cannot fit 320pt) and must show the arithmetic.
 ```bash
 # Fixed sizing -- the highest-yield grep in this file
 grep -rn "\.frame(width:\|\.frame(height:\|UIScreen\.main\|\.frame(minWidth: [0-9]\{3,\}" --include=*.swift .
-# Type that cannot scale
-grep -rn "\.font(\.system(size:\|Font\.custom(\"[^\"]*\", size:" --include=*.swift . | grep -v relativeTo
+# Type that cannot scale, or scales at body's rate in another role
+grep -rn "\.system(size:\|\.custom(\"[^\"]*\", \(size\|fixedSize\):" --include=*.swift . | grep -v relativeTo
 # Truncation and scale-down hiding a reflow failure
 grep -rn "lineLimit(1)\|minimumScaleFactor\|\.truncationMode" --include=*.swift .
 # Dynamic Type caps
@@ -242,7 +242,7 @@ alongside it.
 | `GeometryReader` to size a child | Takes all offered space; collapses the surrounding layout | `containerRelativeFrame`, or `ViewThatFits` |
 | `minimumScaleFactor` on body text | Undoes the accessibility setting the user chose | Reflow with `ViewThatFits` or `AnyLayout` |
 | `lineLimit(1)` on a meaningful label | Truncates meaning at AX sizes | Allow wrapping, or `ViewThatFits` |
-| `Font.custom(_:size:)` without `relativeTo:` | Frozen at one size forever | Always pass `relativeTo:` |
+| `Font.custom(_:fixedSize:)`, or `custom(_:size:)` without `relativeTo:` outside body text | Frozen at one size, or grows at body's rate instead of its role's | `custom(_:size:relativeTo:)` naming the role's text style |
 | Fixed padding beside scaling text | Proportions collapse at AX5 | `@ScaledMetric` |
 | Capping Dynamic Type on body content | Excludes the users the feature exists for | Reflow instead |
 | `.overlay(alignment: .bottom)` for a custom bar | Content scrolls under it permanently; the last row is unreachable | `.safeAreaInset(edge: .bottom)` |
@@ -255,7 +255,7 @@ alongside it.
 | Severity | Example |
 |---|---|
 | CRITICAL | Content unreachable in a supported configuration: a control off-screen at AX5 with no scroll, a form field permanently under the keyboard, the last list row permanently under an overlay bar |
-| HIGH | Clipping or overlapping at AX5 on the narrowest supported width; a fixed-width layout on an adaptive surface; `ViewThatFits` with no fitting candidate; Dynamic Type capped on body content; a stretched phone layout on iPad; `UIScreen.main.bounds` driving layout |
+| HIGH | Clipping or overlapping at AX5 on the narrowest supported width; a fixed-width layout on an adaptive surface; `ViewThatFits` with no fitting candidate; Dynamic Type capped on body content; a stretched phone layout on iPad; `UIScreen.main.bounds` driving layout; `.ignoresSafeArea()` on the content layer, putting a control or text under the status bar, Dynamic Island or home indicator |
 | MEDIUM | `minimumScaleFactor` masking a reflow failure; `lineLimit(1)` truncating a label whose meaning survives (a meaningful label truncated at AX5 on the narrowest width is the HIGH row in section 4); fixed padding beside scaled text; compact-height layout untested; missing `@ScaledMetric` on an icon beside text |
 | LOW | Slightly loose proportions at one width; a magic number that happens not to clip |
 | NIT | Preference about where a breakpoint sits |

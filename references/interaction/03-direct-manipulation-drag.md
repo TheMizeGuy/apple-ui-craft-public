@@ -173,6 +173,41 @@ Apple's documented recommendation is `false` wherever a canvas or map hosts both
 
 This is the correct tool for any effect that always returns to its initial value -- a press-to-lift scale, a peek, a pull-to-refresh head -- because there is no committed counterpart to animate; the reset IS the return animation. Reaching for `.onEnded { withAnimation { state = 0 } }` on a plain `@State` instead reintroduces the bug `@GestureState` exists to fix: `.onEnded` does not fire on cancellation (an incoming call, a parent `ScrollView` stealing the gesture), so the view can strand mid-effect.
 
+The rule covers committed drags too. A drag that ends in an outcome (archive, snap to a corner, reorder) keeps its live value in `@GestureState` and writes only the outcome to `@State` in `.onEnded`, which SwiftUI runs only when the gesture succeeds. Give the reset and the committed outcome the same spring so the card travels from the finger to the new corner in one motion. When cleanup must also run on a cancel, observe a `@GestureState` activity flag:
+
+```swift
+// iOS 17+. The reset closure cannot read the environment, so it asks UIAccessibility.
+@Environment(\.accessibilityReduceMotion) private var reduceMotion
+@GestureState(reset: { _, transaction in
+    transaction.animation = UIAccessibility.isReduceMotionEnabled ? nil : .spring(duration: 0.4, bounce: 0.2)
+}) private var drag: CGSize = .zero                  // live offset; resets on end and on cancel
+@GestureState private var isDragging = false
+@State private var corner: Corner = .bottomTrailing  // the committed outcome
+
+private var settle: Animation? { reduceMotion ? nil : .spring(duration: 0.4, bounce: 0.2) }
+
+card
+    .offset(drag)
+    .gesture(
+        DragGesture()
+            .updating($drag) { value, state, _ in state = value.translation }
+            .updating($isDragging) { _, state, _ in state = true }
+            .onEnded { value in
+                let landing = reduceMotion ? value.location : value.predictedEndLocation
+                withAnimation(settle) { corner = .nearest(to: landing) }
+            }
+    )
+    .onChange(of: isDragging) { _, dragging in
+        if !dragging { clearDropHighlight() }        // runs on success and on cancel
+    }
+```
+
+Under Reduce Motion the landing is the release point, not the projected fling (the Reduce Motion section below), and both springs drop to `nil`.
+
+Exercise the interruptions in a Runtime review: a parent scroll view claiming the pan, a sheet or alert presented mid-drag, a second finger landing mid-drag, and the app leaving the foreground mid-drag (an incoming call, Control Center pulled down). After each, the view is at rest and the next drag starts from zero. The Simulator cannot place a call, so system cancellation is a device check; on Source or Simulator evidence the source rule above is the check, and the device run goes on the `Untested:` line (`references/review/02-evidence-pipeline.md#simulator-and-device`).
+
+Interruption list adapted from impeccable (Apache-2.0): skill/reference/harden.md.
+
 ## The accessibility bridge: `accessibilityDragPoint` and `accessibilityDropPoint`
 
 Every recipe above is invisible to VoiceOver -- none of it replays a `DragGesture`. The base modifiers (`references/accessibility/04-motor-interaction.md#native-voiceover-bridge-apis`, iOS 16.0+) disambiguate source and destination when a view has more than one drag or drop interaction; wiring them onto a REAL custom drag (not a toy example) means pairing them with the outcome, not the gesture:
@@ -215,7 +250,7 @@ Keep regardless of Reduce Motion: haptics (governed by the system Haptics settin
 ## Severity guide
 
 - **CRITICAL** -- a custom drag interaction (reorder, canvas placement) ships with no VoiceOver/Switch Control path at all -- not even a named-action alternative.
-- **HIGH** -- the tracked value is animated (visible lag on every drag); OR raw points/sec passed into a normalized `initialVelocity` parameter (wild overshoot in production).
+- **HIGH** -- the tracked value is animated (visible lag on every drag); OR raw points/sec passed into a normalized `initialVelocity` parameter (wild overshoot in production); OR transient drag state held in `@State` and cleared only in `.onEnded` -- a cancelled drag leaves the view stranded off its anchor, and the next drag starts with a jump.
 - **MEDIUM** -- release settles to the raw position instead of the momentum projection (no follow-through, but not broken); a return-to-origin effect pops instead of easing due to a missing reset transaction.
 - **LOW** -- rubber-band constant noticeably stiffer/looser than system feel; snap bounce outside the 0.15-0.25 house range.
 

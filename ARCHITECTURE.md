@@ -4,7 +4,7 @@ Internal map of files, responsibilities, and cross-references. Not loaded by Cla
 
 ## Mission
 
-A team of seven specialist agents embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
+A team of specialist agents embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS/iPadOS UI so the result feels like Apple's own first-party apps -- not "good enough," but the kind of UI that makes users say "this feels right" without being able to articulate why. Liquid Glass done correctly. Springs that settle naturally and stay interruptible. Haptics that confirm without fatiguing. Accessibility built in, not bolted on. Platform integration that makes the app feel like it belongs on the home screen -- and reaches the wrist, the TV, the desktop, and the headset when it should.
 
 ## Layout
 
@@ -14,14 +14,14 @@ apple-ui-craft/
 ├── README.md
 ├── USAGE.md                     (how to drive every skill)
 ├── ARCHITECTURE.md              (this file)
-├── skills/                      (6 user-invoked entry points)
+├── skills/                      (user-invoked entry points)
 │   ├── design-ios/SKILL.md          "design a [screen/flow/component]"
 │   ├── review-ios-ui/SKILL.md       "review my iOS UI / check this screen"
 │   ├── optimize-ios-ui/SKILL.md     "optimize animations / haptics / performance"
 │   ├── craft-ios-ui/SKILL.md        "make this feel Apple-native" (full team)
 │   ├── audit-accessibility/SKILL.md "audit my app for accessibility" (a11y solo, deep)
 │   └── integrate-platform/SKILL.md  "make my app feel native beyond the UI" (platform solo)
-├── agents/                      (7 agents; no model pin -- the dispatching session chooses)
+├── agents/                      (no model pin -- the dispatching session chooses)
 │   ├── apple-ui-architect.md          greenfield design + production SwiftUI
 │   ├── apple-ui-reviewer.md           HIG + visual + Liquid Glass audit
 │   ├── animation-haptics-engineer.md  motion + interaction/feel + tactile feedback
@@ -29,10 +29,10 @@ apple-ui-craft/
 │   ├── performance-engineer.md        SwiftUI perf, rendering, scroll, state, launch, memory
 │   ├── platform-engineer.md           platform + cross-platform integration (incl. Siri AI via App Intents)
 │   └── craft-team-lead.md             orchestrator for craft-ios-ui multi-pass
-└── references/                  (14 directories -- self-contained knowledge files)
+└── references/                  (self-contained knowledge files)
     ├── _scaffolding/
     │   ├── _TEMPLATE.md                     reference-file skeleton (authoring-only)
-    │   ├── dispatch-protocol.md             shared dispatch mechanics (all 6 skills point here) + the optional memory query
+    │   ├── dispatch-protocol.md             shared dispatch mechanics (every skill points here) + the optional memory query
     │   └── version-floor-registry.md        SINGLE source of availability floors + PHANTOM list
     ├── design/
     │   ├── 01-apple-design-philosophy.md    clarity, deference, depth
@@ -134,28 +134,30 @@ apple-ui-craft/
     │   ├── 04-states-feedback-and-affordances.md  OWNER: the 10-state set, latency budgets, silent success, affordances, disabled anti-patterns
     │   └── 05-adaptive-review-method.md     OWNER: sizing-strategy classification, the five axes, size matrix, ROBUST/ADEQUATE/FRAGILE/BROKEN rubric
     └── review/                              (0.3.0 -- HOW to review, shared by every agent)
-        ├── 01-finding-format.md             OWNER: finding template, severity scale, confidence enum, dimension registry
-        ├── 02-evidence-pipeline.md          OWNER: review modes, geometry evidence rule, configuration + state coverage
-        └── 03-density-and-economy.md        OWNER: window utilisation, leftover sizing, length, distance -- the WASTE dimension
+        ├── 01-finding-format.md             OWNER: finding template, severity scale, confidence enum, dimension registry, systemic patterns
+        ├── 02-evidence-pipeline.md          OWNER: review modes, Simulator and device, geometry evidence rule, configuration + state coverage, capture validity
+        ├── 03-density-and-economy.md        OWNER: window utilisation, leftover sizing, length, distance -- the WASTE dimension
+        └── 04-run-artifacts.md              OWNER: review ledger schema v1, CI verdict artifact schema v1, which skill writes what
 ```
 
 ```
 tests/                            (0.3.0 -- zero-dependency gates, Node >= 18 stdlib)
 ├── run-all.sh                    every gate; the definition of done
-├── check-references.mjs          every references/...#anchor citation resolves
+├── check-references.mjs          every references/...#anchor citation and corpus label owner resolves
 ├── README.md                     the runbook
 ├── corpus/
-│   ├── fixtures/*.swift          10 fixtures with planted defects + 1 clean control
-│   └── labels.json               ground truth (16 labels, ruleRef -> owning reference)
+│   ├── fixtures/*.swift          fixtures with planted defects, plus clean controls
+│   └── labels.json               ground truth (ruleRef -> owning reference; check-references.mjs resolves every owner)
 └── harness/
     ├── score-review.mjs          recall + precision gate (floors 0.8)
-    ├── selftest.mjs              46 cases verifying the scorer itself
-    └── examples/sample-findings.json   a by-the-book run (16/16)
+    ├── selftest.mjs              verifies the scorer itself
+    ├── blind-copy.mjs            neutral-name, comment-stripped fixture copy for a blind run
+    └── examples/sample-findings.json   a by-the-book run (every label)
 
 ci/                               (0.3.1 -- the verdict gate a reviewed repo runs)
 ├── gate.mjs                      consumes the artifact; binds to the last UI-touching sha, fails closed
 ├── verdict-artifact-schema.json  canonical; gate.mjs parses it at runtime
-├── selftest.mjs                  30 cases, every fail-closed path pinned
+├── selftest.mjs                  every fail-closed path pinned
 └── README.md                     adoption guide for a reviewed repo
 ```
 
@@ -228,9 +230,9 @@ and dedup key on.
 
 | Contract | Owner | Notes |
 |---|---|---|
-| Finding format, severity, confidence, dimension registry | `references/review/01-finding-format.md` | Every agent, skill, and the team-lead merge key on these exact strings |
-| Evidence modes and the geometry evidence rule | `references/review/02-evidence-pipeline.md` | Bounds what each mode may claim; `NOT ASSESSED` is a legal verdict and is carried through unchanged |
-| Corpus ground truth | `tests/corpus/labels.json` | Each label's `ruleRef` must be defined in the reference named in its `owner` field |
+| Finding format, severity, confidence, dimension registry, systemic patterns | `references/review/01-finding-format.md` | Every agent, skill, and the team-lead merge key on these exact strings; a systemic entry summarises and never replaces its instances |
+| Evidence modes and the geometry evidence rule | `references/review/02-evidence-pipeline.md` | Bounds what each mode may claim, including what a Simulator run cannot show; captures are checked before grading; `NOT ASSESSED` is a legal verdict and is carried through unchanged |
+| Corpus ground truth | `tests/corpus/labels.json` | Each label's `ruleRef` must be defined in the reference named in its `owner` field; `tests/check-references.mjs` fails on an owner anchor that does not resolve, an undeclared ruleRef area, or a fixture with no labels entry |
 | Review ledger (schema v1) | `references/review/04-run-artifacts.md` | `.claude/apple-ui-craft/last-review.json` in the REVIEWED repo; informational version, powers the delta report |
 | CI verdict artifact (schema v1) | `ci/verdict-artifact-schema.json` | `gate.mjs` parses the schema at runtime and HARD-REJECTS a `schemaVersion` mismatch |
 | WCAG 2.2 A/AA coverage | `references/accessibility/08-wcag-2-2-mapping.md` | The audit checklist; an uncited criterion is otherwise indistinguishable from an unmet one |

@@ -41,8 +41,9 @@ matrix (what changes under each accessibility setting).
 ## Output
 
 - Accessibility verdict: INCLUSIVE / ADEQUATE / GAPS / EXCLUDING / NOT ASSESSED (no setting exercised and no assistive technology reached)
-- The evidence mode and which accessibility settings were actually exercised. A setting that was not turned on is reported `not exercised`, never OK -- a clean cell filled from a default-configuration screenshot is a false negative on the users this audit exists for (`references/review/02-evidence-pipeline.md#configuration-coverage`)
+- The evidence mode with its runtime target, which accessibility settings were actually exercised, and an `Untested:` line. A setting that was not turned on is reported `not exercised`, never OK -- a clean cell filled from a default-configuration screenshot is a false negative on the users this audit exists for (`references/review/02-evidence-pipeline.md#configuration-coverage`). VoiceOver, Switch Control and Assistive Access read `not exercised (structure checked)` unless a device ran them (`references/review/02-evidence-pipeline.md#simulator-and-device`)
 - Findings in the canonical format (`references/review/01-finding-format.md`), each carrying its `WCAG:` and `Who is affected:` lines
+- Systemic patterns (`references/review/01-finding-format.md#systemic-patterns`), e.g. touch targets under 44pt across the tab bar and every list row
 - Findings by screen, severity-tagged (CRITICAL = exclusion or WCAG A/AA violation)
 - Per-finding: WCAG criterion + level, affected assistive technology, concrete SwiftUI rewrite
 - Settings matrix: behavior under Reduce Motion, Reduce Transparency, Increase Contrast,

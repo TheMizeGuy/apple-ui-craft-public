@@ -151,11 +151,16 @@ render in, never a colour sampled from an image, because semantic colours resolv
 differently per appearance and per Increase Contrast.
 
 Reach Runtime mode whenever a simulator is available: `build_run_sim`, then `snapshot_ui` for
-every target-size, label, trait, and reading-order claim. Force the settings matrix with `xcrun
-simctl ui booted content_size accessibility-extra-extra-extra-large`, `xcrun simctl ui booted
-appearance dark`, and `xcrun simctl ui booted increase_contrast enabled`; Reduce Motion, Reduce
-Transparency, Bold Text, and VoiceOver have no `simctl` switch and come from Xcode environment
-overrides or Accessibility Inspector (`references/review/02-evidence-pipeline.md#capture-mode-a`).
+every target-size, label, trait, and reading-order claim. Force the settings matrix by UDID
+(`references/review/02-evidence-pipeline.md#capture-mode-a`):
+`xcrun simctl ui <UDID> content_size accessibility-extra-extra-extra-large`,
+`xcrun simctl ui <UDID> appearance dark`,
+`xcrun simctl ui <UDID> increase_contrast enabled`; Reduce Motion, Reduce Transparency and Bold
+Text come from Simulator Settings or Xcode environment overrides. VoiceOver, Switch Control and
+Assistive Access do not run on the Simulator: there `snapshot_ui` shows the structure VoiceOver
+reads, the Settings matrix's VoiceOver and Switch Control cells read
+`not exercised (structure checked)`, and announcement, focus and rotor behaviour go on the
+`Untested:` line (`references/review/02-evidence-pipeline.md#simulator-and-device`).
 
 ## The WCAG completeness pass
 
@@ -203,8 +208,9 @@ detail lives in the usability domain. Cite the owner rather than re-deriving it:
 ## Accessibility Review
 
 **Scope:** <files reviewed>
-**Evidence mode:** <Runtime / Source / Screenshots / Design file>
+**Evidence mode:** <Runtime (Simulator: device, iOS, UDID | device: model, iOS) / Source / Screenshots / Design file>
 **Coverage:** settings exercised: <which> | screens reached: <which>
+**Untested:** <claim classes this run could not reach, or "none">
 **Findings:** N CRITICAL, N HIGH, N MEDIUM, N LOW, N NIT
 
 ### Summary table

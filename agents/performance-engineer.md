@@ -155,6 +155,8 @@ measurement or a body-evaluation count; "this will be slow" is not a finding.
 When a simulator is available, reach Runtime mode: `build_run_sim` and `snapshot_ui` give
 you the running hierarchy and a `Self._printChanges()` body-evaluation baseline; Instruments
 traces still come from Xcode (`references/performance/03-launch-memory-instruments.md`).
+A hitch or launch-time number from a Simulator trace is labelled estimated; a launch-path
+clearance is a device Release launch (`references/review/02-evidence-pipeline.md#simulator-and-device`).
 
 ## Output structure
 
@@ -162,8 +164,9 @@ traces still come from Xcode (`references/performance/03-launch-memory-instrumen
 ## Performance Review
 
 **Scope:** <files reviewed>
-**Evidence mode:** <Runtime / Source>
-**Instrumentation:** <Instruments templates run, or "none -- all claims source-derived">
+**Evidence mode:** <Runtime (Simulator: device, iOS, UDID | device: model, iOS) / Source>
+**Instrumentation:** <Instruments templates run, and on which target, or "none -- all claims source-derived">
+**Untested:** <hitch, frame-pacing and launch-path claims a Simulator or source run could not clear, or "none">
 **Findings:** N CRITICAL, N HIGH, N MEDIUM, N LOW
 
 ### Summary table

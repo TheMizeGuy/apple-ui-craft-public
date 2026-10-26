@@ -1,6 +1,6 @@
 # Finding Format, Severity, and Confidence
 
-> Owner: `references/review/01-finding-format.md` is the SINGLE SOURCE OF TRUTH for the finding template, the severity scale, the confidence enum, and the dimension registry, across every agent, skill, and consumer in this plugin. An agent body that defines its own field names is a bug in that file, not a local convention: `craft-team-lead` merges and deduplicates on these names, so a specialist emitting a variant has its real findings dropped as non-conforming output. Point at this file; do not restate it.
+> Owner: `references/review/01-finding-format.md` is the SINGLE SOURCE OF TRUTH for the finding template, the severity scale, the confidence enum, the dimension registry, and the systemic-pattern entry, across every agent, skill, and consumer in this plugin. An agent body that defines its own field names is a bug in that file, not a local convention: `craft-team-lead` merges and deduplicates on these names, so a specialist emitting a variant has its real findings dropped as non-conforming output. Point at this file; do not restate it.
 
 Five agents write findings and one merges them. That only works if all six agree
 on the field names. This file is the agreement.
@@ -160,6 +160,36 @@ Why it works: <the specific reason, not "nice job">
 ```
 
 No "Great work overall". Praise names a specific decision and why it is right.
+
+## Systemic patterns
+
+When one defect recurs (the same `<Dimension>` and the same defect, found in 3 or
+more places across 2 or more files, at MEDIUM or above), the report adds one
+systemic entry above the per-file findings. It names the pattern and the single
+structural change that removes every instance, so literal colours in nine views
+read as one asset-catalog change rather than nine unrelated fixes.
+
+```
+[SYSTEMIC] <Dimension> -- <the pattern, one line>
+Instances: <N> across <M> files: File.swift:12, Other.swift:40, ... (the first 10, then "+K more")
+Highest severity: <the highest instance's tag>
+Structural fix: <the one change: a color set, a ViewModifier, a ButtonStyle, a shared component>
+Suggested fix:
+```swift
+// verbatim-applicable SwiftUI for that change
+```
+Reference: references/<topic>/<file>.md#<slug>
+```
+
+A systemic entry summarises; it never replaces. Every instance stays a finding
+with its own `File:` line, so dedup (Dimension + File + defect), the
+per-dimension counts and verdicts, the review ledger
+(`references/review/04-run-artifacts.md#review-ledger-schema-v1`) and the CI
+artifact are unchanged. The entry carries no severity of its own and is ordered
+by its highest instance. Praise is never systemic, and a run of NITs stays NIT
+findings.
+
+Adapted from impeccable (Apache-2.0): `skill/reference/audit.native.md`.
 
 ## Worked examples
 

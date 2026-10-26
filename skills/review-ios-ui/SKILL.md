@@ -24,6 +24,8 @@ This skill dispatches 3 specialist agents in parallel. Resolve the plugin root f
    - Reviews: VoiceOver, Dynamic Type, contrast, touch targets, motor accessibility
 ```
 
+**Design record (optional).** Look for `DESIGN.md` (or `Design.md`, `design.md`) at the project root, then in `.agents/context/`, then in `docs/`; the first found wins. When one exists, pass its frontmatter `colors` and `typography` tokens and its Do's and Don'ts section on a `DESIGN RECORD:` line in the `apple-ui-reviewer` dispatch, as the project's declared design system, so a choice the project documented is judged as respected coherence rather than an unexamined default. It never exempts an accessibility or correctness finding. The file is read-only and optional: this skill never writes or creates it, and a missing file is a no-op the report does not mention.
+
 After all 3 complete, merge findings:
 - Validate the format first: every finding uses the field names and dimension
   strings in `references/review/01-finding-format.md`. Dedup and the verdict
@@ -31,6 +33,7 @@ After all 3 complete, merge findings:
   with no verdict row. Re-dispatch a non-conforming specialist rather than
   repairing its output by hand
 - Deduplicate (e.g., touch targets flagged by both accessibility and UI reviewer)
+- Union the specialists' `Untested:` lines; a claim one specialist covered on a device leaves the union
 - Order by severity (CRITICAL -> HIGH -> MEDIUM -> LOW -> NIT)
 - Group by screen/file
 - If two specialists' recommendations conflict, present both with the trade-off named -- never silently pick one
@@ -57,8 +60,9 @@ cover.
 ## Output
 
 Unified report with:
-- The evidence mode and the coverage it produced (screens reached, states forced, configurations exercised) as the first line -- it bounds every verdict below it
+- The evidence mode and the coverage it produced (screens reached, states forced, configurations exercised) as the first line, naming the runtime target and closing with `Untested:` (`references/review/02-evidence-pipeline.md#simulator-and-device`) -- it bounds every verdict below it
 - Per-dimension verdicts: HIG (APPLE-NATIVE/CLOSE/NEEDS WORK/GENERIC), Density and economy (EARNED/ACCEPTABLE/WASTEFUL/STRETCHED-PHONE), Usability and flow (COMPLETABLE/WORKABLE/OBSTRUCTED/BROKEN/NOT ASSESSED), Adaptive layout (ROBUST/ADEQUATE/FRAGILE/BROKEN/NOT ASSESSED), Animation (FLUID/ADEQUATE/STIFF/BROKEN/NOT ASSESSED), Haptics (INTENTIONAL/SPARSE/ABSENT/NOISY/NOT ASSESSED), Accessibility (INCLUSIVE/ADEQUATE/GAPS/EXCLUDING/NOT ASSESSED) -- animation and haptics are two independent verdicts; report both, never collapse them into one label; NOT ASSESSED on any of the three when the evidence mode could not reach it
+- Systemic patterns, when one defect recurs across files (`references/review/01-finding-format.md#systemic-patterns`), above the findings by file
 - Findings organized by file/screen
 - Concrete SwiftUI rewrites for every finding
 - Top 3 priority actions

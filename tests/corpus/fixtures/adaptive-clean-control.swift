@@ -83,12 +83,13 @@ struct WorkoutsScreen: View {
 
         case .loaded(let workouts):
             let visible = filter(workouts)
-            if visible.isEmpty {
-                ContentUnavailableView.search(text: searchText)
-            } else {
-                List(visible, selection: $selection) { WorkoutRow(workout: $0) }
-                    .searchable(text: $searchText)
-            }
+            List(visible, selection: $selection) { WorkoutRow(workout: $0) }
+                .overlay {
+                    if visible.isEmpty {
+                        ContentUnavailableView.search(text: searchText)
+                    }
+                }
+                .searchable(text: $searchText)
         }
     }
 
@@ -200,7 +201,7 @@ struct EditSheet: View {
         NavigationStack {
             Form {
                 TextField("Name", text: $draft.name)
-                    .textContentType(.name)
+                    .textInputAutocapitalization(.words)
                     .focused($isNameFocused)
                     .submitLabel(.done)
             }

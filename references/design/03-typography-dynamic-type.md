@@ -133,17 +133,30 @@ Text("Never tiny")
 Custom fonts can scale with Dynamic Type via `relativeTo:`:
 
 ```swift
-Text("Brand text")
-    .font(.custom("BrandFont-Bold", size: 17, relativeTo: .body))
+Text("Trailhead")
+    .font(.custom("BrandFont-Bold", size: 34, relativeTo: .largeTitle))
 
-// The font scales relative to .body's current size
+// The font scales relative to .largeTitle's current size
 // At AX5, "BrandFont-Bold" appears proportionally larger
 ```
 
 | Wrong | Right |
 |---|---|
-| `.font(.custom("Brand", size: 17))` | `.font(.custom("Brand", size: 17, relativeTo: .body))` |
+| `.font(.custom("Brand", fixedSize: 17))` | `.font(.custom("Brand", size: 17, relativeTo: .body))` |
+| `.font(.custom("Brand", size: 34))` on a title | `.font(.custom("Brand", size: 34, relativeTo: .largeTitle))` |
 | `.font(.system(size: 17))` | `.font(.body)` |
+
+`custom(_:size:)` without `relativeTo:` still scales, along the body curve, so it
+is right only for body text; a title or caption set that way grows at body's rate
+instead of its role's. `custom(_:fixedSize:)` and `.system(size:)` do not scale at
+all.
+
+**Where a brand face goes.** SF carries body, labels and controls: it is tuned
+for them at every Dynamic Type size, and system controls draw in it regardless,
+so a brand face there splits one screen into two typographic systems. A brand
+face earns display moments (a large title, a hero numeral, an onboarding
+headline), always through `relativeTo:`. This is the greenfield default; a
+project design system or `DESIGN.md` that sets its face on body text wins.
 
 ## Custom dimensions that scale (@ScaledMetric)
 
@@ -237,7 +250,8 @@ Always test with:
 | `.frame(height: 50)` for cells | Truncates at AX sizes | Use `.frame(minHeight: 50)` or remove fixed height |
 | `lineLimit(1)` on user content | Truncates names, addresses, etc. | Allow wrapping, use truncation only for known-safe cases |
 | Fixed icon sizes | Look tiny at AX5 next to giant text | Use `@ScaledMetric` |
-| Custom font without `relativeTo:` | Doesn't scale with Dynamic Type | Add `relativeTo: .body` (or appropriate style) |
+| Custom font at `fixedSize:` | Doesn't scale with Dynamic Type | `custom(_:size:relativeTo:)` with the role's text style |
+| Custom font without `relativeTo:` outside body text | Scales along the body curve, not its role's | Add `relativeTo:` naming the role (`.largeTitle`, `.caption`) |
 | Truncating navigation titles | Inline title becomes "..." at AX5 | Use `.toolbarTitleDisplayMode(.large)` and let it expand |
 | Hardcoded VStack spacing | Cramped at AX5 | Use system spacing or scale with `@ScaledMetric` |
 | `.font(.extraLargeTitle)` / `.extraLargeTitle2` on iOS | Doesn't exist on iOS -- `Font.TextStyle.extraLargeTitle`/`.extraLargeTitle2` are visionOS 1.0+ ONLY | Cap at `.largeTitle`; the iOS ramp is 11 styles, there is no 12th |
@@ -245,4 +259,4 @@ Always test with:
 ## See also
 
 - `references/design/04-color-system.md` -- color hierarchy that pairs with text hierarchy
-- `references/accessibility/02-dynamic-type-adaptation.md` -- accessibility deep dive
+- `references/accessibility/02-dynamic-type-adaptation.md` -- scaling, AX sizes and reflow from the accessibility side

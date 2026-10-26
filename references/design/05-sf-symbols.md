@@ -323,7 +323,7 @@ HStack {
 
 | Mistake | Problem | Fix |
 |---|---|---|
-| Custom icon when SF Symbol exists | Inconsistent visual weight | Use SF Symbol |
+| Custom icon when SF Symbol exists, or a second icon set beside SF Symbols (bundled PNG or PDF glyphs from a web icon kit) | Weight, baseline and optical size drift between neighbors; the glyphs ignore Bold Text and the rendering modes | An SF Symbol for every concept it covers, and a custom symbol exported from the SF Symbols app (`references/design/05-sf-symbols.md#custom-symbols`) for the rest. MEDIUM (`references/review/01-finding-format.md#severity-scale`); a provider's required brand mark is exempt |
 | `chevron.left` for back | Doesn't mirror in RTL | `chevron.backward` |
 | Symbol weight doesn't match text | Visually mismatched | Add `.fontWeight()` matching surrounding text |
 | Standalone symbol without label | VoiceOver reads "icon" | `.accessibilityLabel("descriptive text")` |

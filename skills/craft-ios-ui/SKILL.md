@@ -20,9 +20,12 @@ Agent({
   prompt: "PLUGIN ROOT: <plugin root>
            REFERENCES: <plugin root>/references/
            <full contents of <plugin root>/agents/craft-team-lead.md>
-           SCOPE: <the user's scope: files/screens or whole project>"
+           SCOPE: <the user's scope: files/screens or whole project>
+           DESIGN RECORD: <the DESIGN.md excerpt below, or omit the line>"
 })
 ```
+
+**Design record (optional).** Look for `DESIGN.md` (or `Design.md`, `design.md`) at the project root, then in `.agents/context/`, then in `docs/`; the first found wins. When one exists, pass its frontmatter `colors` and `typography` tokens and its Do's and Don'ts section on the `DESIGN RECORD:` line; the team lead hands it to `apple-ui-reviewer` as the project's declared design system, so a choice the project documented is judged as respected coherence rather than an unexamined default. It never exempts an accessibility or correctness finding. The file is read-only and optional: this skill never writes or creates it, and a missing file is a no-op the report does not mention.
 
 The team lead then dispatches all 5 review specialists the same way, each specialist's body inlined into a `general-purpose` dispatch (see "How this agent is dispatched" in `agents/craft-team-lead.md`):
 1. `apple-ui-reviewer` -- HIG, Liquid Glass, typography, color, navigation, layout
@@ -48,10 +51,10 @@ Defaults to the entire project. Can be scoped to specific screens/directories.
 
 Comprehensive report with:
 - Executive summary
-- The evidence mode and coverage as the report's first line -- it bounds every verdict below it
+- The evidence mode and coverage as the report's first line, with the runtime target and the Untested union -- it bounds every verdict below it
 - Per-dimension verdicts (visual, density and economy, usability and flow, adaptive layout, animation, haptics, accessibility, performance, platform)
 - Findings organized by screen/flow
-- Cross-cutting findings
+- Cross-cutting and systemic findings (`references/review/01-finding-format.md#systemic-patterns`)
 - Platform integration opportunity map
 - Prioritized improvement plan
 - Praise for well-implemented patterns

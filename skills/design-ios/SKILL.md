@@ -25,30 +25,20 @@ Gather project context BEFORE dispatching -- the architect designs against these
 | Navigation model | Grep for `NavigationStack` / `NavigationSplitView` / `TabView`; match the dominant one |
 | Color + type conventions | `Assets.xcassets` color sets; any DesignSystem/Theme/Tokens file |
 | Component conventions | Existing reusable views -- new components copy their API shape |
+| Product context (optional) | `PRODUCT.md` at the project root, then `.agents/context/`, then `docs/` (named `PRODUCT.md`, `Product.md` or `product.md`; the first found wins). Pass its Platform, Users, Product Purpose, Operating Context, Brand Commitments and Accessibility & Inclusion sections into the dispatch |
+| Design record (optional) | `DESIGN.md` by the same lookup (`DESIGN.md`, `Design.md` or `design.md`). Pass its frontmatter `colors` and `typography` tokens and its Overview and Do's and Don'ts sections as brand intent; web units (rem, px) become a Dynamic Type text style through `relativeTo:`, never a fixed size |
+
+Both files are read-only and optional: this skill never writes, creates or interviews for them, and a missing file is a no-op the report does not mention. The request and the existing code outrank them; they outrank inference. A `## Platform` of `web` describes another surface of the product and grounds only users and context.
 
 No project (greenfield): default to an iOS 26 deployment target (the Liquid Glass floor, which reaches iOS 26 and 27 devices) with iOS 27 APIs behind `#available(iOS 27, *)` where they are the better tool, `NavigationStack`, semantic colors only -- and state those assumptions explicitly in the dispatch. A user who names iOS 27 as the target gets the iOS 27 APIs directly, with no fallbacks.
 
 ### Stage 2: Accessibility pass
-After the architect produces code, dispatch `apple-ui-craft:accessibility-engineer` (with the same `PLUGIN ROOT:` and `REFERENCES:` lines) to audit it. Inline the architect's full Stage 1 SwiftUI output -- or the absolute paths of the files it wrote, when a project exists -- directly into this dispatch prompt: the accessibility-engineer shares no conversation state with Stage 1 and can only Read what it is pointed at. It audits for:
+After the architect produces code, dispatch `apple-ui-craft:accessibility-engineer` (with the same `PLUGIN ROOT:` and `REFERENCES:` lines) to audit it. Inline the architect's full Stage 1 SwiftUI output -- or the absolute paths of the files it wrote, when a project exists -- directly into this dispatch prompt, together with the deployment target and the scope: the accessibility-engineer shares no conversation state with Stage 1 and can only Read what it is pointed at. It audits for:
 - VoiceOver labels and reading order
 - Dynamic Type survival at AX sizes
 - Touch target compliance (44x44pt)
 - Reduce Motion fallback
 - Color contrast
-
-Example Stage 2 prompt (the audit silently reviews nothing without the inlined code -- this handoff is the step most often botched):
-
-```
-PLUGIN ROOT: <root>
-REFERENCES: <root>/references/
-Audit the SwiftUI below for accessibility. It was designed moments ago in a session
-you cannot see; the code below is your ONLY input.
-DEPLOYMENT TARGET: iOS 26. SCOPE: 3 views (SettingsView, ProfileRow, PlanPicker).
-<architect's full Stage 1 SwiftUI, pasted verbatim -- or absolute file paths when
-the code was written to disk>
-Return severity-tagged findings (CRITICAL/HIGH/MEDIUM/LOW/NIT) per dimension:
-VoiceOver, Dynamic Type, touch targets, Reduce Motion, contrast.
-```
 
 Present both outputs to the user. The architect's code is the primary deliverable; the accessibility findings are immediate feedback for refinement.
 

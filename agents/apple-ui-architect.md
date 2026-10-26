@@ -77,6 +77,7 @@ If a project root is provided, map the codebase with Glob, Grep and Read:
 - Deployment target (determines available APIs)
 - Existing color/typography conventions
 - Existing animation patterns
+- `PRODUCT.md` / `DESIGN.md` content the dispatch carries: product truth for the task frame, brand intent for the visual layer
 
 **Match what exists.** Don't impose a new architecture on top of a working one.
 
@@ -101,6 +102,11 @@ Entry:      every surface it can start from -- app icon, widget, Siri, Spotlight
 Exit:       completion, abandonment, error, interruption, termination
 Frequency:  once ever / daily / per incident / per purchase
 ```
+
+Fill Actor, Trigger and Frequency from `PRODUCT.md` (Users, Operating Context)
+when the dispatch carries it, and mark each field `(PRODUCT.md)` or `(inferred)`.
+Accessibility needs it names are design constraints from the first line, never
+deferred to the audit.
 
 Then write the flow map -- step, entry condition, input required, state carried
 in, state produced, failure modes, exit paths. **An empty cell is a design defect
@@ -174,8 +180,9 @@ Your code must be:
 - A shallow app root and first screen: observers and side-effect modifiers go on a zero-size sibling, not wrapped around the root; heavy overlay and inset content goes behind a nominal `View` struct (a `some View` property is not one); a long run of modifiers becomes one `ViewModifier`. A deep root can crash on launch on devices while every Simulator run passes (`references/performance/03-launch-memory-instruments.md#launch-crash-stack-exhaustion-at-first-render`)
 
 **Visually Apple-native:**
-- System font styles (`.title`, `.headline`, `.body`, `.caption`) -- never hardcoded sizes
+- System font styles (`.title`, `.headline`, `.body`, `.caption`) -- never hardcoded sizes; a brand face only in display roles (`references/design/03-typography-dynamic-type.md#custom-fonts-with-dynamic-type`)
 - Semantic colors (`.primary`, `.secondary`, `.accent`) -- never hardcoded hex
+- A `DESIGN.md` palette becomes asset-catalog color sets with Any, Dark and High Contrast variants, referenced as `Color("Name")`; its typeface takes display roles through `Font.custom(_:size:relativeTo:)` while SF carries body, labels and controls; it never overrides semantic colors in system chrome, Dynamic Type, or HIG navigation. Where it contradicts the project's Swift conventions (an asset catalog, a Theme file), the code wins and the output says so in one line
 - SF Symbols -- prefer over custom icons
 - Leading/trailing alignment -- never left/right (breaks RTL)
 - Standard margins via `.padding()` and `.scenePadding()` (iOS 16+)
@@ -210,7 +217,7 @@ Your code must be:
 - Branch on `horizontalSizeClass`, never on `UIDevice.current.userInterfaceIdiom`
 - `ViewThatFits` / `AnyLayout` where content must restack, with a final candidate that ACTUALLY fits
 - `@ScaledMetric` for every custom dimension sitting beside text
-- `Font.custom(_:size:relativeTo:)` -- never a bare `size:`
+- `Font.custom(_:size:relativeTo:)` naming the role's text style -- never `fixedSize:` or `.system(size:)` on text (`custom(_:size:)` alone scales along the body curve, right only for body text)
 - Custom bars via `.safeAreaInset(edge:)`, never `.overlay(alignment: .bottom)`, which makes the last row permanently unreachable
 - Toolbars that degrade instead of clipping as the window narrows: `visibilityPriority(_:)` on secondary groups, the one action that must never hide pinned with `.topBarPinnedTrailing`, rarely used actions in `ToolbarOverflowMenu` (iOS 27; below it, fewer items and an explicit `Menu`). Built with the iOS 27 SDK, an app resizes continuously on iPad and under iPhone Mirroring whatever orientations it declares, so every width between compact and full is a real state
 - At regular width: a `NavigationSplitView` for list-plus-detail, or `GridItem(.adaptive(minimum:maximum:))` for peers. A single centred column of label-and-value rows on iPad is a stretched phone
@@ -344,8 +351,8 @@ say that is why.)
 
 These protect correctness and access -- things that compile wrong, exclude someone, or lose work. Everything else in this file is a default, not a rule: where the project has its own design system (brand type, color, motion tokens, component shapes), the project wins, and the defaults are what you reach for when it does not.
 
-- **No hardcoded colors.** System semantic colors only, unless the design spec requires a brand color (which still uses `.init(red:green:blue:)` with dark mode variants via asset catalog).
-- **No hardcoded font sizes.** System text styles only. Custom fonts use `Font.custom(_:relativeTo:)` for Dynamic Type scaling.
+- **No hardcoded colors.** System semantic colors, or a brand color from an asset-catalog color set with Any, Dark and High Contrast variants, referenced as `Color("Name")`; never `Color(red:green:blue:)` or a hex initializer in code.
+- **No hardcoded font sizes.** System text styles only. Custom fonts use `Font.custom(_:size:relativeTo:)` for Dynamic Type scaling.
 - **No left/right.** Leading/trailing everywhere. Test your mental model: would this break in Arabic?
 - **No `.onAppear { Task {} }`.** Use `.task {}`.
 - **No fixed geometry on content.** No `.frame(width:)`/`.frame(height:)` on content, no `UIScreen.main.bounds`, no `UIDevice.current.userInterfaceIdiom` branching. The adaptive contract is written BEFORE the layout, not discovered after it.

@@ -6,13 +6,39 @@
 // file. A citation that does not resolve is a silent capability loss: the agent
 // follows the pointer, finds nothing, and degrades without reporting it.
 //
+// Every corpus label's `owner` must resolve the same way, every label's ruleRef
+// area must be declared in labels.json meta.ruleRefAreas, and every fixture file
+// must exist and be listed.
+//
+// Usage: node tests/check-references.mjs [--labels <path>]
+//
 // Zero dependencies, Node >= 18 stdlib only. Exit 0 pass, 1 fail, 2 usage.
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
-import { join, relative, dirname } from 'node:path';
+import { join, relative, dirname, resolve, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+function usage(message) {
+  console.error(`usage error: ${message}`);
+  console.error('usage: node tests/check-references.mjs [--labels <path>]');
+  process.exit(2);
+}
+
+let labelsPath = join(ROOT, 'tests', 'corpus', 'labels.json');
+let labelsExplicit = false;
+const argv = process.argv.slice(2);
+for (let i = 0; i < argv.length; i++) {
+  if (argv[i] === '--labels') {
+    if (!argv[i + 1]) usage('--labels needs a path');
+    labelsPath = resolve(argv[++i]);
+    labelsExplicit = true;
+  } else {
+    usage(`unknown argument: ${argv[i]}`);
+  }
+}
+if (labelsExplicit && !existsSync(labelsPath)) usage(`no such labels file: ${labelsPath}`);
 
 // Scratch and machine-written state. Not shipped, not our contract to keep.
 const SKIP_DIRS = new Set(['.git', '.serena', '.claude', '.anti-slop', '.remember', 'node_modules']);
@@ -85,6 +111,62 @@ for (const f of files) {
   });
 }
 
+// Label owners resolve like citations, so a renamed heading fails here rather than
+// orphaning a label. Idea from impeccable rule-id tagging (scripts/lib/utils.js, Apache-2.0).
+let ownersChecked = 0;
+let fixturesChecked = 0;
+if (existsSync(labelsPath)) {
+  const rel = relative(ROOT, labelsPath);
+  const shown = !rel.startsWith('..') && !isAbsolute(rel) ? rel : labelsPath;
+  const raw = readFileSync(labelsPath, 'utf8');
+  const escape = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const lineOf = (key, value) => {
+    const m = new RegExp(`"${key}"\\s*:\\s*"${escape(value)}"`).exec(raw);
+    return m ? raw.slice(0, m.index).split('\n').length : 1;
+  };
+  const fail = (line, ref, why) => failures.push({ file: shown, line, ref, why });
+
+  let labels = null;
+  try {
+    labels = JSON.parse(raw);
+  } catch (e) {
+    fail(1, shown, `labels file does not parse: ${e.message}`);
+  }
+  if (labels && !Array.isArray(labels.meta?.ruleRefAreas)) {
+    fail(1, 'meta.ruleRefAreas', 'labels file declares no ruleRefAreas array');
+  } else if (labels && !Array.isArray(labels.fixtures)) {
+    fail(1, 'fixtures', 'labels file has no fixtures array');
+  } else if (labels) {
+    const areas = new Set(labels.meta.ruleRefAreas);
+    const fixtureDir = join(ROOT, 'tests', 'corpus', 'fixtures');
+    const listed = new Set();
+    for (const fixture of labels.fixtures) {
+      fixturesChecked++;
+      listed.add(fixture.file);
+      if (!fixture.file || !existsSync(join(fixtureDir, fixture.file))) {
+        fail(lineOf('file', fixture.file ?? ''), `tests/corpus/fixtures/${fixture.file ?? ''}`, 'fixture file does not exist');
+      }
+      for (const label of fixture.expected || []) {
+        ownersChecked++;
+        const line = lineOf('id', label.id ?? '');
+        const owner = label.owner || '';
+        const [path, anchor] = owner.split('#');
+        if (!owner) fail(line, label.id || '(no id)', 'label has no owner');
+        else if (!existsSync(join(ROOT, path))) fail(line, owner, 'owner file does not exist');
+        else if (!anchor) fail(line, owner, 'owner has no #anchor');
+        else if (!slugIndex.get(path)?.has(anchor)) fail(line, owner, 'owner anchor does not exist in that file');
+        const area = (label.ruleRef || '').split('/')[0];
+        if (!areas.has(area)) fail(line, label.ruleRef || '(no ruleRef)', `ruleRef area "${area}" is not in meta.ruleRefAreas`);
+      }
+    }
+    if (existsSync(fixtureDir)) {
+      for (const f of readdirSync(fixtureDir).filter((n) => n.endsWith('.swift')).sort()) {
+        if (!listed.has(f)) fail(1, `tests/corpus/fixtures/${f}`, 'fixture not listed in labels.json');
+      }
+    }
+  }
+}
+
 // An orphan reference is the mirror failure: a file nothing points at is a file
 // no agent will ever read. Warn rather than fail -- a newly added reference is
 // legitimately unwired for one commit.
@@ -109,13 +191,14 @@ const orphans = files
   .filter((r) => r.startsWith('references/') && !r.includes('_TEMPLATE') && !referenced.has(r));
 
 console.log(`checked ${citations} citations across ${files.length} markdown files`);
+if (fixturesChecked) console.log(`checked ${ownersChecked} label owners across ${fixturesChecked} fixtures`);
 if (orphans.length) {
   console.log(`\nWARN: ${orphans.length} reference file(s) nothing cites (unreachable to agents):`);
   for (const o of orphans) console.log(`  ${o}`);
 }
 if (failures.length) {
-  console.log(`\nFAIL: ${failures.length} broken citation(s):`);
+  console.log(`\nFAIL: ${failures.length} broken citation(s) or label owner(s):`);
   for (const f of failures) console.log(`  ${f.file}:${f.line}  ${f.ref}  -- ${f.why}`);
   process.exit(1);
 }
-console.log('\nPASS: every reference citation resolves.');
+console.log('\nPASS: every reference citation and label owner resolves.');

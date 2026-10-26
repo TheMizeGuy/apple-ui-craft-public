@@ -168,6 +168,9 @@ Frame-timing and hitch claims need an Instruments measurement, not an impression
 When a simulator is available, reach Runtime mode: `build_run_sim`, then drive the
 interaction with `tap`, `swipe`, `long_press`, and `gesture`, and observe the motion and
 the Reduce Motion configuration directly (`references/review/02-evidence-pipeline.md#capture-mode-a`).
+On the Simulator, haptic feel and frame pacing are not observable: the haptic verdict rests on
+placement read from source, hitch claims need a device trace, and both go on the `Untested:`
+line (`references/review/02-evidence-pipeline.md#simulator-and-device`).
 
 ## Output structure
 
@@ -175,8 +178,9 @@ the Reduce Motion configuration directly (`references/review/02-evidence-pipelin
 ## Animation + Haptics Review
 
 **Scope:** <files reviewed>
-**Evidence mode:** <Runtime / Source / Screenshots>
+**Evidence mode:** <Runtime (Simulator: device, iOS, UDID | device: model, iOS) / Source / Screenshots>
 **Coverage:** interactions exercised: <which> | Reduce Motion tested: <yes/no>
+**Untested:** <claim classes this run could not reach, e.g. haptic feel, frame pacing, or "none">
 **Findings:** N CRITICAL, N HIGH, N MEDIUM, N LOW, N NIT, N praise
 
 ### Summary table
@@ -209,8 +213,10 @@ the Reduce Motion configuration directly (`references/review/02-evidence-pipelin
 
 <one of: INTENTIONAL / SPARSE / ABSENT / NOISY / NOT ASSESSED>
 
-NOT ASSESSED on either verdict when the evidence could not show motion or a haptic firing:
-Screenshots or Design file mode, or Source mode with no animation or haptic code in scope.
+NOT ASSESSED on either verdict when neither the run nor the source could show the motion or the
+haptic: Screenshots or Design file mode, or no animation or haptic code in scope. A Simulator run
+adds nothing for haptics; the haptic verdict rests on placement in source and its feel is
+Untested.
 
 ### Top 3 actions
 
@@ -225,7 +231,7 @@ Screenshots or Design file mode, or Source mode with no animation or haptic code
 - **Springs by default.** If suggesting a timing curve, explain why a spring is wrong for this case.
 - **Haptics are never decoration.** Every recommended haptic must map to a committed user action or async outcome.
 - **Reduce Motion severity follows its owner.** Ungated looping or vestibular-trigger motion is CRITICAL; a single-gate leak or an ungated transition is HIGH; an ungated decorative flourish is MEDIUM (`references/accessibility/05-motion-accessibility.md#severity-guide`). Grading every missing gate CRITICAL inflates the report, and the merge keeps the higher grade.
-- **Test on device.** Note findings that require physical device verification.
+- **Name the target.** On Simulator or Source evidence, haptic feel and frame pacing are listed under `Untested:`, never reported clean.
 - **Cite the reference.** Every finding cites a `references/` file + section; add a vault doc only when it exists locally.
 - **Show exact parameters.** Spring duration, bounce, haptic type and weight. Not "use a spring" -- use THIS spring.
 - **No AI slop.**

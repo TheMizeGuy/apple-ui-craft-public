@@ -68,7 +68,7 @@ before deciding what your evidence lets you claim.
 
 | Check | Expected |
 |---|---|
-| System icons used where available | SF Symbols over custom assets for standard concepts |
+| System icons used where available | SF Symbols, plus custom symbols exported from the SF Symbols app, for every concept they cover; no second icon set beside them (`references/design/05-sf-symbols.md#common-mistakes`) |
 | Correct rendering mode | `.monochrome` for toolbars, `.hierarchical` for emphasis, `.multicolor` for complex icons, `.palette` for brand pairing |
 | Variable values where applicable | Battery, signal strength, progress indicators |
 | Symbol effects for state changes | `.symbolEffect(.bounce)`, `.contentTransition(.symbolEffect(.replace))` |
@@ -82,6 +82,7 @@ before deciding what your evidence lets you claim.
 | Large titles on root views | `.navigationBarTitleDisplayMode(.large)` on top-level, `.inline` on detail |
 | Tab bar for top-level | 3-5 items, standard system tab bar |
 | Sheets for creation/editing | Not pushed onto navigation stack |
+| Swipe-to-dismiss stays live | `interactiveDismissDisabled` bound to real unsaved state, never a constant on a sheet with nothing to lose (`references/patterns/05-modality-sheets.md#drag-to-dismiss-and-interactivedismissdisabled-ethics`) |
 | Confirmation dialogs for destructive | `.confirmationDialog()` before delete/destructive |
 | Back button always present | No custom back buttons that break swipe-back gesture |
 | Standard alert style | `.alert()` for simple confirmation, not custom modals; data-driven with `.alert(_:item:)` / `.alert(error:)` / `.confirmationDialog(_:item:)` rather than a `Bool` plus a separate optional (Xcode 27; runs back to iOS 15) |
@@ -92,7 +93,7 @@ before deciding what your evidence lets you claim.
 
 | Check | Expected |
 |---|---|
-| Safe areas respected | Content avoids notch, home indicator, Dynamic Island |
+| Safe areas respected | Content avoids notch, home indicator, Dynamic Island; `.ignoresSafeArea()` on the background layer only, never on content or controls (`references/usability/05-adaptive-review-method.md#5-safe-areas-are-two-rules-not-one`) |
 | Standard margins | `.padding()` (16pt default), `.scenePadding()` for adaptive content margins |
 | Leading/trailing alignment | Never `left`/`right` (breaks RTL) |
 | Touch targets >= 44x44pt | All interactive elements |
@@ -110,6 +111,9 @@ before deciding what your evidence lets you claim.
 | Context menus on interactive content | `.contextMenu {}` on items with multiple actions |
 | Pull-to-refresh where applicable | `.refreshable {}` on scrollable content with remote data |
 | Empty states | Meaningful empty state view (not blank screen) with ContentUnavailableView (iOS 17+) |
+| System controls, not look-alikes | `Toggle`, `Picker`, `Stepper`, `Button`, restyled through their style protocols; never a look-alike drawn from shapes with `.onTapGesture` (`references/interaction/06-custom-controls-reorderable.md#the-apple-way`) |
+| Control chrome stays on controls | A `Menu` or `.pickerStyle(.menu)` whose label is a row's text block or a card carries `.menuStyle(.button)` and `.buttonStyle(.plain)`; under the automatic style iOS 26+ draws the tinted menu capsule around the content, and on 27 no app opts out of it. The default chrome is right on a control-sized title or `Label`, as in a toolbar (`references/interaction/06-custom-controls-reorderable.md#the-apple-way`) |
+| Drag state survives interruption | Live drag values in `@GestureState`; a `@State` cleared only in `.onEnded` strands when the system cancels the drag (`references/interaction/03-direct-manipulation-drag.md#returning-cleanly-gesturestate-reset-transactions`) |
 
 ### Dimension 8: Density and economy
 
@@ -199,7 +203,7 @@ Method, matrix, and the ROBUST/ADEQUATE/FRAGILE/BROKEN rubric:
 | Nothing clips at AX5 on the narrowest supported width | Truncated labels that carry meaning |
 | Text stacks vertically at accessibility sizes | A fixed `HStack` of label and value |
 | `ViewThatFits` has a candidate that actually fits | The last candidate overflows, so the system renders it clipped |
-| Custom fonts and dimensions scale | `Font.custom(_:size:)` with no `relativeTo:`; fixed padding beside scaled text |
+| Custom fonts and dimensions scale | `Font.custom(_:fixedSize:)`, or `custom(_:size:)` with no `relativeTo:` in a non-body role; fixed padding beside scaled text |
 | Compact HEIGHT is exercised | Landscape untested |
 | Custom bars join the safe area | `.overlay(alignment: .bottom)` instead of `.safeAreaInset(edge: .bottom)`, so the last row is permanently unreachable |
 
@@ -228,11 +232,16 @@ Read `references/review/02-evidence-pipeline.md` and state which mode you are in
 reached, and which configurations you exercised. This is the first line of your
 report, and it bounds every verdict in it.
 
-Reach Runtime mode whenever a simulator is available: `session_show_defaults`, then
-`build_run_sim`, then `snapshot_ui` (the geometry source) and `screenshot` per screen; drive
-sequences with `tap`, `swipe`, `gesture` (the edge back-swipe), and `button`; force
-configurations with `set_sim_appearance` and `xcrun simctl ui booted content_size
-accessibility-extra-extra-extra-large` / `increase_contrast enabled`. Capture table:
+Reach Runtime mode whenever a simulator is available: `session_show_defaults` (it names the
+session's simulator; use its UDID for every `simctl` call), then `build_run_sim`, then
+`snapshot_ui` (the geometry source) and `screenshot` per screen; drive sequences with `tap`,
+`swipe`, `gesture` (the edge back-swipe), and `button`; force configurations with
+`set_sim_appearance` and `xcrun simctl ui <UDID> content_size
+accessibility-extra-extra-extra-large` / `increase_contrast enabled`. Check every capture
+before grading it (`references/review/02-evidence-pipeline.md#capture-validity`); a capture
+that fails twice is a configuration not exercised. Name the target on the Evidence mode line
+and list what the run could not reach on the `Untested:` line
+(`references/review/02-evidence-pipeline.md#simulator-and-device`). Capture table:
 `references/review/02-evidence-pipeline.md#capture-mode-a`.
 
 **The rule this exists to enforce:** dimensions 9 to 12 cannot be judged from
@@ -345,8 +354,9 @@ Dimension-specific optional lines you will use most: `Measurement:` (dimension
 
 **Scope:** <files reviewed, count>
 **Deployment target:** <iOS version>
-**Evidence mode:** <Runtime / Source / Screenshots / Design file>
+**Evidence mode:** <Runtime (Simulator: device, iOS, UDID | device: model, iOS) / Source / Screenshots / Design file>
 **Coverage:** <screens reached> | states: <which of the 10> | configurations: <which of the matrix>
+**Untested:** <claim classes this run could not reach, or "none">
 **Findings:** N CRITICAL, N HIGH, N MEDIUM, N LOW, N NIT, N praise
 
 ### Summary table
@@ -367,6 +377,10 @@ Dimension-specific optional lines you will use most: `Measurement:` (dimension
 | Adaptive layout and Dynamic Type | | | | | |
 | App icon (when in scope) | | | | | |
 | **TOTAL** | | | | | |
+
+### Systemic patterns
+
+<when one defect recurs across files, one entry per `references/review/01-finding-format.md#systemic-patterns`; every instance also stays a finding below>
 
 ### Findings
 
@@ -396,7 +410,7 @@ Dimension-specific optional lines you will use most: `Measurement:` (dimension
 - **APPLE-NATIVE** -- Feels like a first-party app. 0 CRITICAL, 0-1 HIGH.
 - **CLOSE** -- Good foundation, specific gaps. 0 CRITICAL, 2-3 HIGH.
 - **NEEDS WORK** -- Multiple Apple-native conventions violated. 1+ CRITICAL or 4+ HIGH.
-- **GENERIC** -- Doesn't feel like an iOS app at all. Cross-platform aesthetics, custom everything where system would work.
+- **GENERIC** -- Doesn't feel like an iOS app at all. The question that decides it: would a fluent iPhone user trust this screen, or pause at a control that is not the system's? The tell is a port from a website or another platform -- a drawer or hand-rolled bar for navigation, look-alike controls, a second icon set, dead system gestures. A coherent design system that restyles system controls is not this.
 
 **Density and economy (dimension 8)**
 
@@ -425,7 +439,7 @@ exercised beside the verdict.
 - **Cite the reference.** Every finding has a reference path.
 - **Show the rewrite.** Every finding has concrete SwiftUI code.
 - **Don't manufacture findings.** If it's good, say so as a `[PRAISE]` finding (`references/review/01-finding-format.md#praise`).
-- **Respect existing coherence.** If the app has a consistent non-default design system that works, don't penalize it for not being system default -- flag only where the non-default choice hurts the experience.
+- **Respect existing coherence.** If the app has a consistent non-default design system that works, don't penalize it for not being system default -- flag only where the non-default choice hurts the experience. A choice the project documented is not a default: a `DESIGN RECORD:` the dispatch carries (from the project's `DESIGN.md`) or tokens the project declares in an asset catalog or Theme file. Cite it when this exemption applies; it never exempts an accessibility or correctness finding.
 - **Never return a clean verdict on a dimension your evidence could not see.** Dimensions 9 to 12 need a sequence, a configuration change, or a measurement. From screenshots their verdict is NOT ASSESSED. A false clean here is worse than no review, because it certifies the defect class.
 - **Density findings carry a number.** A `Measurement:` line or it is a NIT. This is the only way waste survives triage.
 - **Check the exemption before flagging unused width.** A reading measure is a legitimate use of space; a stretched phone is not. `references/review/03-density-and-economy.md#the-ipad-question` is the four-question test.

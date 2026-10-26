@@ -50,7 +50,7 @@ Unified report with:
 - Animation verdict (FLUID / ADEQUATE / STIFF / BROKEN / NOT ASSESSED)
 - Haptic verdict (INTENTIONAL / SPARSE / ABSENT / NOISY / NOT ASSESSED)
 - Performance verdict (SMOOTH / ADEQUATE / JANKY / BROKEN / NOT ASSESSED)
-- The evidence mode, and whether Instruments actually ran. Every performance finding carries an `Impact:` line with a metric and a delta, labelled measured or estimated -- an unmeasured performance claim sends someone optimising the wrong thing (`references/review/02-evidence-pipeline.md`)
+- The evidence mode with its runtime target, whether Instruments actually ran and on which target, and the union of both specialists' `Untested:` lines (`references/review/02-evidence-pipeline.md#simulator-and-device`). Every performance finding carries an `Impact:` line with a metric and a delta, labelled measured or estimated -- an unmeasured performance claim sends someone optimising the wrong thing (`references/review/02-evidence-pipeline.md`)
 - Findings in the canonical format (`references/review/01-finding-format.md`); feel cannot be judged from a screenshot, so in Screenshots mode the animation and haptic verdicts are NOT ASSESSED
 - Haptic coverage map (every interaction surface mapped to recommended haptic)
 - Spring parameter recommendations (exact values)

@@ -222,7 +222,7 @@ var body: some View {
 
 A form holding unsaved work needs both: `interactiveDismissDisabled` covers the drag, `dismissalConfirmationDialog` covers the close. Below iOS 27 there is no iOS window-close hook, which is why the fallback branch is bare -- and why a long or costly form should autosave a draft rather than rely on either dialog.
 
-`interactiveDismissDisabled(_:)` (iOS 15+) takes a `Bool` -- pass `true` only while there IS something to lose, computed from real state (`hasChanges`), never hardcoded `true`. Disabling dismissal unconditionally turns the sheet into a roach motel: no swipe, no tap-outside, and an in-sheet Cancel action becomes MANDATORY since the user's only other way out is gone. Use `.cancellationAction`/`.confirmationAction` toolbar placements, not `.topBarLeading`/`.topBarTrailing` -- they position and style Cancel/Save per-platform and mark Save as the bold default action. Read `@Environment(\.dismiss)` from the child instead of passing an `isPresented` binding down; it works identically whether the child was presented as a sheet or pushed.
+`interactiveDismissDisabled(_:)` (iOS 15+) takes a `Bool` -- pass `true` only while there IS something to lose, computed from real state (`hasChanges`), never hardcoded `true`. Disabling dismissal unconditionally turns the sheet into a roach motel: no swipe, no tap-outside, and an in-sheet Cancel action becomes MANDATORY since the user's only other way out is gone. Use `.cancellationAction`/`.confirmationAction` toolbar placements, not `.topBarLeading`/`.topBarTrailing` -- they position and style Cancel/Save per-platform and mark Save as the bold default action. Read `@Environment(\.dismiss)` from the child instead of passing an `isPresented` binding down; it works identically whether the child was presented as a sheet or pushed. The one exception is a step the flow requires -- a consent or setup step with its own in-sheet actions (`references/patterns/03-onboarding-tipkit.md`) -- which may disable dismissal outright, with a comment saying why.
 
 ## Haptic conventions
 
@@ -335,7 +335,7 @@ Popovers are iPad's non-modal answer to a sheet -- they point at the control tha
 
 ## Severity guide
 
-CRITICAL: a required-data form with dismissal enabled silently discards user work. HIGH: `.fullScreenCover` used where a `.sheet` was expected, trapping the user. MEDIUM: missing `presentationDragIndicator` on a resizable sheet with no other resize affordance. LOW: haptic texture mismatch (e.g. `.selection` instead of `.impact` on a drag threshold).
+CRITICAL: a required-data form with dismissal enabled silently discards user work. HIGH: `.fullScreenCover` used where a `.sheet` was expected, trapping the user. MEDIUM: missing `presentationDragIndicator` on a resizable sheet with no other resize affordance; `interactiveDismissDisabled` hardcoded `true` (or called with no argument) on a sheet with nothing to lose -- swipe-to-dismiss is dead and the in-sheet Done is the only exit (HIGH when no in-sheet Cancel or Done exists). LOW: haptic texture mismatch (e.g. `.selection` instead of `.impact` on a drag threshold).
 
 ## See also
 

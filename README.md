@@ -1,6 +1,6 @@
 # apple-ui-craft
 
-A team of seven specialist agents embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
+A team of specialist agents embodying a principal Apple UI engineer. Designs, reviews, optimizes, and crafts iOS UI so it feels like Apple built it. Liquid Glass done correctly. Springs that settle naturally. Haptics that confirm without fatiguing. Accessibility built in. Platform integration that makes the app feel like it belongs on the home screen.
 
 New here? The [Usage Guide](USAGE.md) walks through every skill with worked invocations. The [Architecture](ARCHITECTURE.md) has the full file map.
 
@@ -60,7 +60,7 @@ Manual alternative: `git clone https://github.com/TheMizeGuy/apple-ui-craft-publ
 
 ## Reference library
 
-**94 reference files** in a self-contained library distilled from an 88-document iOS knowledge base (~103,000 lines), organized into 13 content domains plus `_scaffolding` (14 directories total). The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list.
+A self-contained reference library in 13 content domains plus `_scaffolding`. The [`ARCHITECTURE.md`](ARCHITECTURE.md) tree is the authoritative file list, and its reference inventory holds the per-domain file counts.
 
 ```
 references/
@@ -92,21 +92,6 @@ references/
                      dispatch protocol
 ```
 
-Per-domain file counts:
-
-| Domain | Files | Domain | Files |
-|---|--:|---|--:|
-| design | 14 | interaction | 6 |
-| patterns | 11 | cross-platform | 6 |
-| platform | 9 | usability | 5 |
-| performance | 8 | exemplars | 5 |
-| accessibility | 8 | haptics | 4 |
-| animation | 7 | methodology | 4 |
-| | | review | 4 |
-| | | `_scaffolding` | 3 |
-
-**Total: 94 files** across 13 content domains plus `_scaffolding`.
-
 The **version-floor registry** (`_scaffolding/version-floor-registry.md`) is the single source of truth for availability floors, deprecated APIs, and the PHANTOM list -- APIs that do not exist and must never be emitted. Every reference file cites it rather than restating floors.
 
 ## Severity scale
@@ -134,7 +119,10 @@ change, or a measurement. When the available evidence cannot show them, the
 review returns **NOT ASSESSED** for those dimensions rather than a clean verdict.
 A clean verdict from a single static frame is a false negative on exactly the
 defect class a static frame cannot contain, so the plugin declines to give one.
-Every report states its evidence mode and coverage as its first line.
+Every report states its evidence mode and coverage as its first line. A Simulator
+run says what it could not show: haptic feel, real hitches, VoiceOver behaviour
+and the device-only launch crash go on an `Untested:` line instead of a clean
+verdict.
 
 ## Hard rules
 
@@ -154,11 +142,17 @@ The session that runs a skill chooses the model for each agent it dispatches; no
 
 ## Backed by
 
-- 88-file iOS Development vault (~103,000 lines), distilled into the reference library
+- An iOS Development knowledge vault, distilled into the reference library
 - A version-floor registry verified against Apple's symbol metadata (iOS 13 through iOS 27, with the 27.1/27.2 beta tier fenced)
 - GoodMem, when configured, for an optional query of prior debugging and audit findings
 - Context7 for live Apple framework docs
 - XcodeBuildMCP, when available, for the Runtime evidence mode: build, run, `snapshot_ui` geometry, driven sequences
+
+## Acknowledgements
+
+- [Impeccable](https://github.com/pbakaus/impeccable), Copyright 2025 Paul Bakaus, Apache-2.0: review method and evidence rules re-expressed, no text copied. From commit 3671d50: naming the simulator or device behind runtime evidence and what stayed untested, and the interrupted-gesture checks (`skill/reference/ios.md`, `skill/reference/harden.md`); addressing a simulator by UDID (`skill/reference/ios.md`); checking every capture before grading it (`skill/agents/impeccable-finish-reviewer.md`); the systemic-patterns entry and the platform-conformance checks (`skill/reference/audit.native.md`); reading `PRODUCT.md` and `DESIGN.md` (`skill/reference/init.md`, `crates/context/src/context.rs`); a brand face in display roles only (`skill/reference/ios.md`); and gating corpus label owners mechanically (`scripts/lib/utils.js`).
+- [ehmo/platform-design-skills](https://github.com/ehmo/platform-design-skills), MIT: impeccable's `skill/reference/ios.md` is distilled from it, so the ideas above that come from that file trace back to this work.
+- [VibeCurb](https://github.com/Yu-369/VibeCurb), Copyright (c) 2026 Yu-369, MIT: the motion choreography rules in `references/animation/07-motion-choreography.md`, curated and merged with this plugin's conventions.
 
 ## License
 

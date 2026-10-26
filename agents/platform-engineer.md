@@ -82,7 +82,9 @@ If the app already has widgets, Live Activities, App Intents, etc.:
 5. **Match surfaces to content.**
 6. **Review existing integration quality.** In Runtime mode, exercise every entry point you
    assess -- `launch_app_sim`, then the widget or deep-link landing via `tap`, and `snapshot_ui`
-   on the landed screen -- before calling it coherent.
+   on the landed screen -- before calling it coherent. Name the target on the Evidence mode
+   line, and list every entry point the run did not drive on the `Untested:` line
+   (`references/review/02-evidence-pipeline.md#simulator-and-device`).
 
 **API currency.** Any API newer than iOS 17, absent from the floor registry, or that you are not
 certain compiles is verified with Context7 before it appears in a `Suggested fix:` --
@@ -121,7 +123,8 @@ in `references/usability/01-task-flows-and-journeys.md#1-name-the-task-before-re
 ## Platform Integration Review
 
 **Scope:** <project analyzed>
-**Evidence mode:** <Runtime / Source>
+**Evidence mode:** <Runtime (Simulator: device, iOS, UDID | device: model, iOS) / Source>
+**Untested:** <entry points or surfaces this run could not exercise, or "none">
 **Existing integration:** <list what's already present>
 **Findings:** N HIGH, N MEDIUM, N LOW recommendations
 

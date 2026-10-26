@@ -11,7 +11,7 @@ before merge, not just a script.
 |---|---|
 | `gate.mjs` | The gate. Node >= 18, zero dependencies |
 | `verdict-artifact-schema.json` | Canonical schema. `gate.mjs` parses it at runtime rather than reimplementing it |
-| `selftest.mjs` | 30 cases verifying the gate, including every fail-closed path |
+| `selftest.mjs` | Verifies the gate, including every fail-closed path |
 
 Narrative contract, including how verdicts are derived and what each field
 means: `references/review/04-run-artifacts.md`.
@@ -112,7 +112,7 @@ Artifact keys follow CI naming; findings carry the reviewer's dimension names.
 ## Verifying the gate
 
 ```bash
-node ci/selftest.mjs      # 30 cases
+node ci/selftest.mjs
 ```
 
 Run it after any change to `gate.mjs` or the schema. A gate nobody tests can

@@ -174,5 +174,93 @@
     "title": "Trends sets no navigationTitle so children show a bare Back button",
     "ruleRef": "ia/missing-navigation-title",
     "evidence": "TrendsView's NavigationStack has no navigationTitle; every other tab root sets one."
+  },
+  {
+    "id": "conformance-tile-drag-strands",
+    "dimension": "Micro-interactions",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/conformance-gestures.swift",
+    "line": 51,
+    "title": "Tile drag offset in @State strands when the system cancels the drag",
+    "ruleRef": "conformance/drag-state-strands-on-cancel",
+    "evidence": "Source: dragOffset is @State written in .onChanged and zeroed only in .onEnded (conformance-gestures.swift:51); SwiftUI runs onEnded only when the gesture succeeds, so a cancelled drag leaves the tile at the cancelled offset until the next drag."
+  },
+  {
+    "id": "conformance-whats-new-swipe-dead",
+    "dimension": "Navigation patterns",
+    "severity": "MEDIUM",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/conformance-gestures.swift",
+    "line": 156,
+    "title": "Read-only What's New sheet disables swipe-to-dismiss with nothing to lose",
+    "ruleRef": "conformance/swipe-dismiss-disabled",
+    "evidence": "Source: WhatsNewSheet applies .interactiveDismissDisabled() with no condition (conformance-gestures.swift:156); the sheet holds no editable state, so the swipe is dead with nothing to protect."
+  },
+  {
+    "id": "conformance-capture-under-chrome",
+    "dimension": "Layout and spacing",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/conformance-content-ignores-safe-area.swift",
+    "line": 73,
+    "title": "Capture controls lay out under the status bar and home indicator",
+    "ruleRef": "conformance/content-ignores-safe-area",
+    "evidence": "Source: .ignoresSafeArea() is on the ZStack holding the Close and shutter buttons (conformance-content-ignores-safe-area.swift:73), not on CameraPreview alone."
+  },
+  {
+    "id": "conformance-drawer-navigation",
+    "dimension": "Information architecture and navigation structure",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/conformance-hamburger-drawer.swift",
+    "line": 47,
+    "title": "Slide-in drawer is the only top-level navigation on iPhone",
+    "ruleRef": "conformance/hamburger-drawer",
+    "evidence": "Source: no TabView; four top-level sections are reached only through a line.3.horizontal button that slides a side menu in (conformance-hamburger-drawer.swift:47)."
+  },
+  {
+    "id": "conformance-pill-switch-look-alike",
+    "dimension": "Micro-interactions",
+    "severity": "CRITICAL",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/conformance-web-controls.swift",
+    "line": 51,
+    "title": "Shape-drawn push switch has no switch trait, value or VoiceOver path",
+    "ruleRef": "conformance/control-look-alike",
+    "evidence": "Source: PillSwitch draws a Capsule and Circle and flips isOn in .onTapGesture (conformance-web-controls.swift:51) with no accessibilityRepresentation, trait or value; the row below uses a real Toggle."
+  },
+  {
+    "id": "conformance-digest-row-menu-chrome",
+    "dimension": "Micro-interactions",
+    "severity": "MEDIUM",
+    "confidence": "Quality defect",
+    "file": "tests/corpus/fixtures/conformance-web-controls.swift",
+    "line": 60,
+    "title": "Digest-day row's text block is a Menu label on the automatic style, so the menu capsule frames the content",
+    "ruleRef": "conformance/menu-chrome-on-content",
+    "evidence": "Source: DigestDayRow wraps a two-line VStack of Text as the label of a Menu with no menuStyle or buttonStyle (conformance-web-controls.swift:60); on iOS 26+ the automatic style draws the tinted menu capsule around the whole block. Fix: .menuStyle(.button).buttonStyle(.plain) on the Menu."
+  },
+  {
+    "id": "color-literal-push-label",
+    "dimension": "Color system",
+    "severity": "HIGH",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/conformance-web-controls.swift",
+    "line": 24,
+    "title": "Literal near-black row label disappears on the Dark Mode grouped row",
+    "ruleRef": "color/literal-text-color",
+    "evidence": "Derived: Color(red: 0.11, green: 0.11, blue: 0.12) = #1C1C1F against secondarySystemGroupedBackground Dark #1C1C1E is 1.00:1; Light #FFFFFF is 17.00:1 (conformance-web-controls.swift:24)."
+  },
+  {
+    "id": "conformance-web-kit-glyphs",
+    "dimension": "SF Symbols",
+    "severity": "MEDIUM",
+    "confidence": "Hard defect",
+    "file": "tests/corpus/fixtures/conformance-icon-drift.swift",
+    "line": 40,
+    "title": "Web-kit glyphs mixed with SF Symbols in one bottom toolbar",
+    "ruleRef": "conformance/mixed-icon-set",
+    "evidence": "Source: Image(\"ri-heart-line\"), Image(\"ri-heart-fill\") and Image(\"ri-chat-3-line\") are bundled web-kit glyphs beside ShareLink's SF Symbol in one bottomBar group (conformance-icon-drift.swift:40); heart, heart.fill and bubble.left exist as SF Symbols."
   }
 ]

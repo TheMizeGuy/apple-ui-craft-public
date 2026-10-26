@@ -28,7 +28,7 @@ were".
 | Model | Use when | SwiftUI | Fails when |
 |---|---|---|---|
 | Flat, single screen | One job, no hierarchy | A `NavigationStack` with no destinations | A second job appears and gets bolted on as a sheet |
-| Tabbed | 2 to 5 co-equal top-level areas, each independently useful | `TabView` with `Tab` | A 6th area arrives and lands in "More", where it is invisible |
+| Tabbed | 3 to 5 co-equal top-level areas, each independently useful | `TabView` with `Tab` | A 6th area arrives and lands in "More", where it is invisible |
 | Hierarchical | Content nests naturally: list to detail to sub-detail | `NavigationStack(path:)` | Depth passes 3 and the user cannot get back to a known place |
 | Split | iPad, Mac, and any list-plus-detail on a wide window | `NavigationSplitView` | It is shipped only for iPhone and the iPad gets a stretched phone |
 | Modal-driven | A task with its own completion, entered from anywhere | `.sheet`, `.fullScreenCover` | Modals stack three deep and the user cannot tell what dismissing returns to |
@@ -39,6 +39,12 @@ tab does not become a sixth tab; the system collapses items into "More" and the
 sixth onward become a nested list nobody visits. If the app has six top-level
 areas, the information architecture is wrong, not the tab bar. Consolidate, or
 move to `.sidebarAdaptable` where the platform allows a sidebar.
+
+**A hamburger drawer is not an iOS navigation model.** It hides every top-level
+area behind one control, so nothing on screen says where the user is or what
+else exists; it is the navigation a website ships. Three to five areas are a tab
+bar, and an app shaped like a sidebar uses `.tabViewStyle(.sidebarAdaptable)`,
+which stays a tab bar on iPhone.
 
 ```swift
 // iOS 18+ value-based tabs: selection is a value, so it is restorable and
@@ -251,7 +257,7 @@ relaunch; rotate at depth 3; run it in Slide Over.
 | Severity | Example |
 |---|---|
 | CRITICAL | The user cannot reach a core area; a deep link crashes; back is impossible from a screen on the primary path |
-| HIGH | Two navigation systems competing; 6+ top-level areas; the interactive pop gesture broken; a deep link landing at the root; push depth 5+; a detail with no route back to its list; the auth gate losing the deep-link target |
+| HIGH | Two navigation systems competing; 6+ top-level areas; the interactive pop gesture broken; a deep link landing at the root; push depth 5+; a detail with no route back to its list; the auth gate losing the deep-link target; a hamburger drawer as the iPhone's top-level navigation |
 | MEDIUM | No title on a screen; `.large` title at depth 3; label drift between tab, title, and heading; more than 9 ungrouped peers; stacked modals two deep; back losing scroll position |
 | LOW | "More" as a section name; alphabetical ordering where frequency would serve; a missing `NSUserActivity` on a secondary screen |
 | NIT | Tab ordering preference |

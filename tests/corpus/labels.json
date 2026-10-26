@@ -1,14 +1,24 @@
 {
   "meta": {
-    "purpose": "Ground truth for the apple-ui-craft regression corpus. Each fixture lists the findings a by-the-book review SHOULD produce, in the canonical finding shape from references/review/01-finding-format.md, plus a ruleRef naming the reference section the finding maps to. The scorer (tests/harness/score-review.mjs) matches emitted findings to these labels by ruleRef first, then by (fixture, dimension) with fuzzy title overlap.",
+    "purpose": "Ground truth for the apple-ui-craft regression corpus. Each fixture lists the findings a by-the-book review SHOULD produce, in the canonical finding shape from references/review/01-finding-format.md, plus a ruleRef naming the reference section the finding maps to. The scorer (tests/harness/score-review.mjs) matches emitted findings to these labels by ruleRef first, then by the label's owner section cited within eight lines of the labelled line, then by (fixture, dimension) with fuzzy title overlap.",
     "findingShape": "id, dimension (a verbatim entry from the dimension registry in references/review/01-finding-format.md), severity (CRITICAL|HIGH|MEDIUM|LOW|NIT), confidence (Hard defect|Quality defect|Pattern smell|Taste note), file, line, title, ruleRef, evidence.",
-    "ruleRefConvention": "<area>/<defect-slug>, where area is one of adaptive, density, flow, forms, ia, state. Each ruleRef's definition, threshold and severity live in the reference named in that label's `owner` field. Adding a ruleRef here without adding it there is a corpus that tests nothing.",
+    "ruleRefConvention": "<area>/<defect-slug>, where area is one of meta.ruleRefAreas. Each ruleRef's definition, threshold and severity live in the reference named in that label's `owner` field. Adding a ruleRef here without adding it there is a corpus that tests nothing.",
+    "ruleRefAreas": [
+      "adaptive",
+      "color",
+      "conformance",
+      "density",
+      "flow",
+      "forms",
+      "ia",
+      "state"
+    ],
     "cleanControlRule": "A clean control has expected == [] and maxIncidentalFindings == 1: the review may surface at most one incidental note before the control is treated as failed.",
     "severityIsInformational": "severity on a label records the reference's by-the-book class; the scorer matches on ruleRef/title, not severity, so a reviewer calling a defect one class higher or lower still counts as a hit.",
-    "dimensionCoverage": "16 labels across 10 defective fixtures, concentrated on the dimensions added in 0.3.0 (task flow, information architecture, error recovery and state integrity, adaptive layout and Dynamic Type, density and economy) because those are the ones with no prior regression protection. The visual dimensions (Liquid Glass, typography, color, SF Symbols, micro-interactions), animation, haptics, VoiceOver, performance and platform integration have NO labels here. Read any pooled recall number as recall over the labeled dimensions, never as coverage of the plugin's twenty-four.",
+    "dimensionCoverage": "Labels cover task flow, information architecture, error recovery and state integrity, adaptive layout and Dynamic Type, density and economy, and the platform-conformance checks inside Navigation patterns, Micro-interactions, Layout and spacing, Color system and SF Symbols. Liquid Glass, Typography hierarchy, App icon, Animation, Haptics, VoiceOver and the other accessibility dimensions, performance and platform integration have no labels. Read any pooled recall number as recall over the labelled dimensions, never as coverage of the registry.",
     "swiftFixturesAreReadNotCompiled": "Fixtures are read by a reviewing agent, never built. There is no Xcode target, so an editor resolving them against the host macOS SDK will flag iOS-only API (navigationBarTitleDisplayMode, topBarLeading, keyboardType, ContentUnavailableView.search). Those diagnostics are an artifact of having no iOS target and are NOT defects to fix -- several of them ARE the planted defect, and 'fixing' them destroys the fixture.",
-    "cleanControlContract": "adaptive-clean-control.swift is the guard against the failure mode where a reviewer flags constructs rather than defects -- the mirror image of every other fixture. It uses what the references prescribe: AnyLayout reflow at accessibility sizes, @ScaledMetric on an icon beside text, a reading measure on the detail column, NavigationSplitView at regular width, safeAreaInset for a custom bar, a Codable route, a draft owned above its presentation, interactiveDismissDisabled paired with a real Cancel, a confirmed destructive action, a double-submit guard, a keyboard toolbar, and all five reachable states each with a recovery. A run that flags any of those has learned the wrong lesson and fails the gate here.",
-    "authored": "Every fixture is new for apple-ui-craft 0.3.0. No fixture is copied from another corpus."
+    "cleanControlContract": "adaptive-clean-control.swift is the guard against the failure mode where a reviewer flags constructs rather than defects -- the mirror image of every other fixture. It uses what the references prescribe: AnyLayout reflow at accessibility sizes, @ScaledMetric on an icon beside text, a reading measure on the detail column, NavigationSplitView at regular width, safeAreaInset for a custom bar, a Codable route, a draft owned above its presentation, interactiveDismissDisabled paired with a real Cancel, a confirmed destructive action, a double-submit guard, a keyboard toolbar, and all five reachable states each with a recovery. A run that flags any of those has learned the wrong lesson and fails the gate here. conformance-clean-control.swift guards the conformance checks the same way: a Toggle restyled through ToggleStyle, a custom dial bridged with accessibilityRepresentation, ignoresSafeArea on the camera preview alone, a required consent step that locks dismissal and says why, a sidebar-adaptable TabView, a drag held in @GestureState, and a custom SF symbol beside system ones.",
+    "authored": "No fixture is copied from another corpus."
   },
   "fixtures": [
     {
@@ -232,8 +242,124 @@
       ]
     },
     {
+      "file": "conformance-gestures.swift",
+      "note": "A self-view tile drag kept in @State strands when the system cancels it, and a read-only sheet kills swipe-to-dismiss for nothing.",
+      "expected": [
+        {
+          "id": "conformance-drag-strands-on-cancel",
+          "ruleRef": "conformance/drag-state-strands-on-cancel",
+          "dimension": "Micro-interactions",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 51,
+          "title": "Self-view tile drag offset lives in @State and resets only in onEnded, stranding the tile when the drag is cancelled",
+          "owner": "references/interaction/03-direct-manipulation-drag.md#returning-cleanly-gesturestate-reset-transactions"
+        },
+        {
+          "id": "conformance-swipe-dismiss-disabled",
+          "ruleRef": "conformance/swipe-dismiss-disabled",
+          "dimension": "Navigation patterns",
+          "severity": "MEDIUM",
+          "confidence": "Hard defect",
+          "line": 156,
+          "title": "Read-only What's New sheet hardcodes interactiveDismissDisabled, so swipe-down does nothing",
+          "owner": "references/patterns/05-modality-sheets.md#drag-to-dismiss-and-interactivedismissdisabled-ethics"
+        }
+      ]
+    },
+    {
+      "file": "conformance-content-ignores-safe-area.swift",
+      "note": "ignoresSafeArea on the whole capture stack instead of the preview alone puts both controls under system chrome.",
+      "expected": [
+        {
+          "id": "conformance-content-ignores-safe-area",
+          "ruleRef": "conformance/content-ignores-safe-area",
+          "dimension": "Layout and spacing",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 73,
+          "title": "ignoresSafeArea on the whole capture stack puts Close under the status bar and display corner and the shutter over the home indicator",
+          "owner": "references/usability/05-adaptive-review-method.md#5-safe-areas-are-two-rules-not-one"
+        }
+      ]
+    },
+    {
+      "file": "conformance-hamburger-drawer.swift",
+      "note": "Four top-level sections reached only through a slide-in drawer; no tab bar says where the user is or what else exists.",
+      "expected": [
+        {
+          "id": "conformance-hamburger-drawer",
+          "ruleRef": "conformance/hamburger-drawer",
+          "dimension": "Information architecture and navigation structure",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 47,
+          "title": "Hamburger drawer replaces the tab bar as the iPhone top-level navigation",
+          "owner": "references/usability/03-navigation-and-information-architecture.md#1-navigation-models"
+        }
+      ]
+    },
+    {
+      "file": "conformance-web-controls.swift",
+      "note": "A settings screen ported from the web: a shape-drawn switch with no accessibility bridge, a literal near-black label that vanishes in Dark Mode, and a row whose two-line text block is the label of a Menu left on the automatic style.",
+      "expected": [
+        {
+          "id": "conformance-toggle-look-alike",
+          "ruleRef": "conformance/control-look-alike",
+          "dimension": "Micro-interactions",
+          "severity": "CRITICAL",
+          "confidence": "Hard defect",
+          "line": 51,
+          "title": "Toggle look-alike drawn from a Capsule and onTapGesture has no switch trait, value or VoiceOver path",
+          "owner": "references/interaction/06-custom-controls-reorderable.md#the-apple-way"
+        },
+        {
+          "id": "conformance-menu-chrome-on-content",
+          "ruleRef": "conformance/menu-chrome-on-content",
+          "dimension": "Micro-interactions",
+          "severity": "MEDIUM",
+          "confidence": "Quality defect",
+          "line": 60,
+          "title": "Menu with the row's text block as its label keeps the automatic style, so the system draws its menu capsule around the content",
+          "owner": "references/interaction/06-custom-controls-reorderable.md#the-apple-way"
+        },
+        {
+          "id": "color-literal-label",
+          "ruleRef": "color/literal-text-color",
+          "dimension": "Color system",
+          "severity": "HIGH",
+          "confidence": "Hard defect",
+          "line": 24,
+          "title": "Literal near-black label color is invisible on the Dark Mode grouped row",
+          "owner": "references/design/04-color-system.md#custom-colors-via-asset-catalog"
+        }
+      ]
+    },
+    {
+      "file": "conformance-icon-drift.swift",
+      "note": "Web-kit glyphs beside an SF Symbol in one toolbar, where SF Symbols cover both concepts.",
+      "expected": [
+        {
+          "id": "conformance-mixed-icon-set",
+          "ruleRef": "conformance/mixed-icon-set",
+          "dimension": "SF Symbols",
+          "severity": "MEDIUM",
+          "confidence": "Hard defect",
+          "line": 40,
+          "title": "Bundled web-kit glyphs sit beside SF Symbols in one toolbar where heart and bubble symbols exist",
+          "owner": "references/design/05-sf-symbols.md#common-mistakes"
+        }
+      ]
+    },
+    {
       "file": "adaptive-clean-control.swift",
       "note": "CLEAN CONTROL. Must produce zero findings. Every construct here is one the references prescribe; flagging any of them means the reviewer is matching constructs rather than defects.",
+      "expected": [],
+      "maxIncidentalFindings": 1
+    },
+    {
+      "file": "conformance-clean-control.swift",
+      "note": "CLEAN CONTROL. A correct review files nothing here; the scorer tolerates one incidental note (maxIncidentalFindings). It holds the prescribed counterpart of every conformance plant, plus the required-step dismiss lock, a restyled Toggle, a Menu whose label is a row's text block restyled plain beside a toolbar Menu that keeps the system chrome on its short Label, a custom dial with accessibilityRepresentation and a custom SF symbol.",
       "expected": [],
       "maxIncidentalFindings": 1
     }

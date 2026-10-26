@@ -174,7 +174,8 @@ This also unlocks a claim a TV app could not previously make: App Store Connect'
 | Fixed icon size | Tiny next to giant text | `@ScaledMetric` |
 | Forced single line | Cuts off content | `.lineLimit(nil)` or default |
 | Hardcoded font sizes | Don't scale | Use `.font(.body)` etc. |
-| Custom font without `relativeTo:` | Doesn't scale | Add `relativeTo: .body` |
+| `Font.custom(_:fixedSize:)` | Doesn't scale | `custom(_:size:relativeTo:)` with the role's text style |
+| `custom(_:size:)` without `relativeTo:` outside body text | Scales along the body curve, not its role's | Add `relativeTo:` naming the role |
 | HStack at AX5 | Items overflow horizontally | Switch to VStack at AX |
 | Inline navigation title at AX5 | Becomes "..." | Shorten the title, or carry the long form as a heading in the content; never `.large` past the root -- it breaks the depth cue (`references/usability/03-navigation-and-information-architecture.md`) |
 
@@ -267,7 +268,8 @@ Apple's Accessibility Nutrition Label criteria put a number on this: Larger Text
 | `.font(.system(size: 17))` | Doesn't scale | `.font(.body)` |
 | `.frame(height: 50)` for cells | Truncates at AX | `.frame(minHeight: 50)` or remove |
 | `lineLimit(1)` on names | Truncates user data | Allow wrapping |
-| Custom font without `relativeTo:` | Doesn't scale | Add `relativeTo:` |
+| `Font.custom(_:fixedSize:)` | Doesn't scale | `custom(_:size:relativeTo:)` with the role's text style |
+| `custom(_:size:)` without `relativeTo:` outside body text | Scales along the body curve, not its role's | Add `relativeTo:` naming the role |
 | Fixed icon sizes | Look tiny at AX5 | `@ScaledMetric` |
 | HStack everywhere | Overflows at AX5 | Branch to VStack at AX |
 | Truncating nav title | "..." at AX5 | Shorter title or an in-content heading; `.large` only on a root |

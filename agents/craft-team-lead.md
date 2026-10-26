@@ -54,6 +54,7 @@ Dispatch all 5 review agents in parallel (apple-ui-architect is not dispatched -
 - The specialist's full body from `agents/<specialist>.md` (read it, inline it)
 - The ABSOLUTE path to this plugin's `references/` directory + that specialist's must-read list from ARCHITECTURE.md
 - The file list / project root and project context from Phase 1
+- For `apple-ui-reviewer`, the `DESIGN RECORD:` content when your dispatch carried one: the project's declared design system, read-only evidence for respecting a documented choice
 - The report format, and the note that a report over a few KB may go to a file whose path the specialist returns
 
 ```
@@ -100,6 +101,8 @@ Collect all specialist reports. Then:
    | Scroll jank | performance-engineer |
    | Widget or Siri entry landing wrong | apple-ui-reviewer (dimension 9) for the flow consequence; platform-engineer for the integration mechanics |
    | iPad single-column layout | apple-ui-reviewer (dimension 8) with the measurement |
+   | Drag state stranded on cancellation | apple-ui-reviewer (Micro-interactions) for the state mechanism; animation-haptics-engineer's finding folds in |
+   | Look-alike of a system control | apple-ui-reviewer (Micro-interactions); accessibility-engineer's missing-bridge finding folds in as corroboration and, per step 1, the higher severity (CRITICAL with no bridge) is kept |
 
 2. **Resolve conflicts.** If animation-haptics-engineer recommends a spring and performance-engineer says it causes hitches, the performance finding wins and the spring recommendation adjusts.
 
@@ -109,7 +112,9 @@ Collect all specialist reports. Then:
    - MEDIUM third (quality gaps)
    - LOW/NIT last
 
-4. **Group by screen/flow.** Present findings organized by which screen they affect, not which agent found them.
+4. **Group by screen/flow.** Present findings organized by which screen they affect, not which agent found them. A defect that recurs across files also gets one systemic entry (`references/review/01-finding-format.md#systemic-patterns`); every instance stays under its screen.
+
+5. **Union the `Untested:` lines.** The report's Untested line is the union of the specialists' lines; a claim one specialist covered on a device leaves the union.
 
 ### Phase 4: Present unified report
 
@@ -121,8 +126,9 @@ Collect all specialist reports. Then:
 **Project:** <name>
 **Scope:** <files/screens reviewed>
 **Specialists dispatched:** apple-ui-reviewer, animation-haptics-engineer, accessibility-engineer, performance-engineer, platform-engineer
-**Evidence mode:** <the WEAKEST mode any specialist ran in, and which ran weaker>
+**Evidence mode:** <the WEAKEST mode any specialist ran in, which ran weaker, and each Runtime target>
 **Coverage:** screens: <which> | states: <which> | configurations: <which>
+**Untested:** <union of the specialists' Untested lines>
 **Total findings:** N CRITICAL, N HIGH, N MEDIUM, N LOW, N NIT, N praise
 
 ### Executive summary
@@ -161,9 +167,9 @@ the dimensions static evidence cannot cover.
 
 ...
 
-### Cross-cutting findings
+### Cross-cutting and systemic findings
 
-<findings that apply project-wide, not to one screen>
+<findings that apply project-wide, and systemic entries per `references/review/01-finding-format.md#systemic-patterns`; every instance also stays under its screen>
 
 ### Platform opportunities
 

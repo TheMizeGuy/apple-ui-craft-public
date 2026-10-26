@@ -18,9 +18,13 @@
 //   --min-precision   Pass threshold for precision (default 0.8).
 //   --labels <path>   Override the labels file (default ../corpus/labels.json).
 //
-// Matching: by ruleRef first (explicit finding.ruleRef, or the label's ruleRef
-// mentioned in the finding's id/title/evidence), else by (fixture, dimension)
-// with fuzzy title overlap. Either way the finding must carry substance: a title
+// Matching, in three passes over each fixture, each finding claiming at most
+// one label: by ruleRef (explicit finding.ruleRef, or the label's ruleRef
+// mentioned in the finding's id/title/evidence); then by the label's owner
+// section cited in the finding with the finding within LINE_WINDOW lines of
+// the labelled construct, nearest line first; then by (fixture, dimension)
+// with fuzzy title overlap. Every pass runs for every label before the next
+// looser pass starts. In each case the finding must carry substance: a title
 // with at least MIN_TITLE_TOKENS meaningful tokens. Without that floor the gate
 // is satisfiable by naming ruleRefs and nothing else, which measures whether the
 // reviewer memorised the corpus rather than whether it located the defects.
@@ -41,6 +45,7 @@ const DEFAULT_MIN_RECALL = 0.8;
 const DEFAULT_MIN_PRECISION = 0.8;
 const MIN_TITLE_TOKENS = 2;
 const TITLE_OVERLAP_THRESHOLD = 0.34;
+const LINE_WINDOW = 8;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -84,6 +89,31 @@ export function fixtureOf(finding) {
   return basename(finding.file || '');
 }
 
+// A citation compared from its `references/` segment on, so an absolute plugin
+// path and a plugin-relative one name the same section.
+export function normalizeCitation(text) {
+  const s = String(text || '');
+  const i = s.indexOf('references/');
+  return i < 0 ? '' : s.slice(i).trim().toLowerCase();
+}
+
+// A finding cites a label's owner section if its ruleRef is that citation or
+// the citation appears in any of its free-text fields.
+export function citesOwner(finding, owner) {
+  const want = normalizeCitation(owner);
+  if (!want) return false;
+  if (normalizeCitation(finding.ruleRef) === want) return true;
+  const haystack = `${finding.id || ''} ${finding.title || ''} ${finding.evidence || ''}`.toLowerCase();
+  return haystack.includes(want);
+}
+
+export function lineDistance(finding, label) {
+  const a = Number(finding.line);
+  const b = Number(label.line);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return Infinity;
+  return Math.abs(a - b);
+}
+
 export function score(findings, labels, only) {
   const fixtures = labels.fixtures.filter((f) => !only || f.file === only);
   if (!fixtures.length) return { error: `no such fixture: ${only}` };
@@ -102,23 +132,51 @@ export function score(findings, labels, only) {
 
     const matched = [];
     const missed = [];
+    const hitFor = new Map();
+    const open = (f) => !claimed.has(f) && hasSubstance(f);
+    const take = (label, hit, pass) => {
+      claimed.add(hit);
+      hitFor.set(label, { hit, pass });
+    };
+
+    // Pass 1: deterministic, by ruleRef, for every label before any looser pass
+    // so a fuzzy pairing never steals a finding another label names exactly.
+    for (const label of expected) {
+      const hit = mine.find((f) => open(f) && mentionsRule(f, label.ruleRef));
+      if (hit) take(label, hit, 'ruleRef');
+    }
+
+    // Pass 2: the finding cites the label's owner section and sits within
+    // LINE_WINDOW lines of the labelled construct. Pairs are assigned nearest
+    // line first across the whole fixture, so two labels that share an owner
+    // section each get the finding on their own construct.
+    const pairs = [];
+    for (const label of expected) {
+      if (hitFor.has(label)) continue;
+      for (const f of mine) {
+        if (!open(f) || !citesOwner(f, label.owner)) continue;
+        const distance = lineDistance(f, label);
+        if (distance <= LINE_WINDOW) pairs.push({ label, f, distance });
+      }
+    }
+    pairs.sort((a, b) => a.distance - b.distance);
+    for (const { label, f } of pairs) {
+      if (!hitFor.has(label) && open(f)) take(label, f, 'owner');
+    }
+
+    // Pass 3: same dimension, fuzzy title overlap.
+    for (const label of expected) {
+      if (hitFor.has(label)) continue;
+      const hit = mine.find(
+        (f) => open(f) && f.dimension === label.dimension && overlap(f.title, label.title) >= TITLE_OVERLAP_THRESHOLD
+      );
+      if (hit) take(label, hit, 'title');
+    }
 
     for (const label of expected) {
-      // Pass 1: deterministic, by ruleRef.
-      let hit = mine.find((f) => !claimed.has(f) && hasSubstance(f) && mentionsRule(f, label.ruleRef));
-      // Pass 2: same dimension, fuzzy title overlap.
-      if (!hit) {
-        hit = mine.find(
-          (f) =>
-            !claimed.has(f) &&
-            hasSubstance(f) &&
-            f.dimension === label.dimension &&
-            overlap(f.title, label.title) >= TITLE_OVERLAP_THRESHOLD
-        );
-      }
-      if (hit) {
-        claimed.add(hit);
-        matched.push({ label: label.ruleRef, by: hit.id || hit.title });
+      const m = hitFor.get(label);
+      if (m) {
+        matched.push({ label: label.ruleRef, by: m.hit.id || m.hit.title, pass: m.pass });
         hits++;
       } else {
         missed.push({ label: label.ruleRef, title: label.title });
@@ -144,6 +202,7 @@ export function score(findings, labels, only) {
       isCleanControl: expected.length === 0,
       expected: expected.length,
       matched: matched.length,
+      pairs: matched,
       missed,
       incidental: incidental.length,
       incidentalTitles: incidental.map((f) => f.title || f.id)
@@ -228,8 +287,10 @@ function main() {
   }
 
   const { expected, emitted, hits } = result.totals;
+  const byPass = { ruleRef: 0, owner: 0, title: 0 };
+  for (const f of result.perFixture) for (const m of f.pairs) byPass[m.pass]++;
   console.log(`corpus: ${result.perFixture.length} fixture(s)`);
-  console.log(`expected labels: ${expected}   emitted findings: ${emitted}   matched: ${hits}`);
+  console.log(`expected labels: ${expected}   emitted findings: ${emitted}   matched: ${hits} (by ruleRef ${byPass.ruleRef}, owner section and line ${byPass.owner}, title ${byPass.title})`);
   console.log(`recall:    ${recall.toFixed(3)}  (threshold ${opts.minRecall})`);
   console.log(`precision: ${precision.toFixed(3)}  (threshold ${opts.minPrecision})`);
   if (result.ignoredFindings) console.log(`ignored ${result.ignoredFindings} finding(s) not on any corpus fixture`);

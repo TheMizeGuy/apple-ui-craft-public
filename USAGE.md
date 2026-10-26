@@ -22,7 +22,7 @@ claude --plugin-dir ./apple-ui-craft-public
 No build step, no configuration. The plugin is Markdown-only: skills, agents, and a reference library. It uses GoodMem and Context7 when they are available in your session and degrades gracefully when they are not.
 
 
-## The six skills
+## The skills
 
 Invoke a skill by describing your task in natural language, or by typing its `/`-name. Pick by intent:
 
@@ -45,7 +45,7 @@ Use when you are creating something new: a screen, a flow, a component family, o
 "create the onboarding for a meditation app"
 ```
 
-**What happens:** the `apple-ui-architect` produces production SwiftUI (Liquid Glass, semantic colors, SF Symbols, spring animation, intentional haptics, accessibility from birth), a design-decision rationale, an animation inventory, and Xcode previews. Then the `accessibility-engineer` audits the new code and returns immediate refinement feedback.
+**What happens:** the `apple-ui-architect` produces production SwiftUI (Liquid Glass, semantic colors, SF Symbols, spring animation, intentional haptics, accessibility from birth), a design-decision rationale, an animation inventory, and Xcode previews. Then the `accessibility-engineer` audits the new code and returns immediate refinement feedback. When the project keeps a `PRODUCT.md` or `DESIGN.md` (at the root, in `.agents/context/` or in `docs/`), `design-ios` reads it for product context and brand intent, and never writes either file.
 
 **You get:** compilable SwiftUI you can drop into Xcode, plus a short "why" for each decision and an accessibility audit table.
 
@@ -154,7 +154,7 @@ Shared dispatch mechanics: `references/_scaffolding/dispatch-protocol.md`.
 
 ## The reference library
 
-The plugin's knowledge lives in `references/` -- **94 files** across 13 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, usability, review, exemplars, methodology) plus `_scaffolding/` (14 directories total). See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
+The plugin's knowledge lives in `references/`: 13 content domains (design, animation, interaction, haptics, accessibility, patterns, performance, platform, cross-platform, usability, review, exemplars, methodology) plus `_scaffolding/`. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full tree, per-domain counts, and the reference-to-agent ownership matrix.
 
 Two files anchor the whole library:
 
@@ -196,7 +196,9 @@ Run both before shipping: one clears the gate, the other earns the delight.
 
 **Can it review UIKit?** Yes -- the reviewers read both SwiftUI and UIKit, though recommendations lead with the SwiftUI-native path.
 
-**What if my app has a deliberate non-default design system?** The reviewers respect existing coherence. A consistent, working non-default system is not penalized for being non-default; findings flag only where a choice hurts the experience.
+**What if my app has a deliberate non-default design system?** The reviewers respect existing coherence. A consistent, working non-default system is not penalized for being non-default; findings flag only where a choice hurts the experience. When the project keeps a `DESIGN.md`, `review-ios-ui` and `craft-ios-ui` pass its documented tokens to the reviewer as the declared system, read-only.
+
+**Why does a report list Untested items?** A Simulator run cannot show haptic feel, real hitches, VoiceOver behaviour or the device-only launch crash, so those go on the report's `Untested:` line rather than into a clean verdict. A run on a device clears them.
 
 **How do I get the most out of a review?** Scope it. Point a skill at the screen or flow you care about rather than the whole project, and you get denser, more actionable findings.
 

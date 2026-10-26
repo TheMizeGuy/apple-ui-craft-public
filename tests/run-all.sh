@@ -19,10 +19,10 @@ run() {
   echo
 }
 
-run "reference integrity" node tests/check-references.mjs
+run "reference and label-owner integrity" node tests/check-references.mjs
 run "scorer selftest"     node tests/harness/selftest.mjs
 run "CI gate selftest"      node ci/selftest.mjs
-run "corpus recall (example run)" node tests/harness/score-review.mjs tests/harness/examples/sample-findings.json
+run "answer key covers every label (example run)" node tests/harness/score-review.mjs tests/harness/examples/sample-findings.json --min-recall 1 --min-precision 1
 
 # Manifest sanity: the four version-lockstep files must agree, and the JSON must parse.
 echo "=== manifest and version lockstep"

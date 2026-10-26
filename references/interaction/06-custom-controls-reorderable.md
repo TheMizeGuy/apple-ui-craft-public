@@ -9,6 +9,10 @@ Two disciplines, opposite bias. A genuinely custom control (nothing native maps 
 
 A custom control is, to VoiceOver, an inert blob of shapes unless you tell the accessibility layer what it represents. That is the single most-skipped step in custom-control work and a recurring App Store rejection. For reordering, the most-skipped step is the opposite: reaching for a hand-rolled `DragGesture` when `List.onMove` already does the job, correctly, for free.
 
+Before building a control, check whether a system control already is it. A two-state switch is `Toggle`, a choice among a few values is `Picker`, an increment is `Stepper`, a tap is `Button`: restyle them with `ButtonStyle`, `ToggleStyle` or `.pickerStyle`, and the control keeps its binding, its label, Voice Control and Full Keyboard Access, and (for a button) the press state; a `ToggleStyle` that draws its own track borrows the switch's trait and value through `accessibilityRepresentation`. A look-alike drawn from shapes and `.onTapGesture` has none of them, and it is the commonest sign of a screen ported from a website. Hand-build only what no system control maps to (a dial, a 2D pad) and bridge it with `accessibilityRepresentation` below. A project component library that restyles system controls this way is the prescribed path, not a look-alike.
+
+The reverse holds too: a system control keeps its chrome whatever its label is. `Menu` and `Picker` in `.menu` style take the automatic menu style of their container, and in content on iOS 26+ that resolves to a bordered, tint-filled capsule drawn around the label. When the label is a row's text block or a card, the capsule lands around the content and every row reads as one oversized button in the accent colour. Set `.menuStyle(.button)` with `.buttonStyle(.plain)` (or `.borderless`) when content is the label, and keep the default chrome only where the label is a control-sized title or `Label` that should read as a button, as it does in a toolbar. Two iOS 27 facts sharpen this: an app rebuilt with Xcode 27 has no Liquid Glass opt-out, so the capsule shows in every app, and control styling set in the environment resets inside sheets and popovers, so the two modifiers go on the `Menu` itself.
+
 ## `accessibilityRepresentation`: the highest-leverage line in custom-control work
 
 Instead of hand-wiring a label, a value string, an adjustable action, and every trait, tell SwiftUI "for accessibility, treat this as a real `Slider`" and inherit every stock behavior -- the adjustable trait, value formatting, Voice Control number entry, Full Keyboard Access, rotor support:
@@ -20,7 +24,7 @@ CustomSliderTrack(value: $value)
     }
 ```
 
-The visual stays 100% your custom design; the accessibility semantics become a battle-tested native control. Prefer it over hand-rolled traits whenever the control maps cleanly to `Slider`, `Stepper`, `Toggle`, or `Picker`. Hand-roll only when the mapping is genuinely custom (a 2D pad, a color wheel):
+The visual stays 100% your custom design; the accessibility semantics become a battle-tested native control. For a control that maps to `Toggle`, `Picker`, `Stepper` or `Button`, restyle the system control through its style protocol first; `accessibilityRepresentation` bridges a custom visual that no style can produce (a slider track, a dial), and gives a hand-drawn `ToggleStyle` the switch's semantics. Hand-roll only when the mapping is genuinely custom (a 2D pad, a color wheel):
 
 ```swift
 CustomSlider(value: $volume)
@@ -337,6 +341,7 @@ tvOS has neither `reorderContainer`/`reorderable()` nor `swipeActionsContainer()
 | Wrong | Why it fails | Right |
 |---|---|---|
 | Custom control with no `accessibilityAdjustableAction` | Inoperable for VoiceOver -- circular/linear dragging means nothing to it | `accessibilityRepresentation { Slider/Stepper/Picker }` or the manual adjustable contract |
+| `Menu` or `.pickerStyle(.menu)` whose label is a row's text block or a card, left on the automatic style | On iOS 26+ the system draws its tinted menu capsule around the content -- every row becomes an oversized accent-coloured pill | `.menuStyle(.button)` + `.buttonStyle(.plain)` when content is the label; the default chrome only for a control-sized title or `Label` |
 | `reorderContainer`/`reorderable` as the only reorder path in an app whose floor is below 27, or on tvOS | Won't compile -- the modifiers require a 27 deployment target and do not exist on tvOS at any version | `reorderContainer` behind `#available(iOS 27, *)` with `List.onMove` / hand-rolled `.draggable`+`.dropDestination` as the real fallback branch |
 | `.reorderable()` on the cell instead of the `ForEach` | It is declared on `DynamicViewContent`, not `View` -- does not compile | `.reorderable()` on the `ForEach`, `.reorderContainer(for:)` on the enclosing container |
 | `cards.apply(difference)` or `difference.apply(to:)` in a `move:` closure | Neither exists in SwiftUI -- phantom API | Write the mutation yourself from `difference.sources` and `difference.destination.position` |
@@ -351,8 +356,8 @@ tvOS has neither `reorderContainer`/`reorderable()` nor `swipeActionsContainer()
 ## Severity guide
 
 - **CRITICAL** -- a custom control ships with no accessibility bridge at all.
-- **HIGH** -- `reorderContainer` shipped as the ONLY reorder path on a floor below 27 or on tvOS (won't compile); a `move:` closure calling a phantom `apply` (won't compile); hand-rolled grid reorder invisible to VoiceOver (no drag point/drop point actions); haptic fired per-frame instead of edge-triggered; `swipeActions` outside a `List` with no `swipeActionsContainer()` on a 27 floor.
-- **MEDIUM** -- a hand-rolled grid/stack reorder in an app whose floor is already 27 (reinvents a system primitive); missing hysteresis causes visible flicker at slot boundaries; `.position` used instead of `.offset` causing a pickup jump.
+- **HIGH** -- a look-alike of a system control that maps exactly (`Toggle`, `Picker`, `Stepper`, `Button`), drawn from shapes and `.onTapGesture`, with a partial or hand-rolled bridge that misses the value or the trait; `reorderContainer` shipped as the ONLY reorder path on a floor below 27 or on tvOS (won't compile); a `move:` closure calling a phantom `apply` (won't compile); hand-rolled grid reorder invisible to VoiceOver (no drag point/drop point actions); haptic fired per-frame instead of edge-triggered; `swipeActions` outside a `List` with no `swipeActionsContainer()` on a 27 floor.
+- **MEDIUM** -- a fully bridged look-alike of a system control where its style protocol would have served; a `Menu` or menu-style `Picker` whose label is content under the automatic style, so the menu capsule frames a text block or card; a hand-rolled grid/stack reorder in an app whose floor is already 27 (reinvents a system primitive); missing hysteresis causes visible flicker at slot boundaries; `.position` used instead of `.offset` causing a pickup jump.
 - **LOW** -- `reorderContainer` with no `dragContainer` on iPad/Mac where dragging an item out is expected; lift/settle share one animation value; segmented-pill glass morph missing a stable `glassEffectID`.
 
 ## See also
